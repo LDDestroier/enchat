@@ -129,7 +129,74 @@ if not encKey then
 	currentY = currentY + 3
 end
 
---need to add textToBlit function
+local toblit = {
+	[0] = " ",
+	[1] = "0",
+	[2] = "1",
+	[4] = "2",
+	[8] = "3",
+	[16] = "4",
+	[32] = "5",
+	[64] = "6",
+	[128] = "7",
+	[256] = "8",
+	[512] = "9",
+	[1024] = "a",
+	[2048] = "b",
+	[4096] = "c",
+	[8192] = "d",
+	[16384] = "e",
+	[32768] = "f"
+}
+local tocolors = {}
+for k,v in pairs(toblit) do
+	tocolors[v] = k
+end
+
+local textToBlit = function(input, inittext, initback)
+	local char, text, back = "", inittext or toblit[term.getTextColor()], initback or toblit[term.getBackgroundColor()]
+	local charout, textout, backout = "", "", ""
+	local textCode = "&"
+	local bgCode = "~"
+	
+	local x = 0
+	local cur, prev, nex
+	
+	while true do
+		x = x + 1
+		
+		prev = input:sub(x-1,x-1)
+		cur = input:sub(x,x)
+		nex = input:sub(x+1,x+1)
+		
+		if cur then
+			if cur == textCode and nex then
+				if tocolors[nex:lower()] then
+					text = nex:lower()
+					x = x + 1
+				else
+					char = nex
+				end
+			elseif cur == backCode and nex then
+				if tocolors[nex:lower()] then
+					back = nex:lower()
+					x = x + 1
+				else
+					char = nex
+				end
+			else
+				char = cur
+			end
+
+			charout = charout..char
+			textout = textout..text
+			backout = backout..back
+		else
+			break
+		end
+	end
+	return {charout, textout, backout}
+end
 
 local genRenderLog = function(log)
 	local buff, prebuff
