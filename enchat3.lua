@@ -117,6 +117,8 @@ end
 
 local prettyPrompt = function(prompt, y, replchar, history)
 	local cy, cx = term.getCursorPos()
+	term.setBackgroundColor(colors.gray)
+	term.setTextColor(colors.white)
 	local yadj = 1 + prettyCenterWrite(prompt, y or cy)
 	term.setCursorPos(1, y + yadj)
 	term.setBackgroundColor(colors.lightGray)
