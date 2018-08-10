@@ -245,7 +245,7 @@ local logadd = function(name, message)
 end
 
 local main = function()
-	renderChat()
+	renderChat(scroll)
 	while true do
 		term.setCursorPos(1, scr_y - 1)
 		term.setBackgroundColor(colors.lightGray)
@@ -261,12 +261,12 @@ local handleEvents = function()
 		if evt == "enchat_receive" then
 			local user, message = evt[2], evt[3]
 			logadd(user, message)
-			renderChat()
+			renderChat(scroll)
 		elseif evt == "enchat_send" then
 			local user, message, doLog = evt[2], evt[3], evt[4]
 			if doLog then
 				logadd(user, message)
-				renderChat()
+				renderChat(scroll)
 			end
 			modem.transmit(enchat.port, enchat.port, encrite({
 				name = name,
