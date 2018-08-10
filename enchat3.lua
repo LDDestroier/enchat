@@ -1,3 +1,9 @@
+--[[
+ Enchat 3.0 BETA (well, work in progress really)
+ Get with:
+  wget https://github.com/LDDestroier/enchat/raw/master/enchat3.lua enchat3
+--]]
+
 local tArg = {...}
 
 local yourName = tArg[1]
