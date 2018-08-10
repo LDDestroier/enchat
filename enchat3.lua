@@ -126,6 +126,10 @@ end
 
 local currentY = 2
 
+if not (yourName and encKey) then
+	prettyClearScreen()
+end
+
 if not yourName then
 	yourName = prettyPrompt("Enter your name.", currentY)
 	currentY = currentY + 3
