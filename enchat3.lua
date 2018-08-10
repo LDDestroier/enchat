@@ -228,14 +228,6 @@ local renderChat = function(scroll)
 	end
 end
 
-local chatPrompt = function()
-	term.setCursorPos(1, scr_y - 1)
-	term.setBackgroundColor(colors.lightGray)
-	term.setTextColor(colors.black)
-	local input = read() --replace later with fancier input
-	os.queueEvent("enchat_receive", yourName, input)
-end
-
 local logadd = function(name, message)
 	log[#log + 1] = {
 		prefix = "<",
@@ -243,6 +235,17 @@ local logadd = function(name, message)
 		name = name,
 		message = message
 	}
+end
+
+local main = function()
+	renderChat()
+	while true do
+		term.setCursorPos(1, scr_y - 1)
+		term.setBackgroundColor(colors.lightGray)
+		term.setTextColor(colors.black)
+		local input = read() --replace later with fancier input
+		os.queueEvent("enchat_send", yourName, input, true)
+	end
 end
 
 local handleEvents = function()
@@ -258,11 +261,20 @@ local handleEvents = function()
 				logadd(user, message)
 				renderChat()
 			end
-			local eName, eMessage = encrite(name), encrite(message)
-			modem.transmit(enchat.port, enchat.port, {
-				name = eName,
-				message = eMessage
-			})
+			modem.transmit(enchat.port, enchat.port, encrite({
+				name = name,
+				message = message
+			}))
+		elseif evt == "modem_message" then
+			local side, freq, repfreq, distance, msg = evt[2], evt[3], evt[4], evt[5], evt[6]
+			msg = decrite(msg)
+			if type(msg) == "table" then
+				if (type(msg.name) == "string") and (type(msg.message) == "string") then
+					os.queueEvent("enchat_receive", msg.name, msg.receive)
+				end
+			end
 		end
 	end
 end
+
+parallel.waitForAny(main, handleEvents)
