@@ -216,10 +216,47 @@ local renderChat = function(scroll)
 	for a = (scroll + 1), scroll + scr_y do
 		if renderlog[a] then
 			term.setCursorPos(1, y)
-			term.blit(unpack(renderlog[a])
+			term.blit(unpack(renderlog[a]))
 		end
 		y = y + 1
 	end
 end
 
--- do finish, will ya
+local chatPrompt = function()
+	term.setCursorPos(1, scr_y - 1)
+	term.setBackgroundColor(colors.lightGray)
+	term.setTextColor(colors.black)
+	local input = read() --replace later with fancier input
+	os.queueEvent("enchat_receive", yourName, input)
+end
+
+local logadd = function(name, message)
+	log[#log + 1] = {
+		prefix = "<",
+		suffix = "> ",
+		name = name,
+		message = message
+	}
+end
+
+local handleEvents = function()
+	while true do
+		local evt = {os.pullEvent()}
+		if evt == "enchat_receive" then
+			local user, message = evt[2], evt[3]
+			logadd(user, message)
+			renderChat()
+		elseif evt == "enchat_send" then
+			local user, message, doLog = evt[2], evt[3], evt[4]
+			if doLog then
+				logadd(user, message)
+				renderChat()
+			end
+			local eName, eMessage = encrite(name), encrite(message)
+			modem.transmit(enchat.port, enchat.port, {
+				name = eName,
+				message = eMessage
+			})
+		end
+	end
+end
