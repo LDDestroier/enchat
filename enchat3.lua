@@ -138,7 +138,7 @@ if not yourName then
 end
 
 if not encKey then
-	encKey = prettyPrompt("Enter an encryption key.", currentY)
+	encKey = prettyPrompt("Enter an encryption key.", currentY, "*")
 	currentY = currentY + 3
 end
 
@@ -257,6 +257,7 @@ local enchatSend = function(name, message, doLog)
 end
 
 local main = function()
+	term.clear()
 	renderChat(scroll)
 	while true do
 		term.setCursorPos(1, scr_y - 1)
