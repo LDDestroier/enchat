@@ -211,11 +211,11 @@ local textToBlit = function(input, inittext, initback)
 	return {charout, textout, backout}
 end
 
-local genRenderLog = function(inlog)
+local genRenderLog = function()
 	local buff, prebuff
 	renderlog = {}
-	for a = 1, #inlog do
-		prebuff = {textToBlit(inlog[a].prefix..inlog[a].name..inlog[a].suffix..inlog[a].message)}
+	for a = 1, #log do
+		prebuff = {textToBlit(log[a].prefix .. log[a].name .. log[a].suffix .. log[a].message)}
 		buff = blitWrap(unpack(prebuff))
 		for l = 1, #buff do
 			renderlog[#renderlog + 1] = buff[l]
