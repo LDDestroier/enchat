@@ -104,19 +104,20 @@ local prettyCenterWrite = function(text, y)
 	local buff = ""
 	local lines = 0
 	for w = 1, #words do
-		if #buff + words[w] > scr_x then
+		if #buff + #words[w] > scr_x then
 			cwrite(buff, y + lines)
 			buff = ""
 			lines = lines + 1
 		end
-		buff = buff + words[w]
+		buff = buff..words[w]
 	end
 	cwrite(buff, y + lines)
 	return lines
 end
 
 local prettyPrompt = function(prompt, y, replchar, history)
-	local yadj = 1 + prettyCenterWrite(prompt, y)
+	local cy, cx = term.getCursorPos()
+	local yadj = 1 + prettyCenterWrite(prompt, y or cy)
 	term.setCursorPos(1, y + yadj)
 	term.setBackgroundColor(colors.lightGray)
 	term.clearLine()
