@@ -205,11 +205,11 @@ local textToBlit = function(input, inittext, initback)
 	return {charout, textout, backout}
 end
 
-local genRenderLog = function(log)
+local genRenderLog = function(inlog)
 	local buff, prebuff
 	renderlog = {}
-	for a = 1, #log do
-		prebuff = {textToBlit(log[a].prefix..log[a].name..log[a].suffix..log[a].message)}
+	for a = 1, #inlog do
+		prebuff = {textToBlit(inlog[a].prefix..inlog[a].name..inlog[a].suffix..inlog[a].message)}
 		buff = blitWrap(unpack(prebuff))
 		for l = 1, #buff do
 			renderlog[#renderlog + 1] = buff[l]
@@ -218,7 +218,7 @@ local genRenderLog = function(log)
 end
 
 local renderChat = function(scroll)
-	genRenderLog()
+	genRenderLog(log)
 	local y = 1
 	for a = (scroll + 1), scroll + scr_y do
 		if renderlog[a] then
