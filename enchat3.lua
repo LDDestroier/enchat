@@ -20,6 +20,25 @@ local log = {} --Records all sorts of data on text.
 local renderlog = {} --Only records straight terminal output. Generated from 'log'
 
 local scroll = 0
+local maxScroll = 0
+
+local getMaxScroll = function()
+  return math.max(0, #renderlog - (scr_y - 1))
+end
+
+local modem
+local getModem = function()
+  --modem = peripheral.find("modem")
+  modem = {transmit = function() end}
+end
+
+local encrite = function(input, key) --standardized encryption function
+  return input
+end
+
+local decrite = function(input, key)
+  return input
+end
 
 local dab = function(func, ...) --"no and back", not...never mind
 	local x, y = term.getCursorPos()
@@ -41,7 +60,7 @@ local explode = function(div,str,replstr,includeDiv)
     table.insert(arr,string.sub(replstr or str,pos))
     return arr
 end
- 
+
 local blitWrap = function(char, text, back, noWrite)
     local cWords = explode(" ",char,nil, true)
     local tWords = explode(" ",char,text,true)
@@ -171,18 +190,18 @@ local textToBlit = function(input, inittext, initback)
 	local charout, textout, backout = "", "", ""
 	local textCode = "&"
 	local bgCode = "~"
-	
+
 	local x = 0
 	local cur, prev, nex
-	
+
 	while true do
 		x = x + 1
-		
+
 		prev = input:sub(x-1,x-1)
 		cur = input:sub(x,x)
 		nex = input:sub(x+1,x+1)
-		
-		if cur then
+
+		if #cur == 1 then
 			if cur == textCode and nex then
 				if tocolors[nex:lower()] then
 					text = nex:lower()
@@ -208,7 +227,7 @@ local textToBlit = function(input, inittext, initback)
 			break
 		end
 	end
-	return {charout, textout, backout}
+	return charout, textout, backout
 end
 
 local genRenderLog = function()
@@ -226,10 +245,12 @@ end
 local renderChat = function(scroll)
 	genRenderLog(log)
 	local y = 1
-	for a = (scroll + 1), scroll + scr_y do
+  term.setBackgroundColor(colors.gray)
+  term.clear()
+	for a = (scroll + 1), -1 + scroll + scr_y do
 		if renderlog[a] then
 			term.setCursorPos(1, y)
-			term.clearLine()
+			--term.clearLine()
 			term.blit(unpack(renderlog[a]))
 		end
 		y = y + 1
@@ -247,7 +268,7 @@ end
 
 local enchatSend = function(name, message, doLog)
 	if doLog then
-		logadd(name, message)
+		logadd(name or "shit", message)
 		renderChat(scroll)
 	end
 	modem.transmit(enchat.port, enchat.port, encrite({
@@ -264,6 +285,7 @@ local main = function()
 		term.setCursorPos(1, scr_y - 1)
 		term.setBackgroundColor(colors.lightGray)
 		term.setTextColor(colors.black)
+    term.clearLine()
 		local input = read() --replace later with fancier input
 		enchatSend(yourName, input, true)
 	end
@@ -272,6 +294,7 @@ end
 local handleEvents = function()
 	while true do
 		local evt = {os.pullEvent()}
+    maxScroll = getMaxScroll()
 		if evt == "enchat_receive" then
 			local user, message = evt[2], evt[3]
 			logadd(user, message)
@@ -287,8 +310,14 @@ local handleEvents = function()
 					os.queueEvent("enchat_receive", msg.name, msg.receive)
 				end
 			end
-		end
+		elseif evt == "mouse_scroll" then
+      local dist = evt[2]
+      scroll = math.min(maxScroll, math.max(0, scroll + dist))
+      renderChat(scroll)
+    end
 	end
 end
+
+getModem()
 
 parallel.waitForAny(main, handleEvents)
