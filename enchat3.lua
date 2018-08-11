@@ -247,7 +247,7 @@ end
 
 local enchatSend = function(name, message, doLog)
 	if doLog then
-		logadd(user, message)
+		logadd(name, message)
 		renderChat(scroll)
 	end
 	modem.transmit(enchat.port, enchat.port, encrite({
@@ -257,6 +257,7 @@ local enchatSend = function(name, message, doLog)
 end
 
 local main = function()
+	term.setBackgroundColor(colors.gray)
 	term.clear()
 	renderChat(scroll)
 	while true do
