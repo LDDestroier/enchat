@@ -234,7 +234,9 @@ local genRenderLog = function()
 	local buff, prebuff
 	renderlog = {}
 	term.setBackgroundColor(colors.gray)
+	term.setTextColor(colors.white)
 	for a = 1, #log do
+		term.setCursorPos(1,1)
 		prebuff = {textToBlit(log[a].prefix .. log[a].name .. log[a].suffix .. log[a].message)}
 		buff = blitWrap(unpack(prebuff))
 		for l = 1, #buff do
