@@ -233,6 +233,7 @@ end
 local genRenderLog = function()
 	local buff, prebuff
 	renderlog = {}
+	term.setBackgroundColor(colors.gray)
 	for a = 1, #log do
 		prebuff = {textToBlit(log[a].prefix .. log[a].name .. log[a].suffix .. log[a].message)}
 		buff = blitWrap(unpack(prebuff))
@@ -245,8 +246,8 @@ end
 local renderChat = function(scroll)
 	genRenderLog(log)
 	local y = 1
-  term.setBackgroundColor(colors.gray)
-  term.clear()
+	term.setBackgroundColor(colors.gray)
+	term.clear()
 	for a = (scroll + 1), -1 + scroll + scr_y do
 		if renderlog[a] then
 			term.setCursorPos(1, y)
@@ -285,7 +286,7 @@ local main = function()
 		term.setCursorPos(1, scr_y - 1)
 		term.setBackgroundColor(colors.lightGray)
 		term.setTextColor(colors.black)
-    term.clearLine()
+		term.clearLine()
 		local input = read() --replace later with fancier input
 		enchatSend(yourName, input, true)
 	end
@@ -294,7 +295,7 @@ end
 local handleEvents = function()
 	while true do
 		local evt = {os.pullEvent()}
-    maxScroll = getMaxScroll()
+		maxScroll = getMaxScroll()
 		if evt == "enchat_receive" then
 			local user, message = evt[2], evt[3]
 			logadd(user, message)
@@ -311,10 +312,10 @@ local handleEvents = function()
 				end
 			end
 		elseif evt == "mouse_scroll" then
-      local dist = evt[2]
-      scroll = math.min(maxScroll, math.max(0, scroll + dist))
-      renderChat(scroll)
-    end
+			local dist = evt[2]
+			scroll = math.min(maxScroll, math.max(0, scroll + dist))
+			renderChat(scroll)
+		end
 	end
 end
 
