@@ -234,8 +234,8 @@ if(result==nil)then return nil end;return result end
 
 -- AES API STOP (thanks again) --
 
-local checkValidName = function(name)
-	return (#name >= 2 and #name <= 32)
+local checkValidName = function(theName)
+	return (#theName >= 2 and #theName <= 32)
 end
 
 local scr_x, scr_y = term.getSize()
@@ -252,16 +252,16 @@ end
 
 local modem
 local getModem = function()
-  --modem = peripheral.find("modem")
-  modem = {transmit = function() end}
+	--modem = peripheral.find("modem")
+	modem = {transmit = function() end}
 end
 
 local encrite = function(input, key) --standardized encryption function
-  return input
+	return input
 end
 
 local decrite = function(input, key)
-  return input
+	return input
 end
 
 local dab = function(func, ...) --"no and back", not...never mind
@@ -275,44 +275,44 @@ local dab = function(func, ...) --"no and back", not...never mind
 end
 
 local explode = function(div,str,replstr,includeDiv)
-    if (div=='') then return false end
-    local pos,arr = 0,{}
-    for st,sp in function() return string.find(str,div,pos,false) end do
-        table.insert(arr,string.sub(replstr or str,pos,st-1+(includeDiv and #div or 0)))
-        pos = sp + 1
-    end
-    table.insert(arr,string.sub(replstr or str,pos))
-    return arr
+	if (div=='') then return false end
+	local pos,arr = 0,{}
+	for st,sp in function() return string.find(str,div,pos,false) end do
+		table.insert(arr,string.sub(replstr or str,pos,st-1+(includeDiv and #div or 0)))
+		pos = sp + 1
+	end
+	table.insert(arr,string.sub(replstr or str,pos))
+	return arr
 end
 
 local blitWrap = function(char, text, back, noWrite)
-    local cWords = explode(" ",char,nil, true)
-    local tWords = explode(" ",char,text,true)
-    local bWords = explode(" ",char,back,true)
-    local ox,oy = term.getCursorPos()
-    local cx,cy,ty = ox,oy,1
-    local scr_x, scr_y = term.getSize()
-    local output = {}
-    for a = 1, #cWords do
-        if ((cx + #cWords[a]) > scr_x) then
-            cx = 1
-            if (cy == scr_y) then
-                term.scroll(1)
-            end
-            cy = math.min(cy+1, scr_y)
-            ty = ty + 1
-        end
-        if not noWrite then
-            term.setCursorPos(cx,cy)
-            term.blit(cWords[a],tWords[a],bWords[a])
-        end
-        cx = cx + #cWords[a]
-        output[ty] = output[ty] or {"","",""}
-        output[ty][1] = output[ty][1]..cWords[a]
-        output[ty][2] = output[ty][2]..tWords[a]
-        output[ty][3] = output[ty][3]..bWords[a]
-    end
-    return output
+	local cWords = explode(" ",char,nil, true)
+	local tWords = explode(" ",char,text,true)
+	local bWords = explode(" ",char,back,true)
+	local ox,oy = term.getCursorPos()
+	local cx,cy,ty = ox,oy,1
+	local scr_x, scr_y = term.getSize()
+	local output = {}
+	for a = 1, #cWords do
+		if ((cx + #cWords[a]) > scr_x) then
+			cx = 1
+			if (cy == scr_y) then
+				term.scroll(1)
+			end
+			cy = math.min(cy+1, scr_y)
+			ty = ty + 1
+		end
+		if not noWrite then
+			term.setCursorPos(cx,cy)
+			term.blit(cWords[a],tWords[a],bWords[a])
+		end
+		cx = cx + #cWords[a]
+		output[ty] = output[ty] or {"","",""}
+		output[ty][1] = output[ty][1]..cWords[a]
+		output[ty][2] = output[ty][2]..tWords[a]
+		output[ty][3] = output[ty][3]..bWords[a]
+	end
+	return output
 end
 
 prettyClearScreen = function()
