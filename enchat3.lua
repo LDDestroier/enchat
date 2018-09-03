@@ -124,8 +124,6 @@ W>6 and Y%W==4)then P=T(P)end;F[Y]=t.bxor(F[(Y-W)],P)end;return F end
 local function O(M)local F=h(M,3)local W=h(M,2)local Y=h(M,1)local P=h(M,0)
 return
 
-
-
 s(a.add(a.add(a.add(a.mul(0x0b,W),a.mul(0x0d,Y)),a.mul(0x09,P)),a.mul(0x0e,F)),3)+
 s(a.add(a.add(a.add(a.mul(0x0b,Y),a.mul(0x0d,P)),a.mul(0x09,F)),a.mul(0x0e,W)),2)+
 s(a.add(a.add(a.add(a.mul(0x0b,P),a.mul(0x0d,F)),a.mul(0x09,W)),a.mul(0x0e,Y)),1)+
@@ -134,7 +132,6 @@ local function I(M)local F=h(M,3)local W=h(M,2)local Y=h(M,1)local P=h(M,0)local
 local B=t.bxor(W,F)local G=t.bxor(V,B)G=t.bxor(G,a.mul(0x08,G))
 w=t.bxor(G,a.mul(0x04,t.bxor(Y,F)))G=t.bxor(G,a.mul(0x04,t.bxor(P,W)))
 return
-
 
 s(t.bxor(t.bxor(P,G),a.mul(0x02,t.bxor(F,P))),0)+s(t.bxor(t.bxor(Y,w),a.mul(0x02,V)),1)+
 s(t.bxor(t.bxor(W,G),a.mul(0x02,t.bxor(F,P))),2)+
@@ -234,16 +231,11 @@ u=ciphermode.decryptString(l,s,ciphermode.decryptOFB,d)elseif r==CFBMODE then
 u=ciphermode.decryptString(l,s,ciphermode.decryptCFB,d)elseif r==CTRMODE then
 u=ciphermode.decryptString(l,s,ciphermode.decryptCTR,d)else error("Unknown mode",2)end;result=util.unpadByteString(u)
 if(result==nil)then return nil end;return result end
+
 -- AES API STOP (thanks again) --
 
 local checkValidName = function(name)
-	if
-	#name >= 2 and
-	#name <= 32 then
-		return true
-	else
-		return false
-	end
+	return (#name >= 2 and #name <= 32)
 end
 
 local scr_x, scr_y = term.getSize()
