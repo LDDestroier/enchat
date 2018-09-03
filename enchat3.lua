@@ -14,6 +14,20 @@ enchat = {
 	isBeta = true
 }
 
+-- AES API START (thank you SquidDev) --
+
+-- AES API STOP (thanks again) --
+
+local checkValidName = function(name)
+	if
+	#name >= 2 and
+	#name <= 32 then
+		return true
+	else
+		return false
+	end
+end
+
 local scr_x, scr_y = term.getSize()
 
 local log = {} --Records all sorts of data on text.
@@ -153,6 +167,13 @@ end
 
 if not yourName then
 	yourName = prettyPrompt("Enter your name.", currentY)
+	local isValid = checkValidName(yourName)
+	if not isValid then
+		repeat
+			yourName = prettyPrompt("Invalid name. Enter another.", currentY)
+			isValid = checkValidName(yourName)
+		until isValid
+	end
 	currentY = currentY + 3
 end
 
@@ -279,6 +300,22 @@ local enchatSend = function(name, message, doLog)
 		message = message
 	}))
 end
+
+local commands = {
+	--Commands only have one argument -- a single string.
+	--Separate arguments can be extrapolated with the explode() function.
+	exit = function(farewell)
+		enchatSend("*", yourName.." has buggered off."..(farewell and (" ("..farewell..")") or ""))
+		return "exit"
+	end,
+	me = function(msg)
+		enchatSend("*", yourName.." "..msg)
+		renderChat(scroll)
+	end,
+	nick = function(newName)
+		local isValid = checkValidName(newName)
+	end
+}
 
 local main = function()
 	term.setBackgroundColor(colors.gray)
