@@ -1,28 +1,47 @@
+ 
 --[[
  Enchat 3.0 BETA (well, work in progress really)
  Get with:
   wget https://github.com/LDDestroier/enchat/raw/master/enchat3.lua enchat3
 --]]
 
-local tArg = {...}
-
-local yourName = tArg[1]
-local encKey = tArg[2]
-
 enchat = {
 	version = 3.0,
 	isBeta = true
 }
 
+local tArg = {...}
+
+local yourName, encKey
+
+yourName = tArg[1]
+encKey = tArg[2]
+
+local palate = {
+	bg = colors.black,	--Default background color
+	txt = colors.white,	--Default text color (should contrast with bg)
+	promptbg = colors.gray,	--Color for the chat prompt background.
+	prompttxt = colors.white,	--Color for the chat prompt text.
+}
+
 -- AES API START (thank you SquidDev) --
 
-	--I'll just have it fuckin' auto download...
+local apipath
+if shell then apipath = fs.combine(shell.dir(),"aes") else apipath = "aes" end
+if (not aes) and (not fs.exists(apipath)) then
+	print("AES API not found! Downloading...")
+	local prog = http.get("http://pastebin.com/raw/9E5UHiqv")
+	if not prog then error("FAIL!") end
+	local file = fs.open(apipath,"w")
+	file.write(prog.readAll())
+	file.close()
+end
+if not aes then
+	local res = os.loadAPI(apipath)
+	if not res then error("Didn't load AES API!") end
+end
 
 -- AES API STOP (thanks again) --
-
-local checkValidName = function(theName)
-	return (#theName >= 2 and #theName <= 32)
-end
 
 local scr_x, scr_y = term.getSize()
 
@@ -32,22 +51,18 @@ local renderlog = {} --Only records straight terminal output. Generated from 'lo
 local scroll = 0
 local maxScroll = 0
 
-local getMaxScroll = function()
-  return math.max(0, #renderlog - (scr_y - 1))
-end
-
 local modem
 local getModem = function()
 	--modem = peripheral.find("modem")
 	modem = {transmit = function() end}
 end
 
-local encrite = function(input, key) --standardized encryption function
-	return input
+local encrite = function(input) --standardized encryption function
+	return aes.encrypt(encKey, textutils.serialize(input))
 end
 
-local decrite = function(input, key)
-	return input
+local decrite = function(input)
+	return textutils.unserialize(aes.decrypt(encKey, input))
 end
 
 local dab = function(func, ...) --"no and back", not...never mind
@@ -163,13 +178,6 @@ end
 
 if not yourName then
 	yourName = prettyPrompt("Enter your name.", currentY)
-	local isValid = checkValidName(yourName)
-	if not isValid then
-		repeat
-			yourName = prettyPrompt("Invalid name. Enter another.", currentY)
-			isValid = checkValidName(yourName)
-		until isValid
-	end
 	currentY = currentY + 3
 end
 
@@ -211,6 +219,12 @@ local textToBlit = function(input, inittext, initback)
 	local x = 0
 	local cur, prev, nex
 
+	local progress = function()
+		charout = charout..char
+		textout = textout..text
+		backout = backout..back
+	end
+	
 	while true do
 		x = x + 1
 
@@ -225,6 +239,7 @@ local textToBlit = function(input, inittext, initback)
 					x = x + 1
 				else
 					char = nex
+					progress()
 				end
 			elseif cur == backCode and nex then
 				if tocolors[nex:lower()] then
@@ -232,14 +247,12 @@ local textToBlit = function(input, inittext, initback)
 					x = x + 1
 				else
 					char = nex
+					progress()
 				end
 			else
 				char = cur
+				progress()
 			end
-
-			charout = charout..char
-			textout = textout..text
-			backout = backout..back
 		else
 			break
 		end
@@ -250,8 +263,8 @@ end
 local genRenderLog = function()
 	local buff, prebuff
 	renderlog = {}
-	term.setBackgroundColor(colors.gray)
-	term.setTextColor(colors.white)
+	term.setBackgroundColor(palate.bg)
+	term.setTextColor(palate.txt)
 	for a = 1, #log do
 		term.setCursorPos(1,1)
 		prebuff = {textToBlit(log[a].prefix .. log[a].name .. log[a].suffix .. log[a].message)}
@@ -262,18 +275,24 @@ local genRenderLog = function()
 	end
 end
 
-local renderChat = function(scroll)
+local getMaxScroll = function()
+	return math.max(0, #renderlog - (scr_y - 2))
+end
+
+local renderChat = function(scroll, scrollToBottom)
 	genRenderLog(log)
-	local y = 1
-	term.setBackgroundColor(colors.gray)
-	term.clear()
-	for a = (scroll + 1), -1 + scroll + scr_y do
-		if renderlog[a] then
-			term.setCursorPos(1, y)
-			--term.clearLine()
-			term.blit(unpack(renderlog[a]))
+	if scrollToBottom then
+		scroll = getMaxScroll()
+	end
+	local ry
+	term.setBackgroundColor(palate.bg)
+	for y = 1, scr_y - 2 do
+		ry = y + scroll
+		term.setCursorPos(1,y)
+		term.clearLine()
+		if renderlog[ry] then
+			term.blit(unpack(renderlog[ry]))
 		end
-		y = y + 1
 	end
 end
 
@@ -289,7 +308,7 @@ end
 local enchatSend = function(name, message, doLog)
 	if doLog then
 		logadd(name or "shit", message)
-		renderChat(scroll)
+		--dab(renderChat, scroll)
 	end
 	modem.transmit(enchat.port, enchat.port, encrite({
 		name = name,
@@ -297,46 +316,115 @@ local enchatSend = function(name, message, doLog)
 	}))
 end
 
-local commands = {
-	--Commands only have one argument -- a single string.
-	--Separate arguments can be extrapolated with the explode() function.
-	exit = function(farewell)
+local commandInit = "/"
+local commands = {}
+--Commands only have one argument -- a single string.
+--Separate arguments can be extrapolated with the explode() function.
+
+	commands.exit = function(farewell)
 		enchatSend("*", yourName.." has buggered off."..(farewell and (" ("..farewell..")") or ""))
 		return "exit"
-	end,
-	me = function(msg)
-		enchatSend("*", yourName.." "..msg)
-		renderChat(scroll)
-	end,
-	nick = function(newName)
-		local isValid = checkValidName(newName)
 	end
-}
+	commands.me = function(msg)
+		enchatSend("*", yourName.." "..msg, true)
+		renderChat(scroll)
+	end
+	commands.help = function(cmdname)
+		if cmdname then
+			local helpList = {
+				exit = "Exits Enchat and returns to loader (usually shell)",
+				me = "Sends a message in the format of \"* yourName message\"",
+				help = "Shows every command, or describes a command.",
+			}
+			cmdname = cmdname:gsub(" ","")
+			if helpList[cmdname] then
+				logadd("*", helpList[cmdname])
+			else
+				if commands[cmdname] then
+					logadd("*", "No help info for that command.")
+				else
+					logadd("*", "No such command to get help for.")
+				end
+			end
+		else
+			logadd("*","All commands:")
+			for k,v in pairs(commands) do
+				logadd("*",commandInit..k)
+			end
+		end
+	end
+
+local checkIfCommand = function(input)
+	if input:sub(1,#commandInit) == commandInit then
+		return true
+	else
+		return false
+	end
+end
+
+local parseCommand = function(input)
+	local sPos1, sPos2 = input:find(" ")
+	local cmdName, cmdArgs
+	if sPos1 then
+		cmdName = input:sub(#commandInit+1, sPos1-1)
+		cmdArgs = input:sub(sPos2+1)
+	else
+		cmdName = input:sub(#commandInit+1)
+		cmdArgs = nil
+	end
+	
+	local res
+	if commands[cmdName] then
+		res = commands[cmdName](cmdArgs)
+		if res == "exit" then
+			return "exit"
+		end
+	else
+		logadd("*", "No such command.")
+	end
+end
 
 local main = function()
-	term.setBackgroundColor(colors.gray)
+	term.setBackgroundColor(palate.bg)
 	term.clear()
 	renderChat(scroll)
-	while true do
+	local isAtBottom
+	
+	while true do	
+		
 		term.setCursorPos(1, scr_y - 1)
-		term.setBackgroundColor(colors.lightGray)
-		term.setTextColor(colors.black)
+		term.setBackgroundColor(palate.promptbg)
+		term.setTextColor(palate.prompttxt)
 		term.clearLine()
+		
 		local input = read() --replace later with fancier input
-		enchatSend(yourName, input, true)
+		isAtBottom = (scroll == maxScroll)
+		if checkIfCommand(input) then
+			local res = parseCommand(input)
+			if res == "exit" then
+				return "exit"
+			end
+		else
+			enchatSend(yourName, input, true)
+		end
+		dab(renderChat, scroll, isAtBottom)
 	end
+	
 end
 
 local handleEvents = function()
 	while true do
 		local evt = {os.pullEvent()}
-		maxScroll = getMaxScroll()
 		if evt == "enchat_receive" then
 			local user, message = evt[2], evt[3]
 			logadd(user, message)
-			renderChat(scroll)
+			maxScroll = getMaxScroll()
+			dab(renderChat, scroll)
 		elseif evt == "enchat_send" then
 			local user, message, doLog = evt[2], evt[3], evt[4]
+			if doLog then
+				maxScroll = getMaxScroll()
+			end
 			enchatSend(user, message, doLog)
 		elseif evt == "modem_message" then
 			local side, freq, repfreq, distance, msg = evt[2], evt[3], evt[4], evt[5], evt[6]
@@ -346,10 +434,11 @@ local handleEvents = function()
 					os.queueEvent("enchat_receive", msg.name, msg.receive)
 				end
 			end
-		elseif evt == "mouse_scroll" then
+		elseif evt[1] == "mouse_scroll" then
 			local dist = evt[2]
+			maxScroll = getMaxScroll()
 			scroll = math.min(maxScroll, math.max(0, scroll + dist))
-			renderChat(scroll)
+			dab(renderChat, scroll)
 		end
 	end
 end
