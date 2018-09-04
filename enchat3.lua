@@ -413,15 +413,16 @@ local main = function()
 	
 end
 
+local handleReceiveMessage = function(user, message)
+	logadd(user, message)
+	maxScroll = getMaxScroll()
+	dab(renderChat, scroll)
+end
+
 local handleEvents = function()
 	while true do
 		local evt = {os.pullEvent()}
-		if evt == "enchat_receive" then
-			local user, message = evt[2], evt[3]
-			logadd(user, message)
-			maxScroll = getMaxScroll()
-			dab(renderChat, scroll)
-		elseif evt == "enchat_send" then
+		if evt == "enchat_send" then
 			local user, message, doLog = evt[2], evt[3], evt[4]
 			if doLog then
 				maxScroll = getMaxScroll()
@@ -432,12 +433,12 @@ local handleEvents = function()
 			msg = decrite(msg)
 			if type(msg) == "table" then
 				if (type(msg.name) == "string") and (type(msg.message) == "string") then
-					os.queueEvent("enchat_receive", msg.name, msg.receive)
+					handleReceiveMessage(msg.name, msg.receive)
 				end
 			end
 		elseif evt[1] == "mouse_scroll" then
 			local dist = evt[2]
-			maxScroll = getMaxScroll()
+			--maxScroll = getMaxScroll()
 			scroll = math.min(maxScroll, math.max(0, scroll + dist))
 			dab(renderChat, scroll)
 		end
