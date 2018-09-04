@@ -52,6 +52,15 @@ local renderlog = {} --Only records straight terminal output. Generated from 'lo
 local scroll = 0
 local maxScroll = 0
 
+local getModem = function()
+	local modems = {peripheral.find("modem")}
+	return modems[1]
+end
+
+local modem = getModem()
+if not modem then
+	error("You should get a modem.")
+end
 modem.open(enchat.port)
 
 local modem
