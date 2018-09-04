@@ -168,6 +168,7 @@ local prettyPrompt = function(prompt, y, replchar, history)
 	term.setBackgroundColor(colors.lightGray)
 	term.clearLine()
 	local output = read(replchar, history) --will eventually add fancy colored read function
+	return output
 end
 
 local currentY = 2
