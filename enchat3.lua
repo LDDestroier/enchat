@@ -7,7 +7,8 @@
 
 enchat = {
 	version = 3.0,
-	isBeta = true
+	isBeta = true,
+	port = 11000
 }
 
 local tArg = {...}
@@ -50,6 +51,8 @@ local renderlog = {} --Only records straight terminal output. Generated from 'lo
 
 local scroll = 0
 local maxScroll = 0
+
+modem.open(enchat.port)
 
 local modem
 local getModem = function()
