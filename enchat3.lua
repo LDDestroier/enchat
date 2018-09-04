@@ -434,13 +434,13 @@ end
 local handleEvents = function()
 	while true do
 		local evt = {os.pullEvent()}
-		if evt == "enchat_send" then
+		if evt[1] == "enchat_send" then
 			local user, message, doLog = evt[2], evt[3], evt[4]
 			if doLog then
 				maxScroll = getMaxScroll()
 			end
 			enchatSend(user, message, doLog)
-		elseif evt == "modem_message" then
+		elseif evt[1] == "modem_message" then
 			local side, freq, repfreq, distance, msg = evt[2], evt[3], evt[4], evt[5], evt[6]
 			msg = decrite(msg)
 			if type(msg) == "table" then
