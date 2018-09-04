@@ -441,7 +441,7 @@ local handleEvents = function()
 			end
 			enchatSend(user, message, doLog)
 		elseif evt[1] == "modem_message" then
-			local side, freq, repfreq, distance, msg = evt[2], evt[3], evt[4], evt[5], evt[6]
+			local side, freq, repfreq, msg, distance = evt[2], evt[3], evt[4], evt[5], evt[6]
 			msg = decrite(msg)
 			if type(msg) == "table" then
 				if (type(msg.name) == "string") and (type(msg.message) == "string") then
