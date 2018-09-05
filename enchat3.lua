@@ -1,6 +1,6 @@
  
 --[[
- Enchat 3.0 BETA (well, work in progress really)
+ Enchat 3.0 BETA
  Get with:
   wget https://github.com/LDDestroier/enchat/raw/master/enchat3.lua enchat3
 --]]
