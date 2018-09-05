@@ -236,7 +236,7 @@ local textToBlit = function(input, inittext, initback)
 	local char, text, back = "", inittext or toblit[term.getTextColor()], initback or toblit[term.getBackgroundColor()]
 	local charout, textout, backout = "", "", ""
 	local textCode = "&"
-	local bgCode = "~"
+	local backCode = "~"
 
 	local x = 0
 	local cur, prev, nex
@@ -260,7 +260,7 @@ local textToBlit = function(input, inittext, initback)
 					text = nex:lower()
 					x = x + 1
 				else
-					char = nex
+					char = cur
 					progress()
 				end
 			elseif cur == backCode and nex then
@@ -268,7 +268,7 @@ local textToBlit = function(input, inittext, initback)
 					back = nex:lower()
 					x = x + 1
 				else
-					char = nex
+					char = cur
 					progress()
 				end
 			else
