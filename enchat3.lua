@@ -349,6 +349,16 @@ local cryOut = function(name, crying)
 	}))
 end
 
+local getTableLength = function(tab)
+	local output = 0
+	for k,v in pairs(tab) do
+		output = output + 1
+	end
+	return output
+end
+
+local userCryList = {}
+
 local commandInit = "/"
 local commands = {}
 --Commands only have one argument -- a single string.
@@ -384,28 +394,21 @@ local commands = {}
 	commands.list = function()
 		logadd(nil,"Searching...")
 		renderChat(scroll)
-		local userList = {}
+		userCryList = {}
 		local tim = os.startTimer(1)
 		cryOut(yourName, true)
-		local gottim = false
 		while true do
 			local evt = {os.pullEvent()}
-			if evt[1] == "modem_message" then
-				local msg = decrite(evt[5])
-				if (type(msg.name) == "string") and (msg.cry == false) then
-					userList[msg.name] = true
-					gottim = true
-				end
 			elseif evt[1] == "timer" then
 				if evt[2] == tim then
 					break
 				end
 			end
 		end
-		if gottim then
+		if getTableLenth(userCryList) > 0 then
 			logadd(nil,"Nobody's there.")
 		else
-			for k,v in pairs(userList) do
+			for k,v in pairs(userCryList) do
 				logadd(nil,"+"..k)
 			end
 		end
@@ -516,9 +519,11 @@ local handleEvents = function()
 			msg = decrite(msg)
 			if type(msg) == "table" then
 				if (type(msg.name) == "string") then
+					userCryList[msg.name] = true
 					if (type(msg.message) == "string") then
 						handleReceiveMessage(msg.name, tostring(msg.message))
-					elseif msg.cry == true then
+					end
+					if (msg.cry == true) then
 						cryOut(yourName, false)
 					end
 				end
