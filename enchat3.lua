@@ -439,7 +439,7 @@ local handleEvents = function()
 			msg = decrite(msg)
 			if type(msg) == "table" then
 				if (type(msg.name) == "string") and (type(msg.message) == "string") then
-					handleReceiveMessage(msg.name, msg.receive)
+					handleReceiveMessage(msg.name, tostring(msg.message))
 				end
 			end
 		elseif evt[1] == "mouse_scroll" then
