@@ -504,7 +504,7 @@ local main = function()
 		if mHistory[#mHistory] ~= input then
 			mHistory[#mHistory+1] = input
 		end
-		maxScroll = getMaxScroll()
+		--maxScroll = getMaxScroll()
 		dab(renderChat, scroll, isAtBottom)
 	end
 	
