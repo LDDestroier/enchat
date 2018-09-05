@@ -399,7 +399,7 @@ local commands = {}
 		cryOut(yourName, true)
 		while true do
 			local evt = {os.pullEvent()}
-			elseif evt[1] == "timer" then
+			if evt[1] == "timer" then
 				if evt[2] == tim then
 					break
 				end
