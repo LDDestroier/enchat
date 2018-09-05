@@ -63,12 +63,6 @@ if not modem then
 end
 modem.open(enchat.port)
 
-local modem
-local getModem = function()
-	--modem = peripheral.find("modem")
-	modem = {transmit = function() end}
-end
-
 local encrite = function(input) --standardized encryption function
 	return aes.encrypt(encKey, textutils.serialize(input))
 end
