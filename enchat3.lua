@@ -338,10 +338,10 @@ local enchatSend = function(name, message, doLog)
 	}))
 end
 
-local cryOut = function(name)
+local cryOut = function(name, crying)
 	modem.transmit(enchat.port, enchat.port, encrite({
 		name = name,
-		cry = true
+		cry = crying
 	}))
 end
 
@@ -375,11 +375,11 @@ local commands = {}
 		end	
 	end
 	commands.list = function()
-		cryOut()
 		logadd(nil,"Searching...")
 		renderChat(scroll)
 		local userList = {}
 		local tim = os.startTimer(0.5)
+		cryOut(yourName, true)
 		while true do
 			local evt = {os.pullEvent()}
 			if evt[1] == "modem_message" then
@@ -510,7 +510,8 @@ local handleEvents = function()
 					if (type(msg.message) == "string") then
 						handleReceiveMessage(msg.name, tostring(msg.message))
 					elseif (type(msg.cry) == true) then
-						
+						cryOut(yourName, false)
+					end
 				end
 			end
 		elseif evt[1] == "mouse_scroll" then
