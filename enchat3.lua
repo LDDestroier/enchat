@@ -8,7 +8,8 @@
 enchat = {
 	version = 3.0,
 	isBeta = true,
-	port = 11000
+	port = 11000,
+	url = "https://github.com/LDDestroier/enchat/raw/master/enchat3.lua"
 }
 
 local tArg = {...}
@@ -43,6 +44,20 @@ if not aes then
 end
 
 -- AES API STOP (thanks again) --
+
+local updateEnchat = function()
+	local pPath = shell.getRunningProgram()
+	local h = http.get(enchat.url)
+	if not h then
+		return false, "Could not connect."
+	else
+		local content = h.readAll()
+		local file = fs.open(pPath, "w")
+		file.write(content)
+		file.close()
+		return true, "Updated!"
+	end
+end
 
 local scr_x, scr_y = term.getSize()
 
@@ -305,9 +320,9 @@ end
 
 local logadd = function(name, message)
 	log[#log + 1] = {
-		prefix = "<",
-		suffix = "> ",
-		name = name,
+		prefix = name and "<",
+		suffix = name and "> ",
+		name = name and name or "",
 		message = message
 	}
 end
@@ -320,6 +335,13 @@ local enchatSend = function(name, message, doLog)
 	modem.transmit(enchat.port, enchat.port, encrite({
 		name = name,
 		message = message
+	}))
+end
+
+local cryOut = function(name)
+	modem.transmit(enchat.port, enchat.port, encrite({
+		name = name,
+		cry = true
 	}))
 end
 
@@ -336,11 +358,57 @@ local commands = {}
 		enchatSend("*", yourName.." "..msg, true)
 		renderChat(scroll)
 	end
+	commands.colors = function()
+		logadd("*", "Color codes: (use & or ~)")
+		logadd(nil, "&7~11~22~33~44~55~66~7&87~8&78~99~aa~bb~cc~dd~ee~ff")
+	end
+	commands.update = function()
+		local res, message = updateEnchat()
+		if res then
+			term.setBackgroundColor(colors.black)
+			term.setTextColor(colors.white)
+			term.clear()
+			term.setCursorPos(1,1)
+			print(res)
+		else
+			logadd("*", res)
+		end	
+	end
+	commands.list = function()
+		cryOut()
+		logadd(nil,"Searching...")
+		renderChat(scroll)
+		local userList = {}
+		local tim = os.startTimer(0.5)
+		while true do
+			local evt = {os.pullEvent()}
+			if evt[1] == "modem_message" then
+				local msg = decrite(evt[5])
+				if type(msg.name) == "string" and msg.cry == true then
+					userList[msg.name] = true
+				end
+			elseif evt[1] == "timer" then
+				if evt[2] == tim then
+					break
+				end
+			end
+		end
+		if #userList == 0 then
+			logadd(nil,"Nobody's there.")
+		else
+			for k,v in pairs(userList) do
+				logadd(nil,"+"..k)
+			end
+		end
+	end
 	commands.help = function(cmdname)
 		if cmdname then
 			local helpList = {
 				exit = "Exits Enchat and returns to loader (usually shell)",
 				me = "Sends a message in the format of \"* yourName message\"",
+				colors = "Lists all the colors you can use.",
+				update = "Updates and overwrites Enchat, then exits if successful.",
+				list = "Lists all users in range using the same key.",
 				help = "Shows every command, or describes a command.",
 			}
 			cmdname = cmdname:gsub(" ","")
@@ -356,7 +424,7 @@ local commands = {}
 		else
 			logadd("*","All commands:")
 			for k,v in pairs(commands) do
-				logadd("*",commandInit..k)
+				logadd(nil," "..commandInit..k)
 			end
 		end
 	end
@@ -438,8 +506,11 @@ local handleEvents = function()
 			local side, freq, repfreq, msg, distance = evt[2], evt[3], evt[4], evt[5], evt[6]
 			msg = decrite(msg)
 			if type(msg) == "table" then
-				if (type(msg.name) == "string") and (type(msg.message) == "string") then
-					handleReceiveMessage(msg.name, tostring(msg.message))
+				if (type(msg.name) == "string") then
+					if (type(msg.message) == "string") then
+						handleReceiveMessage(msg.name, tostring(msg.message))
+					elseif (type(msg.cry) == true) then
+						
 				end
 			end
 		elseif evt[1] == "mouse_scroll" then
