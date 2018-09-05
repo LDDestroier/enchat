@@ -349,9 +349,10 @@ local cryOut = function(name, crying)
 	}))
 end
 
-local getTableLength = function(tab)
+
+local getTableLength = function(tbl)
 	local output = 0
-	for k,v in pairs(tab) do
+	for k,v in pairs(tbl) do
 		output = output + 1
 	end
 	return output
