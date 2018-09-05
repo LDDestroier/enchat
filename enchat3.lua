@@ -406,7 +406,7 @@ commands.list = function()
 			end
 		end
 	end
-	if getTableLenth(userCryList) > 0 then
+	if getTableLength(userCryList) > 0 then
 		logadd(nil,"Nobody's there.")
 	else
 		for k,v in pairs(userCryList) do
