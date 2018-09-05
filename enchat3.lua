@@ -365,82 +365,82 @@ local commands = {}
 --Commands only have one argument -- a single string.
 --Separate arguments can be extrapolated with the explode() function.
 
-	commands.exit = function(farewell)
-		enchatSend("*", yourName.." has buggered off."..(farewell and (" ("..farewell..")") or ""))
-		return "exit"
+commands.exit = function(farewell)
+	enchatSend("*", yourName.." has buggered off."..(farewell and (" ("..farewell..")") or ""))
+	return "exit"
+end
+commands.me = function(msg)
+	if msg then
+		enchatSend(nil, " * "..yourName.." "..msg, true)
+	else
+		logadd("*",commandInit.."me [message]")
 	end
-	commands.me = function(msg)
-		if msg then
-			enchatSend(nil, " * "..yourName.." "..msg, true)
-		else
-			logadd("*",commandInit.."me [message]")
-		end
-	end
-	commands.colors = function()
-		logadd("*", "Color codes: (use && or ~~)")
-		logadd(nil, "&7~11~22~33~44~55~66~7&87~8&78~99~aa~bb~cc~dd~ee~ff")
-	end
-	commands.update = function()
-		local res, message = updateEnchat()
-		if res then
-			term.setBackgroundColor(colors.black)
-			term.setTextColor(colors.white)
-			term.clear()
-			term.setCursorPos(1,1)
-			print(res)
-		else
-			logadd("*", res)
-		end	
-	end
-	commands.list = function()
-		logadd(nil,"Searching...")
-		renderChat(scroll)
-		userCryList = {}
-		local tim = os.startTimer(1)
-		cryOut(yourName, true)
-		while true do
-			local evt = {os.pullEvent()}
-			if evt[1] == "timer" then
-				if evt[2] == tim then
-					break
-				end
-			end
-		end
-		if getTableLenth(userCryList) > 0 then
-			logadd(nil,"Nobody's there.")
-		else
-			for k,v in pairs(userCryList) do
-				logadd(nil,"+"..k)
+end
+commands.colors = function()
+	logadd("*", "Color codes: (use && or ~~)")
+	logadd(nil, "&7~11~22~33~44~55~66~7&87~8&78~99~aa~bb~cc~dd~ee~ff")
+end
+commands.update = function()
+	local res, message = updateEnchat()
+	if res then
+		term.setBackgroundColor(colors.black)
+		term.setTextColor(colors.white)
+		term.clear()
+		term.setCursorPos(1,1)
+		print(res)
+	else
+		logadd("*", res)
+	end	
+end
+commands.list = function()
+	logadd(nil,"Searching...")
+	renderChat(scroll)
+	userCryList = {}
+	local tim = os.startTimer(1)
+	cryOut(yourName, true)
+	while true do
+		local evt = {os.pullEvent()}
+		if evt[1] == "timer" then
+			if evt[2] == tim then
+				break
 			end
 		end
 	end
-	commands.help = function(cmdname)
-		if cmdname then
-			local helpList = {
-				exit = "Exits Enchat and returns to loader (usually shell)",
-				me = "Sends a message in the format of \"* yourName message\"",
-				colors = "Lists all the colors you can use.",
-				update = "Updates and overwrites Enchat, then exits if successful.",
-				list = "Lists all users in range using the same key.",
-				help = "Shows every command, or describes a command.",
-			}
-			cmdname = cmdname:gsub(" ","")
-			if helpList[cmdname] then
-				logadd("*", helpList[cmdname])
+	if getTableLenth(userCryList) > 0 then
+		logadd(nil,"Nobody's there.")
+	else
+		for k,v in pairs(userCryList) do
+			logadd(nil,"+"..k)
+		end
+	end
+end
+commands.help = function(cmdname)
+	if cmdname then
+		local helpList = {
+			exit = "Exits Enchat and returns to loader (usually shell)",
+			me = "Sends a message in the format of \"* yourName message\"",
+			colors = "Lists all the colors you can use.",
+			update = "Updates and overwrites Enchat, then exits if successful.",
+			list = "Lists all users in range using the same key.",
+			help = "Shows every command, or describes a command.",
+		}
+		cmdname = cmdname:gsub(" ","")
+		if helpList[cmdname] then
+			logadd("*", helpList[cmdname])
+		else
+			if commands[cmdname] then
+				logadd("*", "No help info for that command.")
 			else
-				if commands[cmdname] then
-					logadd("*", "No help info for that command.")
-				else
-					logadd("*", "No such command to get help for.")
-				end
-			end
-		else
-			logadd("*","All commands:")
-			for k,v in pairs(commands) do
-				logadd(nil," "..commandInit..k)
+				logadd("*", "No such command to get help for.")
 			end
 		end
+	else
+		logadd("*","All commands:")
+		for k,v in pairs(commands) do
+			logadd(nil," "..commandInit..k)
+		end
 	end
+end
 
 local checkIfCommand = function(input)
 	if input:sub(1,#commandInit) == commandInit then
