@@ -355,8 +355,10 @@ local commands = {}
 		return "exit"
 	end
 	commands.me = function(msg)
-		enchatSend("*", yourName.." "..msg, true)
-		renderChat(scroll)
+		if msg then
+			enchatSend("*", yourName.." "..msg, true)
+		else
+			logadd("*",commandInit.."me [message]")
 	end
 	commands.colors = function()
 		logadd("*", "Color codes: (use & or ~)")
