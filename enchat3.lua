@@ -307,8 +307,9 @@ end
 
 local renderChat = function(scroll, scrollToBottom)
 	genRenderLog(log)
+	maxScroll = getMaxScroll()
 	if scrollToBottom then
-		scroll = getMaxScroll()
+		scroll = maxScroll
 	end
 	local ry
 	term.setBackgroundColor(palate.bg)
