@@ -258,7 +258,7 @@ local textToBlit = function(input, inittext, initback)
 
 		if #cur == 1 then
 			if cur == textCode and nex then
-				if tocolors[nex:lower()] then
+				if tocolors[nex:lower()] and (nex ~= textCode) then
 					text = nex:lower()
 					x = x + 1
 				else
@@ -266,7 +266,7 @@ local textToBlit = function(input, inittext, initback)
 					progress()
 				end
 			elseif cur == backCode and nex then
-				if tocolors[nex:lower()] then
+				if tocolors[nex:lower()] and (nex ~= backCode) then
 					back = nex:lower()
 					x = x + 1
 				else
@@ -383,13 +383,13 @@ local commands = {}
 		logadd(nil,"Searching...")
 		renderChat(scroll)
 		local userList = {}
-		local tim = os.startTimer(0.5)
+		local tim = os.startTimer(1)
 		cryOut(yourName, true)
 		while true do
 			local evt = {os.pullEvent()}
 			if evt[1] == "modem_message" then
 				local msg = decrite(evt[5])
-				if type(msg.name) == "string" and msg.cry == true then
+				if type(msg.name) == "string" and msg.cry == false then
 					userList[msg.name] = true
 				end
 			elseif evt[1] == "timer" then
