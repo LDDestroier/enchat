@@ -320,10 +320,10 @@ end
 
 local logadd = function(name, message)
 	log[#log + 1] = {
-		prefix = name and "<",
-		suffix = name and "> ",
+		prefix = name and "<" or "",
+		suffix = name and "> " or "",
 		name = name and name or "",
-		message = message
+		message = message or ""
 	}
 end
 
