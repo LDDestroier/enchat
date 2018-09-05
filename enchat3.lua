@@ -364,7 +364,7 @@ local commands = {}
 		end
 	end
 	commands.colors = function()
-		logadd("*", "Color codes: (use & or ~)")
+		logadd("*", "Color codes: (use && or ~~)")
 		logadd(nil, "&7~11~22~33~44~55~66~7&87~8&78~99~aa~bb~cc~dd~ee~ff")
 	end
 	commands.update = function()
@@ -514,7 +514,7 @@ local handleEvents = function()
 				if (type(msg.name) == "string") then
 					if (type(msg.message) == "string") then
 						handleReceiveMessage(msg.name, tostring(msg.message))
-					elseif (type(msg.cry) == true) then
+					elseif msg.cry == true then
 						cryOut(yourName, false)
 					end
 				end
