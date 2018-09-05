@@ -320,6 +320,9 @@ local renderChat = function(scroll, scrollToBottom)
 			term.blit(unpack(renderlog[ry]))
 		end
 	end
+	term.setCursorPos(1,scr_y)
+	term.setTextColor(colors.lightGray)
+	term.write(scroll.." / "..maxScroll)
 end
 
 local logadd = function(name, message)
@@ -371,14 +374,14 @@ commands.exit = function(farewell)
 end
 commands.me = function(msg)
 	if msg then
-		enchatSend(nil, " * "..yourName.." "..msg, true)
+		enchatSend(nil, "&2 * "..yourName.." &2"..msg, true)
 	else
 		logadd("*",commandInit.."me [message]")
 	end
 end
 commands.colors = function()
 	logadd("*", "Color codes: (use && or ~~)")
-	logadd(nil, "&7~11~22~33~44~55~66~7&87~8&78~99~aa~bb~cc~dd~ee~ff")
+	logadd(nil, "  &7~11~22~33~44~55~66~7&87~8&78~99~aa~bb~cc~dd~ee~ff")
 end
 commands.update = function()
 	local res, message = updateEnchat()
@@ -388,6 +391,7 @@ commands.update = function()
 		term.clear()
 		term.setCursorPos(1,1)
 		print(res)
+		return "exit"
 	else
 		logadd("*", res)
 	end	
@@ -406,11 +410,11 @@ commands.list = function()
 			end
 		end
 	end
-	if getTableLength(userCryList) > 0 then
+	if getTableLength(userCryList) == 0 then
 		logadd(nil,"Nobody's there.")
 	else
 		for k,v in pairs(userCryList) do
-			logadd(nil,"+"..k)
+			logadd(nil,"+'"..k.."'")
 		end
 	end
 end
@@ -477,6 +481,7 @@ local main = function()
 	term.clear()
 	renderChat(scroll)
 	local isAtBottom
+	local mHistory = {}
 	
 	while true do	
 		
@@ -485,7 +490,7 @@ local main = function()
 		term.setTextColor(palate.prompttxt)
 		term.clearLine()
 		
-		local input = read() --replace later with fancier input
+		local input = read(nil,mHistory) --replace later with fancier input
 		isAtBottom = (scroll == maxScroll)
 		if checkIfCommand(input) then
 			local res = parseCommand(input)
@@ -494,6 +499,9 @@ local main = function()
 			end
 		else
 			enchatSend(yourName, input, true)
+		end
+		if mHistory[#mHistory] ~= input then
+			mHistory[#mHistory+1] = input
 		end
 		dab(renderChat, scroll, isAtBottom)
 	end
