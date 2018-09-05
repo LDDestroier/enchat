@@ -356,7 +356,7 @@ local commands = {}
 	end
 	commands.me = function(msg)
 		if msg then
-			enchatSend("*", yourName.." "..msg, true)
+			enchatSend(nil, " * "..yourName.." "..msg, true)
 		else
 			logadd("*",commandInit.."me [message]")
 	end
