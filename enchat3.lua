@@ -263,6 +263,7 @@ local textToBlit = function(input, inittext, initback)
 					x = x + 1
 				else
 					char = cur
+					x = (nex == textCode) and (x + 1) or x
 					progress()
 				end
 			elseif cur == backCode and nex then
@@ -271,6 +272,7 @@ local textToBlit = function(input, inittext, initback)
 					x = x + 1
 				else
 					char = cur
+					x = (nex == backCode) and (x + 1) or x
 					progress()
 				end
 			else
