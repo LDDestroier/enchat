@@ -359,6 +359,7 @@ local commands = {}
 			enchatSend(nil, " * "..yourName.." "..msg, true)
 		else
 			logadd("*",commandInit.."me [message]")
+		end
 	end
 	commands.colors = function()
 		logadd("*", "Color codes: (use & or ~)")
