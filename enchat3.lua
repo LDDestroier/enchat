@@ -387,12 +387,14 @@ local commands = {}
 		local userList = {}
 		local tim = os.startTimer(1)
 		cryOut(yourName, true)
+		local gottim = false
 		while true do
 			local evt = {os.pullEvent()}
 			if evt[1] == "modem_message" then
 				local msg = decrite(evt[5])
-				if type(msg.name) == "string" and msg.cry == false then
+				if (type(msg.name) == "string") and (msg.cry == false) then
 					userList[msg.name] = true
+					gottim = true
 				end
 			elseif evt[1] == "timer" then
 				if evt[2] == tim then
@@ -400,7 +402,7 @@ local commands = {}
 				end
 			end
 		end
-		if #userList == 0 then
+		if gottim then
 			logadd(nil,"Nobody's there.")
 		else
 			for k,v in pairs(userList) do
