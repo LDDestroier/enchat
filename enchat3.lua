@@ -79,10 +79,12 @@ end
 modem.open(enchat.port)
 
 local encrite = function(input) --standardized encryption function
+	if not input then return input end
 	return aes.encrypt(encKey, textutils.serialize(input))
 end
 
 local decrite = function(input)
+	if not input then return input end
 	return textutils.unserialize(aes.decrypt(encKey, input))
 end
 
