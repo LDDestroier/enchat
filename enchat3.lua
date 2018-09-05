@@ -504,15 +504,17 @@ local main = function()
 		if mHistory[#mHistory] ~= input then
 			mHistory[#mHistory+1] = input
 		end
+		maxScroll = getMaxScroll()
 		dab(renderChat, scroll, isAtBottom)
 	end
 	
 end
 
 local handleReceiveMessage = function(user, message)
+	local isAtBottom = (scroll == maxScroll)
 	logadd(user, message)
 	maxScroll = getMaxScroll()
-	dab(renderChat, scroll)
+	dab(renderChat, scroll, isAtBottom)
 end
 
 local handleEvents = function()
