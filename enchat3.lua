@@ -329,7 +329,7 @@ end
 
 local enchatSend = function(name, message, doLog)
 	if doLog then
-		logadd(name or "shit", message)
+		logadd(name, message)
 		--dab(renderChat, scroll)
 	end
 	modem.transmit(enchat.port, enchat.port, encrite({
@@ -527,5 +527,7 @@ local handleEvents = function()
 end
 
 getModem()
+
+enchatSend("*", "'"..yourName.."' has moseyed on over.")
 
 parallel.waitForAny(main, handleEvents)
