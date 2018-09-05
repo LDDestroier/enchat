@@ -528,6 +528,6 @@ end
 
 getModem()
 
-enchatSend("*", "'"..yourName.."' has moseyed on over.")
+enchatSend("*", "'"..yourName.."' has moseyed on over.", true)
 
 parallel.waitForAny(main, handleEvents)
