@@ -109,6 +109,8 @@ local renderlog = {} --Only records straight terminal output. Generated from 'lo
 local scroll = 0
 local maxScroll = 0
 
+local keysDown = {}
+
 local getModem = function()
 	local modems = {peripheral.find("modem")}
 	return modems[1]
@@ -632,6 +634,50 @@ textToBlit = function(str,onlyString,initTxt,initBg) --returns output for term.b
 	end
 end
 
+local stringInsert = function(str, ins, x)
+	return str:sub(1,x)..ins..str:sub(x+1)
+end
+
+local colorread = function(history)
+	local buff = ""
+	local xpos = 1
+	local cx, cy = term.getCursorPos()
+	local xscroll = 0
+	local render = function()
+		term.setCursorPos(cx, cy)
+		local char, text, back = textToBlit(buff)
+		term.blit(char:sub(xscroll, xscroll+scr_x), text:sub(xscroll, xscroll+scr_x), back:sub(xscroll, xscroll+scr_x))
+	end
+	local oldXpos, oldXScroll
+	while true do
+		if (oldXpos ~= xpos) or (oldXScroll ~= xscroll) then
+			render()
+		end
+		term.setCursorPos(math.min(cx + oldXpos, scr_x), cy)
+		local event, key = os.pullEvent()
+		oldCX, oldXScroll = cx, xscroll
+		if event == "key" then
+			if key == keys.enter then
+				return buff
+			elseif key == keys.left then
+				xpos = math.max(1, xpos - 1)
+			elseif key == keys.right then
+				xpos = math.min(#buff, xpos + 1)
+			elseif key == keys.home then
+				xpos = 1
+			elseif key == keys["end"] then
+				xpos = #buff
+			elseif key == keys.backspace then
+				buff = buff:sub(1,xpos-1)..buff:sub(xpos+1)
+			elseif key == keys.delete then
+				buff = buff:sub(1,xpos-1)..buff:sub(xpos+1)
+			end
+		elseif event == "char" or event == "paste" then
+			buff = stringInsert(buff, key, xpos)
+		end
+	end
+end
+
 local inAnimate = function(buff, frame, maxFrame, length)
 	local char, text, back = buff[1], buff[2], buff[3]
 	if enchatSettings.doAnimate and frame >= 0 then
@@ -1108,6 +1154,7 @@ local handleEvents = function()
 			end
 		elseif evt[1] == "key" then
 			local key = evt[2]
+			keysDown[key] = true
 			oldScroll = scroll
 			if key == keys.pageUp then
 				adjScroll(-enchatSettings.pageKeySpeed)
@@ -1122,6 +1169,8 @@ local handleEvents = function()
 			if scroll ~= oldScroll then
 				dab(renderChat)
 			end
+		elseif evt[1] == "key_up" then
+			keysDown[key] = nil
 		elseif (evt[1] == "render_enchat") then
 			dab(renderChat)
 		end
