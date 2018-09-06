@@ -134,9 +134,14 @@ local blitWrap = function(char, text, back, noWrite)
 	local cx,cy,ty = ox,oy,1
 	local scr_x, scr_y = term.getSize()
 	local output = {}
+	local length = 0
+	local maxLength = 0
 	for a = 1, #cWords do
+		length = length + #cWords[a]
+		maxLength = math.max(maxLength, length)
 		if ((cx + #cWords[a]) > scr_x) then
 			cx = 1
+			length = 0
 			if (cy == scr_y) then
 				term.scroll(1)
 			end
@@ -153,7 +158,7 @@ local blitWrap = function(char, text, back, noWrite)
 		output[ty][2] = output[ty][2]..tWords[a]
 		output[ty][3] = output[ty][3]..bWords[a]
 	end
-	return output
+	return output, maxLength
 end
 
 prettyClearScreen = function()
@@ -512,13 +517,13 @@ local textToBlit = function(input, _inittext, _initback)
 	return charout, textout, backout
 end
 
-local inAnimate = function(buff, frame, maxFrame)
+local inAnimate = function(buff, frame, maxFrame, length)
 	local char, text, back = buff[1], buff[2], buff[3]
 	if enchatSettings.doAnimate then
 		return {
-			char:sub(#char - ((frame/maxFrame)*#char)),
-			text:sub(#text - ((frame/maxFrame)*#text)),
-			back:sub(#back - ((frame/maxFrame)*#back)),
+			char:sub((length or #char) - ((frame/maxFrame)*(length or #char))),
+			text:sub((length or #text) - ((frame/maxFrame)*(length or #text))),
+			back:sub((length or #back) - ((frame/maxFrame)*(length or #back))),
 		}
 	else
 		return {char,text,back}
@@ -526,7 +531,7 @@ local inAnimate = function(buff, frame, maxFrame)
 end
 
 local genRenderLog = function()
-	local buff, prebuff
+	local buff, prebuff, maxLength
 	local scrollToBottom = scroll == maxScroll
 	renderlog = {}
 	term.setBackgroundColor(palate.bg)
@@ -545,10 +550,10 @@ local genRenderLog = function()
 		if log[a].maxFrame == true then
 			log[a].maxFrame = math.floor(math.min(#prebuff[1], scr_x) / enchatSettings.animDiv)
 		end
-		buff = blitWrap(unpack(prebuff))
+		buff, maxLength = blitWrap(unpack(prebuff))
 		--repeat every line in multiline entries
 		for l = 1, #buff do
-			renderlog[#renderlog + 1] = inAnimate(buff[l], log[a].frame, log[a].maxFrame)
+			renderlog[#renderlog + 1] = inAnimate(buff[l], log[a].frame, log[a].maxFrame, maxLength)
 		end
 		if log[a].frame < log[a].maxFrame then
 			log[a].frame = log[a].frame + 1
