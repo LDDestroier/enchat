@@ -5,6 +5,8 @@
   wget https://github.com/LDDestroier/enchat/raw/master/enchat3.lua enchat3
 --]]
 
+local scr_x, scr_y = term.getSize()
+
 enchat = {
 	version = 3.0,
 	isBeta = true,
@@ -49,6 +51,16 @@ local palate = {
 	prompttxt = colors.white,	--chat prompt text
 	scrollMeter = colors.lightGray,	--scroll indicator
 	chevron = colors.black,		--color of ">" left of text prompt
+	title = colors.lightGray	--color of title, if available
+}
+
+UIconf = {
+	promptY = scr_y - 1,	--Y position of read prompt
+	chevron = ">",			--symbol before read prompt
+	chatlogTop = 1,			--top of where chatlog is written to screen
+	title = "",				--overwritten every render, don't bother here
+	doTitle = false,		--whether or not to draw UIconf.title at the top of the screen
+	nameDecolor = false,	--if true, sets all names to palate.chevron color
 }
 
 local updateEnchat = function(doBeta)
@@ -101,15 +113,11 @@ end
 
 -- AES API STOP (thanks again) --
 
-local scr_x, scr_y = term.getSize()
-
 local log = {} --Records all sorts of data on text.
 local renderlog = {} --Only records straight terminal output. Generated from 'log'
 
 local scroll = 0
 local maxScroll = 0
-
-local keysDown = {}
 
 local getModem = function()
 	local modems = {peripheral.find("modem")}
@@ -297,7 +305,7 @@ if interface then
 			}
 			local drawEdgeLine = function(y,alpha)
 				local l = canvas.addRectangle(notif.wrapX, 1+(y-1)*notif.height, 1, notif.height)
-				l.setColor(table.unpack(colorTranslate["0"]))
+				l.setColor(unpack(colorTranslate["0"]))
 				l.setAlpha(alpha / 2)
 			end
 			local getWordWidth = function(str)
@@ -335,15 +343,15 @@ if interface then
 						r = canvas.addRectangle(xadj+1+(x-1)*notif.width, 1+(y-1)*notif.height, charadj+notif.width, notif.height)
 						if back:sub(cx,cx) ~= " " then
 							r.setAlpha(notif.alpha * nList[n][5])
-							r.setColor(table.unpack(colorTranslate[back:sub(cx,cx)]))
+							r.setColor(unpack(colorTranslate[back:sub(cx,cx)]))
 						else
 							r.setAlpha(100 * nList[n][5])
-							r.setColor(table.unpack(colorTranslate["7"]))
+							r.setColor(unpack(colorTranslate["7"]))
 						end
 						drawEdgeLine(y,notif.alpha * nList[n][5])
 						t = canvas.addText({xadj+1+(x-1)*notif.width,2+(y-1)*notif.height}, char:sub(cx,cx))
 						t.setAlpha(notif.alpha * nList[n][5])
-						t.setColor(table.unpack(colorTranslate[text:sub(cx,cx)]))
+						t.setColor(unpack(colorTranslate[text:sub(cx,cx)]))
 						xadj = xadj + charadj
 						currentX = currentX + charadj+notif.width
 					end
@@ -580,39 +588,48 @@ textToBlit = function(str,onlyString,initTxt,initBg,_checkPos) --returns output 
 		txcolorout = txcolorout..tx --(doFormatting and tx or origTX)
 		bgcolorout = bgcolorout..bg --(doFormatting and bg or origBG)
 	end
-	local checkedPos = 1
+	local checkMod = 0
 	while p <= #str do
 		if str:sub(p,p) == txcode then
 			if tocolors[str:sub(p+1,p+1)] and doFormatting then
 				txcol = str:sub(p+1,p+1)
 				usedformats.txcol = true
 				p = p + 1
+				if p <= checkPos then
+					checkMod = checkMod - 2
+				end
 			elseif codeNames[str:sub(p+1,p+1)] then
 				if str:sub(p+1,p+1) == "r" and doFormatting then
 					txcol = origTX
 					isKrazy = false
 					p = p + 1
+					if p <= checkPos then
+						checkMod = checkMod - 2
+					end
 				elseif str:sub(p+1,p+1) == "{" and doFormatting then
 					doFormatting = false
 					p = p + 1
+					if p <= checkPos then
+						checkMod = checkMod - 2
+					end
 				elseif str:sub(p+1,p+1) == "}" and (not doFormatting) then
 					doFormatting = true
 					p = p + 1
+					if p <= checkPos then
+						checkMod = checkMod - 2
+					end
 				elseif str:sub(p+1,p+1) == "k" and doFormatting and enchatSettings.doKrazy then
 					isKrazy = true
 					usedformats.krazy = true
 					p = p + 1
+					if p <= checkPos then
+						checkMod = checkMod - 2
+					end
 				else
 					moveOn(txcol,bgcol)
-					if p <= checkPos then
-						checkedPos = checkedPos + 1
-					end
 				end
 			else
 				moveOn(txcol,bgcol)
-				if p <= checkPos then
-					checkedPos = checkedPos + 1
-				end
 			end
 			p = p + 1
 		elseif str:sub(p,p) == bgcode then
@@ -620,23 +637,26 @@ textToBlit = function(str,onlyString,initTxt,initBg,_checkPos) --returns output 
 				bgcol = str:sub(p+1,p+1)
 				usedformats.bgcol = true
 				p = p + 1
+				if p <= checkPos then
+					checkMod = checkMod - 2
+				end
 			elseif codeNames[str:sub(p+1,p+1)] and (str:sub(p+1,p+1) == "r") and doFormatting then
 				bgcol = origBG
 				p = p + 1
+				if p <= checkPos then
+					checkMod = checkMod - 2
+				end
 			elseif str:sub(p+1,p+1) == "k" and doFormatting then
 				isKrazy = false
 				p = p + 1
-			else
 				if p <= checkPos then
-					checkedPos = checkedPos + 1
+					checkMod = checkMod - 2
 				end
+			else
 				moveOn(txcol,bgcol)
 			end
 			p = p + 1
 		else
-			if p <= checkPos then
-				checkedPos = checkedPos + 1
-			end
 			moveOn(txcol,bgcol)
 			p = p + 1
 		end
@@ -647,52 +667,7 @@ textToBlit = function(str,onlyString,initTxt,initBg,_checkPos) --returns output 
 		if checkPos > 0 then
 			return {output, txcolorout, bgcolorout}
 		else
-			return {output, txcolorout, bgcolorout}, checkedPos
-		end
-	end
-end
-
-local stringInsert = function(str, ins, x)
-	return str:sub(1,x)..ins..str:sub(x+1)
-end
-
-local colorread = function(history)
-	local buff = ""
-	local xpos = 1
-	local cx, cy = term.getCursorPos()
-	local xscroll = 0
-	local render = function()
-		term.setCursorPos(cx, cy)
-		local char, text, back, cursorPos = unpack(textToBlit(buff, xpos))
-		term.blit(char:sub(xscroll, xscroll+scr_x), text:sub(xscroll, xscroll+scr_x), back:sub(xscroll, xscroll+scr_x))
-		return cursorPos
-	end
-	local oldXpos, oldXScroll, cursorPos
-	while true do
-		if (oldXpos ~= xpos) or (oldXScroll ~= xscroll) then
-			cursorPos = render()
-		end
-		term.setCursorPos(math.min(cx + cursorPos, scr_x), cy)
-		local event, key = os.pullEvent()
-		oldCX, oldXScroll = cx, xscroll
-		if event == "key" then
-			if key == keys.enter then
-				return buff
-			elseif key == keys.left then
-				xpos = math.max(1, xpos - 1)
-			elseif key == keys.right then
-				xpos = math.min(#buff, xpos + 1)
-			elseif key == keys.home then
-				xpos = 1
-			elseif key == keys["end"] then
-				xpos = #buff
-			elseif key == keys.backspace then
-				buff = buff:sub(1,xpos-1)..buff:sub(xpos+1)
-			elseif key == keys.delete then
-				buff = buff:sub(1,xpos-1)..buff:sub(xpos+1)
-			end
-		elseif event == "char" or event == "paste" then
-			buff = stringInsert(buff, key, xpos)
+			return {output, txcolorout, bgcolorout, checkMod}
 		end
 	end
 end
@@ -718,13 +693,23 @@ local genRenderLog = function()
 	term.setBackgroundColor(palate.bg)
 	for a = 1, #log do
 		term.setCursorPos(1,1)
-		prebuff = textToBlit(table.concat({log[a].prefix,"&r~r",log[a].name,"&r~r",log[a].suffix,"&r~r",log[a].message}))
+		if UIconf.nameDecolor then
+			local dcName = textToBlit(table.concat({log[a].prefix,log[a].name,log[a].suffix}), true)
+			local dcMessage = textToBlit(log[a].message)
+			prebuff = {
+				dcName..dcMessage[1],
+				toblit[palate.chevron]:rep(#dcName)..dcMessage[2],
+				toblit[palate.bg]:rep(#dcName)..dcMessage[3]
+			}
+		else
+			prebuff = textToBlit(table.concat({log[a].prefix,"&r~r",log[a].name,"&r~r",log[a].suffix,"&r~r",log[a].message}))
+		end
 		if (log[a].frame == 0) and (canvas and enchatSettings.doNotif) then
 			notif.newNotification(
 				prebuff[1],
 				prebuff[2],
 				prebuff[3],
-				notif.time*4
+				notif.time * 4
 			)
 		end
 		if log[a].maxFrame == true then
@@ -747,23 +732,39 @@ local genRenderLog = function()
 	end
 end
 
-local renderChat = function()
+local renderChat = function(doScrollBackUp)
 	tsv(false)
 	genRenderLog(log)
 	local ry
 	term.setBackgroundColor(palate.bg)
-	for y = 1, scr_y - 2 do
-		ry = y + scroll
+	for y = UIconf.chatlogTop, UIconf.promptY - 1 do
+		ry = (y + scroll - (UIconf.chatlogTop - 1))
 		term.setCursorPos(1,y)
 		term.clearLine()
 		if renderlog[ry] then
 			term.blit(unpack(renderlog[ry]))
 		end
 	end
-	term.setCursorPos(1,scr_y)
-	term.setTextColor(palate.scrollMeter)
-	term.clearLine()
-	term.write(scroll.." / "..maxScroll.."  ")
+	if UIconf.promptY ~= scr_y then
+		term.setCursorPos(1,scr_y)
+		term.setTextColor(palate.scrollMeter)
+		term.clearLine()
+		term.write(scroll.." / "..maxScroll.."  ")
+	end
+	
+	UIconf.title = yourName.." on "..encKey
+	
+	if UIconf.doTitle then
+		term.setTextColor(palate.chevron)
+		if UIconf.nameDecolor then
+			cwrite((" "):rep(scr_x)..textToBlit(UIconf.title, true)..(" "):rep(scr_x), 1)
+		else
+			local blTitle = textToBlit(UIconf.title)
+			term.setCursorPos((scr_x/2) - math.ceil(#blTitle[1]/2), 1)
+			term.clearLine()
+			term.blit(unpack(blTitle))
+		end
+	end
 	tsv(true)
 end
 
@@ -811,8 +812,8 @@ local commands = {}
 --Commands only have one argument -- a single string.
 --Separate arguments can be extrapolated with the explode() function.
 
-commands.exit = function(farewell)
-	enchatSend("*", "'"..yourName.."&r~r' has buggered off."..(farewell and (" ("..farewell..")") or ""))
+commands.exit = function()
+	enchatSend("*", "'"..yourName.."&r~r' buggered off. (disconnect)")
 	return "exit"
 end
 commands.me = function(msg)
@@ -889,6 +890,7 @@ end
 commands.key = function(newKey)
 	if newKey then
 		if newKey ~= encKey then
+			enchatSend("*", "'"..yourName.."&r~r' buggered off. (keychange)", false)
 			encKey = newKey
 			logadd("*", "Key changed to '"..encKey.."&r~r'.")
 			enchatSend("*", "'"..yourName.."&r~r' has moseyed on over.", false)
@@ -896,8 +898,8 @@ commands.key = function(newKey)
 			logadd("*", "That's already the key, though.")
 		end
 	else
-		logadd("Key = '"..encKey.."&r~r'")
-		logadd("Channel = '"..enchat.port.."'")
+		logadd("*","Key = '"..encKey.."&r~r'")
+		logadd("*","Channel = '"..enchat.port.."'")
 	end
 end
 commands.palate = function(_argument)
@@ -920,7 +922,18 @@ commands.palate = function(_argument)
 					prompttxt = colors.white,
 					scrollMeter = colors.lightGray,
 					chevron = colors.black,
+					title = colors.lightGray
 				}
+				UIconf = {
+					promptY = scr_y - 1,
+					chevron = ">",
+					chatlogTop = 1,
+					title = "",
+					doTitle = false,
+					nameDecolor = false,
+				}
+				term.setBackgroundColor(palate.bg)
+				term.clear()
 				logadd("*","You cleansed your palate.")
 			elseif argument[1]:gsub("%s",""):lower() == "enchat2" then
 				palate = {
@@ -929,9 +942,41 @@ commands.palate = function(_argument)
 					promptbg = colors.white,
 					prompttxt = colors.black,
 					scrollMeter = colors.white,
-					chevron = colors.lightGray
+					chevron = colors.lightGray,
+					title = colors.lightGray
 				}
+				UIconf = {
+					promptY = scr_y - 1,
+					chevron = ">",
+					chatlogTop = 1,
+					title = "",
+					doTitle = false,
+					nameDecolor = false,
+				}
+				term.setBackgroundColor(palate.bg)
+				term.clear()
 				logadd("*","Switched to the old Enchat2 palate.")
+			elseif argument[1]:gsub("%s",""):lower() == "chat.lua" then
+				palate = {
+					bg = colors.black,
+					txt = colors.white,
+					promptbg = colors.black,
+					prompttxt = colors.white,
+					scrollMeter = colors.white,
+					chevron = colors.yellow,
+					title = colors.yellow
+				}
+				UIconf = {
+					promptY = scr_y,
+					chevron = ": ",
+					chatlogTop = 2,
+					title = "",
+					doTitle = true,
+					nameDecolor = true,
+				}
+				term.setBackgroundColor(palate.bg)
+				term.clear()
+				logadd("*","Switched to /rom/programs/rednet/chat.lua palate.")
 			else
 				if not palate[argument[1]] then
 					logadd("*","There's no such palate option.")
@@ -1053,6 +1098,7 @@ commandAliases = {
 	ls = commands.list,
 	cry = commands.list,
 	nickname = commands.nick,
+	channel = commands.key,
 	["?"] = commands.help,
 	porn = function()
 		logadd("*","Yeah, no.")
@@ -1105,17 +1151,19 @@ local main = function()
 	os.queueEvent("render_enchat")
 	local mHistory = {}
 	
-	while true do	
+	while true do
 		
-		term.setCursorPos(1, scr_y - 1)
+		term.setCursorPos(1, UIconf.promptY)
 		term.setBackgroundColor(palate.promptbg)
 		term.clearLine()
 		term.setTextColor(palate.chevron)
-		term.write(">")
+		term.write(UIconf.chevron)
 		term.setTextColor(palate.prompttxt)
 		
---		local input = read(nil,mHistory) --replace later with fancier input
-		local input = colorread() --needs history, man
+		local input = read(nil,mHistory) --replace later with fancier input
+		if UIconf.promptY == scr_y then
+			term.scroll(1)
+		end
 		if input:gsub(" ","") ~= "" then --if you didn't just press ENTER or a bunch of spaces
 			if checkIfCommand(input) then
 				local res = parseCommand(input)
@@ -1149,19 +1197,26 @@ end
 
 local handleEvents = function()
 	local oldScroll
+	local keysDown = {}
 	while true do
 		local evt = {os.pullEvent()}
-		if evt[1] == "modem_message" then
+		if evt[1] == "enchat_receive" then
+			if type(evt[2]) == "string" and type(evt[3]) == "string" then
+				handleReceiveMessage(evt[2], evt[3])
+			end
+		elseif evt[1] == "modem_message" then
 			local side, freq, repfreq, msg, distance = evt[2], evt[3], evt[4], evt[5], evt[6]
 			msg = decrite(msg)
 			if type(msg) == "table" then
 				if (type(msg.name) == "string") then
-					userCryList[msg.name] = true
-					if (type(msg.message) == "string") then
-						handleReceiveMessage(msg.name, tostring(msg.message))
-					end
-					if (msg.cry == true) then
-						cryOut(yourName, false)
+					if checkValidName(msg.name) then
+						userCryList[msg.name] = true
+						if (type(msg.message) == "string") then
+							handleReceiveMessage(msg.name, tostring(msg.message))
+						end
+						if (msg.cry == true) then
+							cryOut(yourName, false)
+						end
 					end
 				end
 			end
@@ -1180,16 +1235,12 @@ local handleEvents = function()
 				adjScroll(-enchatSettings.pageKeySpeed)
 			elseif key == keys.pageDown then
 				adjScroll(enchatSettings.pageKeySpeed)
--- this will interfere with read()
---			elseif key == keys.home then
---				scroll = 0
---			elseif key == keys["end"] then
---				scroll = maxScroll
 			end
 			if scroll ~= oldScroll then
 				dab(renderChat)
 			end
 		elseif evt[1] == "key_up" then
+			local key = evt[2]
 			keysDown[key] = nil
 		elseif (evt[1] == "render_enchat") then
 			dab(renderChat)
