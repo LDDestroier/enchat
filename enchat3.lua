@@ -215,7 +215,7 @@ local notif = {}
 notif.alpha = 248
 notif.height = 10
 notif.width = 6
-notif.time = 10
+notif.time = 30
 notif.wrapX = 300
 local nList = {}
 local colorTranslate = {
@@ -563,9 +563,6 @@ local renderChat = function()
 		term.clearLine()
 		if renderlog[ry] then
 			term.blit(unpack(renderlog[ry]))
-			if canvas and enchatSettings.doNotif then
-				notif.displayNotifications(true)
-			end
 		end
 	end
 	term.setCursorPos(1,scr_y)
@@ -584,6 +581,8 @@ local logadd = function(name, message)
 		maxFrame = true
 	}
 	if canvas and enchatSettings.doNotif then
+		term.setTextColor(palate.txt)
+		term.setBackgroundColor(palate.bg)
 		local c,t,b = textToBlit(table.concat({
 			log[#log].prefix,
 			log[#log].name,
@@ -918,10 +917,18 @@ local keepRedrawing = function()
 	end
 end
 
+local handleNotifications = function()
+	while true do
+		if canvas and enchatSettings.doNotif then
+			notif.displayNotifications(true)
+		end	
+	end
+end
+
 getModem()
 
 enchatSend("*", "'"..yourName.."&r~r' has moseyed on over.", true)
 
-parallel.waitForAny(main, handleEvents, keepRedrawing)
+parallel.waitForAny(main, handleEvents, keepRedrawing, handleNotifications)
 
 tsv(true) --in case it's false
