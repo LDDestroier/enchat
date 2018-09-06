@@ -960,6 +960,8 @@ local main = function()
 				mHistory[#mHistory+1] = input
 			end
 			os.queueEvent("render_enchat")
+		else
+			logadd(nil,nil)
 		end
 		
 	end
