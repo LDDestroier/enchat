@@ -489,6 +489,51 @@ local codeNames = {
 	["k"] = "krazy"	--Makes the font krazy!
 }
 
+local kraziez = {
+	["l"] = {
+		"!",
+		"l",
+		"1",
+		"|",
+		"i",
+		"I",
+		":",
+		";",
+	},
+	["m"] = {
+		"M",
+		"W",
+		"w",
+		"m",
+		"X",
+		"N",
+		"_",
+		"%",
+		"@",
+	},
+	["all"] = {}
+}
+
+for a = 1, #kraziez["l"] do
+	kraziez[kraziez["l"][a]] = kraziez["l"]
+end
+for k,v in pairs(kraziez) do
+	for a = 1, #v do
+		kraziez[kraziez[k][a]] = v
+	end
+end
+if tonumber(_CC_VERSION or 0) >= 1.76 then
+	for a = 1, 255 do
+		if (a ~= 32) and (a ~= 13) and (a ~= 10) then
+			kraziez["all"][#kraziez["all"]+1] = string.char(a)
+		end
+	end
+else
+	for a = 33, 126 do
+		kraziez["all"][#kraziez["all"]+1] = string.char(a)
+	end
+end
+
 local moveOn
 local textToBlit = function(str,onlyString,initTxt,initBg) --returns output for term.blit, or blitWrap, with formatting codes for color selection. Modified for use specifically with Enchat.
 	if (not str) then
