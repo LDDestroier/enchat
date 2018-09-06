@@ -581,6 +581,7 @@ local renderChat = function()
 	end
 	term.setCursorPos(1,scr_y)
 	term.setTextColor(palate.scrollMeter)
+	term.clearLine()
 	term.write(scroll.." / "..maxScroll.."  ")
 	tsv(true)
 end
