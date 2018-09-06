@@ -797,8 +797,8 @@ end
 commands.ping = function(pong)
 	logadd(nil, pong or "Pong!")
 end
-commands.set = function(_arguments)
-	arguments = _arguments or ""
+commands.set = function(_argument)
+	argument = _argument or ""
 	local collist = {
 		["string"] = function() return "0" end,
 		["table"] = function() return "5" end,
