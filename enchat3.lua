@@ -482,6 +482,13 @@ local colors_strnames = { --primarily for use when coloring palate
 	["#191919"] = colors.black,
 }
 
+local codeNames = {
+	["r"] = "reset",	-- Sets either the text (&) or background (~) colors to their original color.
+	["{"] = "stopFormatting",	--Toggles formatting text off
+	["}"] = "startFormatting",	--Toggles formatting text on
+	["k"] = "krazy"	--Makes the font krazy!
+}
+
 local kraziez = {
 	["l"] = {
 		"!",
@@ -527,64 +534,94 @@ else
 	end
 end
 
-local textToBlit = function(input, _inittext, _initback)
-	local inittext = _inittext or toblit[term.getTextColor()]
-	local initback = _initback or toblit[term.getBackgroundColor()]
-	local char, text, back = "", inittext, initback
-	local charout, textout, backout = "", "", ""
-	local textCode = "&"
-	local backCode = "~"
-
-	local x = 0
-	local cur, prev, nex
-
-	local progress = function()
-		charout = charout..char
-		textout = textout..text
-		backout = backout..back
-	end
-	
-	while true do
-		x = x + 1
-
-		prev = input:sub(x-1,x-1)
-		cur = input:sub(x,x)
-		nex = input:sub(x+1,x+1)
-
-		if #cur == 1 then
-			if cur == textCode and nex then
-				if tocolors[nex:lower()] and (nex ~= textCode) then
-					text = nex:lower()
-					x = x + 1
-				elseif nex:lower() == "r" then
-					text = inittext
-					x = x + 1
-				else
-					char = cur
-					x = (nex == textCode) and (x + 1) or x
-					progress()
-				end
-			elseif cur == backCode and nex then
-				if tocolors[nex:lower()] and (nex ~= backCode) then
-					back = nex:lower()
-					x = x + 1
-				elseif nex:lower() == "r" then
-					back = initback
-					x = x + 1
-				else
-					char = cur
-					x = (nex == backCode) and (x + 1) or x
-					progress()
-				end
-			else
-				char = cur
-				progress()
-			end
+local moveOn
+textToBlit = function(str,onlyString,initTxt,initBg) --returns output for term.blit, or blitWrap, with formatting codes for color selection. Modified for use specifically with Enchat.
+	if (not str) then
+		if onlyString then
+			return ""
 		else
-			break
+			return "","",""
 		end
 	end
-	return charout, textout, backout
+	str = tostring(str)
+	local p = 1
+	local output = ""
+	local txcolorout = ""
+	local bgcolorout = ""
+	local txcode = "&"
+	local bgcode = "~"
+	local isKrazy = false
+	local doFormatting = true
+	local usedformats = {}
+	local txcol,bgcol = initTxt or toblit[term.getTextColor()], initBg or toblit[term.getBackgroundColor()]
+	local origTX,origBG = initTxt or toblit[term.getTextColor()], initBg or toblit[term.getBackgroundColor()]
+	local cx,cy
+	moveOn = function(tx,bg)
+		if isKrazy and (str:sub(p,p) ~= " ") and doFormatting then
+			if kraziez[str:sub(p,p)] then
+				output = output..kraziez[str:sub(p,p)][math.random(1,#kraziez[str:sub(p,p)])]
+			else
+				output = output..kraziez.all[math.random(1,#kraziez.all)]
+			end
+		else
+			output = output..str:sub(p,p)
+		end
+		txcolorout = txcolorout..tx --(doFormatting and tx or origTX)
+		bgcolorout = bgcolorout..bg --(doFormatting and bg or origBG)
+	end
+	while p <= #str do
+		if str:sub(p,p) == txcode then
+			if tocolors[str:sub(p+1,p+1)] and doFormatting then
+				txcol = str:sub(p+1,p+1)
+				usedformats.txcol = true
+				p = p + 1
+			elseif codeNames[str:sub(p+1,p+1)] then
+				if str:sub(p+1,p+1) == "r" and doFormatting then
+					txcol = origTX
+					isKrazy = false
+					p = p + 1
+				elseif str:sub(p+1,p+1) == "{" and doFormatting then
+					doFormatting = false
+					p = p + 1
+				elseif str:sub(p+1,p+1) == "}" and (not doFormatting) then
+					doFormatting = true
+					p = p + 1
+				elseif str:sub(p+1,p+1) == "k" and doFormatting and enchatSettings.doKrazy then
+					isKrazy = true
+					usedformats.krazy = true
+					p = p + 1
+				else
+					moveOn(txcol,bgcol)
+				end
+			else
+				moveOn(txcol,bgcol)
+			end
+			p = p + 1
+		elseif str:sub(p,p) == bgcode then
+			if tocolors[str:sub(p+1,p+1)] and doFormatting then
+				bgcol = str:sub(p+1,p+1)
+				usedformats.bgcol = true
+				p = p + 1
+			elseif codeNames[str:sub(p+1,p+1)] and (str:sub(p+1,p+1) == "r") and doFormatting then
+				bgcol = origBG
+				p = p + 1
+			elseif str:sub(p+1,p+1) == "k" and doFormatting then
+				isKrazy = false
+				p = p + 1
+			else
+				moveOn(txcol,bgcol)
+			end
+			p = p + 1
+		else
+			moveOn(txcol,bgcol)
+			p = p + 1
+		end
+	end
+	if onlyString then
+		return output
+	else
+		return output, txcolorout, bgcolorout
+	end
 end
 
 local inAnimate = function(buff, frame, maxFrame, length)
