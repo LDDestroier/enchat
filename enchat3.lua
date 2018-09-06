@@ -797,6 +797,55 @@ end
 commands.ping = function(pong)
 	logadd(nil, pong or "Pong!")
 end
+commands.set = function(arguments)
+	local collist = {
+		["string"] = function() return "0" end,
+		["table"] = function() return "5" end,
+		["number"] = function() return "0" end,
+		["boolean"] = function(val) if val then return "d" else return "e" end end,
+		["function"] = function() return "c" end,
+		["nil"] = function() return "8" end,
+		["thread"] = function() return "d" end,
+		["userdata"] = function() return "c" end, --ha
+	}
+	local custColorize = function(input)
+		return "&"..collist[type(input)](input)
+	end
+	local contextualQuote = function(judgetxt,txt)
+		if type(judgetxt) == "string" then
+			return table.concat({"'",txt,"'"})
+		else
+			return txt
+		end
+	end
+	local arguments = explode(" ",argument)
+	if #argument == 0 then
+		for k,v in pairs(enchatSettings) do
+			logadd(nil,"&4'"..k.."'&r = "..contextualQuote(v,custColorize(v)..tostring(v).."&r"))
+		end
+	else
+		if enchatSettings[arguments[1]] ~= nil then
+			if #arguments >= 2 then
+				local newval = table.concat(arguments," ",2)
+				if tonumber(newval) then
+					newval = tonumber(newval)
+				elseif textutils.unserialize(newval) ~= nil then
+					newval = textutils.unserialize(newval)
+				end
+				if type(enchatSettings[arguments[1]]) == type(newval) then
+					enchatSettings[arguments[1]] = newval
+					logadd("*","Set '&4"..arguments[1].."&r' to &{"..contextualQuote(newval,textutils.serialize(newval).."&}").." ("..type(newval)..")")
+				else
+					logadd("*","Wrong value type (it's "..type(enchatSettings[arguments[1]])..")")
+				end
+			else
+				logadd("*","'"..arguments[1].."' is set to "..contextualQuote(enchatSettings[arguments[1]],custColorize(enchatSettings[arguments[1]])..textutils.serialize(enchatSettings[arguments[1]]).."&r").." ("..type(enchatSettings[arguments[1]])..")")
+			end
+		else
+			logadd("*","No such setting.")
+		end
+	end
+end
 commands.help = function(cmdname)
 	if cmdname then
 		local helpList = {
@@ -994,4 +1043,8 @@ enchatSend("*", "'"..yourName.."&r~r' has moseyed on over.", true)
 
 parallel.waitForAny(main, handleEvents, keepRedrawing, handleNotifications)
 
+term.setCursorPos(1,scr_y)
+term.setBackgroundColor(initcolors.bg)
+term.setTextColor(initcolors.txt)
+term.clearLine()
 tsv(true) --in case it's false
