@@ -17,7 +17,7 @@ enchatSettings = {
 	doAnimate = true,	--whether or not to animate text moving from left side of screen
 	reverseScroll = false,	--whether or not to make scrolling up really scroll down
 	redrawDelay = 0.05,	--delay between redrawing
-	useSetVisible = true,	--whether or not to use term.current().setVisible(), which has performance and flickering improvements
+	useSetVisible = false,	--whether or not to use term.current().setVisible(), which has performance and flickering improvements
 	pageKeySpeed = 4,	--how far PageUP or PageDOWN should scroll
 	doNotif = true		--whether or not to use oveerlay glasses for notifications, if possible
 }
@@ -536,9 +536,9 @@ local genRenderLog = function()
 		prebuff = {textToBlit(table.concat({log[a].prefix,"&r~r",log[a].name,"&r~r",log[a].suffix,"&r~r",log[a].message}))}
 		if (log[a].frame == 0) and (canvas and enchatSettings.doNotif) then
 			notif.newNotification(
-				prebuff[l][1],
-				prebuff[l][2],
-				prebuff[l][3],
+				prebuff[1],
+				prebuff[2],
+				prebuff[3],
 				notif.time*4
 			)
 		end
