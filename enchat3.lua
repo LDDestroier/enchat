@@ -10,7 +10,16 @@ enchat = {
 	isBeta = true,
 	port = 11000,
 	url = "https://github.com/LDDestroier/enchat/raw/master/enchat3.lua",
-	animDiv = 2	--divisor of text animation speed (scrolling from left)
+}
+
+enchatSettings = {
+	animDiv = 2,		--divisor of text animation speed (scrolling from left)
+	doAnimate = true,	--whether or not to animate text moving from left side of screen
+	reverseScroll = false,	--whether or not to make scrolling up really scroll down
+	redrawDelay = 0.05,	--delay between redrawing
+	useSetVisible = true,	--whether or not to use term.current().setVisible(), which has performance and flickering improvements
+	pageKeySpeed = 4,	--how far PageUP or PageDOWN should scroll
+	doNotif = true		--whether or not to use oveerlay glasses for notifications, if possible
 }
 
 local tsv = function(visible)
@@ -202,6 +211,130 @@ local prettyPrompt = function(prompt, y, replchar, history)
 	return output
 end
 
+local notif = {}
+notif.alpha = 248
+notif.height = 10
+notif.width = 6
+notif.time = 10
+notif.wrapX = 300
+local nList = {}
+local colorTranslate = {
+	[" "] = {240, 240, 240},
+	["0"] = {240, 240, 240},
+	["1"] = {242, 178, 51 },
+	["2"] = {229, 127, 216},
+	["3"] = {153, 178, 242},
+	["4"] = {222, 222, 108},
+	["5"] = {127, 204, 25 },
+	["6"] = {242, 178, 204},
+	["7"] = {76,  76,  76 },
+	["8"] = {153, 153, 153},
+	["9"] = {76,  153, 178},
+	["a"] = {178, 102, 229},
+	["b"] = {51,  102, 204},
+	["c"] = {127, 102, 76 },
+	["d"] = {87,  166, 78 },
+	["e"] = {204, 76,  76 },
+	["f"] = {25,  25,  25 }
+}
+local interface, canvas = peripheral.find("neuralInterface")
+if interface then
+	if interface.canvas then
+		canvas = interface.canvas()
+		notif.newNotification = function(char, text, back, time)
+			nList[#nList+1] = {char,text,back,time,1} --last one is alpha multiplier
+		end
+		notif.displayNotifications = function(doCountDown)
+			local adjList = {
+				["i"] = -4,
+				["l"] = -3,
+				["I"] = -1,
+				["t"] = -2,
+				["k"] = -1,
+				["!"] = -4,
+				["|"] = -4,
+				["."] = -4,
+				[","] = -4,
+				[":"] = -4,
+				[";"] = -4,
+				["f"] = -1,
+				["'"] = -3,
+				["\""] = -1,
+				["<"] = -1,
+				[">"] = -1,
+			}
+			local drawEdgeLine = function(y,alpha)
+				local l = canvas.addRectangle(notif.wrapX, 1+(y-1)*notif.height, 1, notif.height)
+				l.setColor(table.unpack(colorTranslate["0"]))
+				l.setAlpha(alpha)
+			end
+			local getWordWidth = function(str)
+				local output = 0
+				for a = 1, #str do
+					output = output + notif.width + (adjList[str:sub(a,a)] or 0)
+				end
+				return output
+			end
+			canvas.clear()
+			local xadj, charadj, wordadj, t, r
+			local x, y, words, txtwords, bgwords = 0, 0
+			for n = math.min(#nList,16), 1, -1 do
+				xadj, charadj = 0, 0
+				y = y + 1
+				x = 0
+				words = explode(" ",nList[n][1],_,true)
+				txtwords = explode(" ",nList[n][1],nList[n][2],true)
+				bgwords = explode(" ",nList[n][1],nList[n][3],true)
+				local char, text, back
+				local currentX = 0
+				for w = 1, #words do
+					char = words[w]
+					text = txtwords[w]
+					back = bgwords[w]
+					if currentX + getWordWidth(char) > notif.wrapX then
+						y = y + 1
+						x = 2
+						xadj = 0
+						currentX = x * notif.width
+					end
+					for cx = 1, #char do
+						x = x + 1
+						charadj = (adjList[char:sub(cx,cx)] or 0)
+						r = canvas.addRectangle(xadj+1+(x-1)*notif.width, 1+(y-1)*notif.height, charadj+notif.width, notif.height)
+						if back:sub(cx,cx) ~= " " then
+							r.setAlpha(notif.alpha * nList[n][5])
+							r.setColor(table.unpack(colorTranslate[back:sub(cx,cx)]))
+						else
+							r.setAlpha(100 * nList[n][5])
+							r.setColor(table.unpack(colorTranslate["7"]))
+						end
+						drawEdgeLine(y,notif.alpha * nList[n][5])
+						t = canvas.addText({xadj+1+(x-1)*notif.width,2+(y-1)*notif.height}, char:sub(cx,cx))
+						t.setAlpha(notif.alpha * nList[n][5])
+						t.setColor(table.unpack(colorTranslate[text:sub(cx,cx)]))
+						xadj = xadj + charadj
+						currentX = currentX + charadj+notif.width
+					end
+				end
+				if doCountDown then
+					if nList[n][4] > 1 then
+						nList[n][4] = nList[n][4] - 1
+					else
+						if nList[n][5] > 0 then
+							while true do
+								nList[n][5] = math.max(nList[n][5] - 0.2, 0)
+								notif.displayNotifications(false)
+								if nList[n][5] == 0 then break else sleep(0.05) end
+							end
+						end
+						table.remove(nList,n)
+					end
+				end
+			end
+		end
+	end
+end
+
 local currentY = 2
 
 if not (yourName and encKey) then
@@ -381,11 +514,15 @@ end
 
 local inAnimate = function(buff, frame, maxFrame)
 	local char, text, back = buff[1], buff[2], buff[3]
-	return {
-		char:sub(#char - ((frame/maxFrame)*#char)),
-		text:sub(#text - ((frame/maxFrame)*#text)),
-		back:sub(#back - ((frame/maxFrame)*#back)),
-	}
+	if enchatSettings.doAnimate then
+		return {
+			char:sub(#char - ((frame/maxFrame)*#char)),
+			text:sub(#text - ((frame/maxFrame)*#text)),
+			back:sub(#back - ((frame/maxFrame)*#back)),
+		}
+	else
+		return {char,text,back}
+	end
 end
 
 local genRenderLog = function()
@@ -398,7 +535,7 @@ local genRenderLog = function()
 		term.setCursorPos(1,1)
 		prebuff = {textToBlit(table.concat({log[a].prefix,"&r~r",log[a].name,"&r~r",log[a].suffix,"&r~r",log[a].message}))}
 		if log[a].maxFrame == true then
-			log[a].maxFrame = math.floor(math.min(#prebuff[1], scr_x) / enchat.animDiv)
+			log[a].maxFrame = math.floor(math.min(#prebuff[1], scr_x) / enchatSettings.animDiv)
 		end
 		buff = blitWrap(unpack(prebuff))
 		--repeat every line in multiline entries
@@ -426,6 +563,9 @@ local renderChat = function()
 		term.clearLine()
 		if renderlog[ry] then
 			term.blit(unpack(renderlog[ry]))
+			if canvas and enchatSettings.doNotif then
+				notif.displayNotifications(true)
+			end
 		end
 	end
 	term.setCursorPos(1,scr_y)
@@ -443,6 +583,15 @@ local logadd = function(name, message)
 		frame = 0,
 		maxFrame = true
 	}
+	if canvas and enchatSettings.doNotif then
+		local c,t,b = textToBlit(table.concat({
+			log[#log].prefix,
+			log[#log].name,
+			log[#log].suffix,
+			log[#log].message
+		}),nil,"0"," ")
+		notif.newNotification(c,t,b,notif.time*4)
+	end
 end
 
 local enchatSend = function(name, message, doLog)
@@ -754,7 +903,7 @@ local handleEvents = function()
 			end
 		elseif evt[1] == "mouse_scroll" then
 			local dist = evt[2]
-			scroll = math.min(maxScroll, math.max(0, scroll + dist))
+			scroll = math.min(maxScroll, math.max(0, scroll + (enchatSettings.reverseScroll and -dist or dist)))
 			dab(renderChat)
 		elseif (evt[1] == "render_enchat") then
 			dab(renderChat)
@@ -764,7 +913,7 @@ end
 
 local keepRedrawing = function()
 	while true do
-		sleep(0.05)
+		sleep(enchatSettings.redrawDelay)
 		os.queueEvent("render_enchat")
 	end
 end
