@@ -964,10 +964,10 @@ local main = function()
 			if mHistory[#mHistory] ~= input then
 				mHistory[#mHistory+1] = input
 			end
-			os.queueEvent("render_enchat")
 		else
 			logadd(nil,nil)
 		end
+		os.queueEvent("render_enchat")
 		
 	end
 	
