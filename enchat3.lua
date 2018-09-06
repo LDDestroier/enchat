@@ -9,8 +9,15 @@ enchat = {
 	version = 3.0,
 	isBeta = true,
 	port = 11000,
-	url = "https://github.com/LDDestroier/enchat/raw/master/enchat3.lua"
+	url = "https://github.com/LDDestroier/enchat/raw/master/enchat3.lua",
+	animDiv = 2	--divisor of text animation speed (scrolling from left)
 }
+
+local tsv = function(visible)
+	if term.current() then
+		return term.current().setVisible(visible)
+	end
+end
 
 local tArg = {...}
 
@@ -20,10 +27,10 @@ yourName = tArg[1]
 encKey = tArg[2]
 
 local palate = {
-	bg = colors.black,	--background color
-	txt = colors.white,	--text color (should contrast with bg)
-	promptbg = colors.gray,	--chat prompt background
-	prompttxt = colors.white,	--chat prompt text
+	bg = colors.black,				--background color
+	txt = colors.white,				--text color (should contrast with bg)
+	promptbg = colors.gray,			--chat prompt background
+	prompttxt = colors.white,		--chat prompt text
 	scrollMeter = colors.lightGray,	--scroll indicator
 }
 
@@ -372,10 +379,6 @@ local textToBlit = function(input, _inittext, _initback)
 	return charout, textout, backout
 end
 
-local getMaxScroll = function()
-	return math.max(0, #renderlog - (scr_y - 2))
-end
-
 local inAnimate = function(buff, frame, maxFrame)
 	local char, text, back = buff[1], buff[2], buff[3]
 	return {
@@ -393,7 +396,10 @@ local genRenderLog = function()
 	term.setTextColor(palate.txt)
 	for a = 1, #log do
 		term.setCursorPos(1,1)
-		prebuff = {textToBlit(log[a].prefix .. log[a].name .. log[a].suffix .. log[a].message)}
+		prebuff = {textToBlit(table.concat({log[a].prefix,"&r~r",log[a].name,"&r~r",log[a].suffix,"&r~r",log[a].message}))}
+		if log[a].maxFrame == true then
+			log[a].maxFrame = math.floor(math.min(#prebuff[1], scr_x) / enchat.animDiv)
+		end
 		buff = blitWrap(unpack(prebuff))
 		--repeat every line in multiline entries
 		for l = 1, #buff do
@@ -403,13 +409,14 @@ local genRenderLog = function()
 			log[a].frame = log[a].frame + 1
 		end
 	end
-	maxScroll = getMaxScroll()
+	maxScroll = math.max(0, #renderlog - (scr_y - 2))
 	if scrollToBottom then
 		scroll = maxScroll
 	end
 end
 
 local renderChat = function()
+	tsv(false)
 	genRenderLog(log)
 	local ry
 	term.setBackgroundColor(palate.bg)
@@ -424,6 +431,7 @@ local renderChat = function()
 	term.setCursorPos(1,scr_y)
 	term.setTextColor(palate.scrollMeter)
 	term.write(scroll.." / "..maxScroll.."  ")
+	tsv(true)
 end
 
 local logadd = function(name, message)
@@ -433,7 +441,7 @@ local logadd = function(name, message)
 		name = name and name or "",
 		message = message or "",
 		frame = 0,
-		maxFrame = 8
+		maxFrame = true
 	}
 end
 
@@ -499,8 +507,6 @@ commands.update = function()
 	end	
 end
 commands.list = function()
-	--logadd(nil,"Searching...")
-	--renderChat(scroll)
 	userCryList = {}
 	local tim = os.startTimer(0.1)
 	cryOut(yourName, true)
@@ -644,6 +650,7 @@ end
 commandAliases = {
 	quit = commands.exit,
 	colours = commands.colors,
+	ls = commands.list,
 	cry = commands.list,
 	nickname = commands.nick,
 	["?"] = commands.help,
@@ -653,6 +660,12 @@ commandAliases = {
 	whoareyou = function()
 		logadd("*", "I'm Enchat. But surely, you know this?")
 	end,
+	fuck = function()
+		logadd("*","A mind is a terrible thing to waste.")
+	end,
+	die = function()
+		logadd("*","You would die, but the paperwork is too much.")
+	end
 }
 
 local checkIfCommand = function(input)
@@ -751,7 +764,7 @@ end
 
 local keepRedrawing = function()
 	while true do
-		sleep(0.1)
+		sleep(0.05)
 		os.queueEvent("render_enchat")
 	end
 end
@@ -761,3 +774,5 @@ getModem()
 enchatSend("*", "'"..yourName.."&r~r' has moseyed on over.", true)
 
 parallel.waitForAny(main, handleEvents, keepRedrawing)
+
+tsv(true) --in case it's false
