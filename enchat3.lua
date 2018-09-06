@@ -919,9 +919,10 @@ end
 
 local handleNotifications = function()
 	while true do
+		os.pullEvent("render_enchat")
 		if canvas and enchatSettings.doNotif then
 			notif.displayNotifications(true)
-		end	
+		end
 	end
 end
 
