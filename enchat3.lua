@@ -543,7 +543,7 @@ end
 
 local inAnimate = function(buff, frame, maxFrame, length)
 	local char, text, back = buff[1], buff[2], buff[3]
-	if enchatSettings.doAnimate then
+	if enchatSettings.doAnimate and frame >= 0 then
 		return {
 			char:sub((length or #char) - ((frame/maxFrame)*(length or #char))),
 			text:sub((length or #text) - ((frame/maxFrame)*(length or #text))),
@@ -579,8 +579,10 @@ local genRenderLog = function()
 		for l = 1, #buff do
 			renderlog[#renderlog + 1] = inAnimate(buff[l], log[a].frame, log[a].maxFrame, maxLength)
 		end
-		if log[a].frame < log[a].maxFrame then
+		if (log[a].frame < log[a].maxFrame) and log[a].frame >= 0 then
 			log[a].frame = log[a].frame + 1
+		else
+			log[a].frame = -1
 		end
 	end
 	maxScroll = math.max(0, #renderlog - (scr_y - 2))
