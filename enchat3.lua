@@ -873,10 +873,10 @@ local main = function()
 		
 		term.setCursorPos(1, scr_y - 1)
 		term.setBackgroundColor(palate.promptbg)
+		term.clearLine()
 		term.setTextColor(palate.chevron)
 		term.write(">")
 		term.setTextColor(palate.prompttxt)
-		term.clearLine()
 		
 		local input = read(nil,mHistory) --replace later with fancier input
 		if input:gsub(" ","") ~= "" then --if you didn't just press ENTER or a bunch of spaces
