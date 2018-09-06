@@ -541,6 +541,14 @@ local genRenderLog = function()
 		--repeat every line in multiline entries
 		for l = 1, #buff do
 			renderlog[#renderlog + 1] = inAnimate(buff[l], log[a].frame, log[a].maxFrame)
+			if log[a].frame == 0 then
+				notif.newNotification(
+					renderlog[#renderlog][1],
+					renderlog[#renderlog][2],
+					renderlog[#renderlog][3],
+					notif.time*4
+				)
+			end
 		end
 		if log[a].frame < log[a].maxFrame then
 			log[a].frame = log[a].frame + 1
@@ -580,17 +588,6 @@ local logadd = function(name, message)
 		frame = 0,
 		maxFrame = true
 	}
-	if canvas and enchatSettings.doNotif then
-		term.setTextColor(palate.txt)
-		term.setBackgroundColor(palate.bg)
-		local c,t,b = textToBlit(table.concat({
-			log[#log].prefix,
-			log[#log].name,
-			log[#log].suffix,
-			log[#log].message
-		}),nil,"0"," ")
-		notif.newNotification(c,t,b,notif.time*4)
-	end
 end
 
 local enchatSend = function(name, message, doLog)
