@@ -821,7 +821,11 @@ commands.palate = function(_argument)
 				}
 				logadd("*","Switched to the old Enchat2 palate.")
 			else
-				logadd("*","Give me a color code next time.")
+				if not palate[argument[1]] then
+					logadd("*","There's no such palate option.")
+				else
+					logadd("*","'"..argument[1].."' = '"..toblit[palate[argument[1]]].."'")
+				end
 			end
 		else
 			if #argument > 2 then
@@ -908,9 +912,10 @@ commands.help = function(cmdname)
 			list = "Lists all users in range using the same key.",
 			nick = "Give yourself a different username.",
 			whoami = "Tells you your current username.",
-			key = "Tells you the encryption key. Can also be used to change it.",
+			key = "Change the current encryption key. Tells you the key, if without argument.",
 			clear = "Clears the log. Not your inventory, I swear.",
 			ping = "Pong. *sigh*",
+			set = "Changes config options during the current session. Lists all options, if without argument.",
 			help = "Shows every command, or describes a specific command.",
 		}
 		cmdname = cmdname:gsub(" ","")
@@ -1061,10 +1066,11 @@ local handleEvents = function()
 				adjScroll(-enchatSettings.pageKeySpeed)
 			elseif key == keys.pageDown then
 				adjScroll(enchatSettings.pageKeySpeed)
-			elseif key == keys.home then
-				scroll = 0
-			elseif key == keys["end"] then
-				scroll = maxScroll
+-- this will interfere with read()
+--			elseif key == keys.home then
+--				scroll = 0
+--			elseif key == keys["end"] then
+--				scroll = maxScroll
 			end
 			if scroll ~= oldScroll then
 				dab(renderChat)
