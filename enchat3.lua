@@ -758,7 +758,7 @@ commands.me = function(msg)
 	end
 end
 commands.colors = function()
-	logadd("*", "Color codes: (use && or ~~)")
+	logadd("*", "&{Color codes: (use & or ~)&}")
 	logadd(nil, "  &7~11~22~33~44~55~66~7&87~8&78~99~aa~bb~cc~dd~ee~ff")
 end
 commands.update = function()
@@ -1062,7 +1062,7 @@ local main = function()
 			if mHistory[#mHistory] ~= input then
 				mHistory[#mHistory+1] = input
 			end
-		else
+		elseif input == "" then
 			logadd(nil,nil)
 		end
 		os.queueEvent("render_enchat")
