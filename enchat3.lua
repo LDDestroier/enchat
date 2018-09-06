@@ -23,6 +23,11 @@ enchatSettings = {
 	doNotif = true		--whether or not to use oveerlay glasses for notifications, if possible
 }
 
+local initcolors = {
+	bg = term.getBackgroundColor(),
+	txt = term.getTextColor()
+}
+
 local tsv = function(visible)
 	if term.current() and enchatSettings.useSetVisible then
 		return term.current().setVisible(visible)
