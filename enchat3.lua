@@ -620,7 +620,7 @@ local textToBlit = function(str,onlyString,initTxt,initBg) --returns output for 
 	if onlyString then
 		return output
 	else
-		return output, txcolorout, bgcolorout, usedformats
+		return output, txcolorout, bgcolorout --, usedformats
 	end
 end
 
