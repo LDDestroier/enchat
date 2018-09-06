@@ -23,7 +23,7 @@ enchatSettings = {
 }
 
 local tsv = function(visible)
-	if term.current() then
+	if term.current() and enchatSettings.useSetVisible then
 		return term.current().setVisible(visible)
 	end
 end
@@ -541,7 +541,7 @@ local genRenderLog = function()
 		--repeat every line in multiline entries
 		for l = 1, #buff do
 			renderlog[#renderlog + 1] = inAnimate(buff[l], log[a].frame, log[a].maxFrame)
-			if log[a].frame == 0 then
+			if (log[a].frame == 0) and (canvas and enchatSettings.doNotif) then
 				notif.newNotification(
 					buff[l][1],
 					buff[l][2],
@@ -880,7 +880,12 @@ local handleReceiveMessage = function(user, message)
 	os.queueEvent("render_enchat")
 end
 
+local adjScroll = function(distance)
+	scroll = math.min(maxScroll, math.max(0, scroll + distance))
+end
+
 local handleEvents = function()
+	local oldScroll
 	while true do
 		local evt = {os.pullEvent()}
 		if evt[1] == "modem_message" then
@@ -899,8 +904,26 @@ local handleEvents = function()
 			end
 		elseif evt[1] == "mouse_scroll" then
 			local dist = evt[2]
-			scroll = math.min(maxScroll, math.max(0, scroll + (enchatSettings.reverseScroll and -dist or dist)))
-			dab(renderChat)
+			oldScroll = scroll
+			adjScroll(enchatSettings.reverseScroll and -dist or dist)
+			if scroll ~= oldScroll then
+				dab(renderChat)
+			end
+		elseif evt[1] == "key" then
+			local key = evt[2]
+			oldScroll = scroll
+			if key == keys.pageUp then
+				adjScroll(-enchatSettings.pageKeySpeed)
+			elseif key == keys.pageDown then
+				adjScroll(enchatSettings.pageKeySpeed)
+			elseif key == keys.home then
+				scroll = 0
+			elseif key == keys["end"] then
+				scroll = maxScroll
+			end
+			if scroll ~= oldScroll then
+				dab(renderChat)
+			end
 		elseif (evt[1] == "render_enchat") then
 			dab(renderChat)
 		end
