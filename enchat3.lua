@@ -545,7 +545,8 @@ else
 end
 
 local moveOn
-textToBlit = function(str,onlyString,initTxt,initBg) --returns output for term.blit, or blitWrap, with formatting codes for color selection. Modified for use specifically with Enchat.
+textToBlit = function(str,onlyString,initTxt,initBg,_checkPos) --returns output for term.blit, or blitWrap, with formatting codes for color selection. Modified for use specifically with Enchat.
+	checkPos = _checkPos or -1
 	if (not str) then
 		if onlyString then
 			return ""
@@ -579,6 +580,7 @@ textToBlit = function(str,onlyString,initTxt,initBg) --returns output for term.b
 		txcolorout = txcolorout..tx --(doFormatting and tx or origTX)
 		bgcolorout = bgcolorout..bg --(doFormatting and bg or origBG)
 	end
+	local checkedPos = 1
 	while p <= #str do
 		if str:sub(p,p) == txcode then
 			if tocolors[str:sub(p+1,p+1)] and doFormatting then
@@ -602,9 +604,15 @@ textToBlit = function(str,onlyString,initTxt,initBg) --returns output for term.b
 					p = p + 1
 				else
 					moveOn(txcol,bgcol)
+					if p <= checkPos then
+						checkedPos = checkedPos + 1
+					end
 				end
 			else
 				moveOn(txcol,bgcol)
+				if p <= checkPos then
+					checkedPos = checkedPos + 1
+				end
 			end
 			p = p + 1
 		elseif str:sub(p,p) == bgcode then
@@ -619,10 +627,16 @@ textToBlit = function(str,onlyString,initTxt,initBg) --returns output for term.b
 				isKrazy = false
 				p = p + 1
 			else
+				if p <= checkPos then
+					checkedPos = checkedPos + 1
+				end
 				moveOn(txcol,bgcol)
 			end
 			p = p + 1
 		else
+			if p <= checkPos then
+				checkedPos = checkedPos + 1
+			end
 			moveOn(txcol,bgcol)
 			p = p + 1
 		end
@@ -630,7 +644,11 @@ textToBlit = function(str,onlyString,initTxt,initBg) --returns output for term.b
 	if onlyString then
 		return output
 	else
-		return output, txcolorout, bgcolorout
+		if checkPos > 0 then
+			return {output, txcolorout, bgcolorout}
+		else
+			return {output, txcolorout, bgcolorout}, checkedPos
+		end
 	end
 end
 
@@ -645,15 +663,16 @@ local colorread = function(history)
 	local xscroll = 0
 	local render = function()
 		term.setCursorPos(cx, cy)
-		local char, text, back = textToBlit(buff)
+		local char, text, back, cursorPos = unpack(textToBlit(buff, xpos))
 		term.blit(char:sub(xscroll, xscroll+scr_x), text:sub(xscroll, xscroll+scr_x), back:sub(xscroll, xscroll+scr_x))
+		return cursorPos
 	end
-	local oldXpos, oldXScroll
+	local oldXpos, oldXScroll, cursorPos
 	while true do
 		if (oldXpos ~= xpos) or (oldXScroll ~= xscroll) then
-			render()
+			cursorPos = render()
 		end
-		term.setCursorPos(math.min(cx + oldXpos, scr_x), cy)
+		term.setCursorPos(math.min(cx + cursorPos, scr_x), cy)
 		local event, key = os.pullEvent()
 		oldCX, oldXScroll = cx, xscroll
 		if event == "key" then
@@ -699,7 +718,7 @@ local genRenderLog = function()
 	term.setBackgroundColor(palate.bg)
 	for a = 1, #log do
 		term.setCursorPos(1,1)
-		prebuff = {textToBlit(table.concat({log[a].prefix,"&r~r",log[a].name,"&r~r",log[a].suffix,"&r~r",log[a].message}))}
+		prebuff = textToBlit(table.concat({log[a].prefix,"&r~r",log[a].name,"&r~r",log[a].suffix,"&r~r",log[a].message}))
 		if (log[a].frame == 0) and (canvas and enchatSettings.doNotif) then
 			notif.newNotification(
 				prebuff[1],
@@ -1095,7 +1114,8 @@ local main = function()
 		term.write(">")
 		term.setTextColor(palate.prompttxt)
 		
-		local input = read(nil,mHistory) --replace later with fancier input
+--		local input = read(nil,mHistory) --replace later with fancier input
+		local input = colorread() --needs history, man
 		if input:gsub(" ","") ~= "" then --if you didn't just press ENTER or a bunch of spaces
 			if checkIfCommand(input) then
 				local res = parseCommand(input)
