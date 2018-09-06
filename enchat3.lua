@@ -543,9 +543,9 @@ local genRenderLog = function()
 			renderlog[#renderlog + 1] = inAnimate(buff[l], log[a].frame, log[a].maxFrame)
 			if log[a].frame == 0 then
 				notif.newNotification(
-					renderlog[#renderlog][1],
-					renderlog[#renderlog][2],
-					renderlog[#renderlog][3],
+					buff[l][1],
+					buff[l][2],
+					buff[l][3],
 					notif.time*4
 				)
 			end
