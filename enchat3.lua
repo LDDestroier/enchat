@@ -534,6 +534,14 @@ local genRenderLog = function()
 	for a = 1, #log do
 		term.setCursorPos(1,1)
 		prebuff = {textToBlit(table.concat({log[a].prefix,"&r~r",log[a].name,"&r~r",log[a].suffix,"&r~r",log[a].message}))}
+		if (log[a].frame == 0) and (canvas and enchatSettings.doNotif) then
+			notif.newNotification(
+				prebuff[l][1],
+				prebuff[l][2],
+				prebuff[l][3],
+				notif.time*4
+			)
+		end
 		if log[a].maxFrame == true then
 			log[a].maxFrame = math.floor(math.min(#prebuff[1], scr_x) / enchatSettings.animDiv)
 		end
@@ -541,14 +549,6 @@ local genRenderLog = function()
 		--repeat every line in multiline entries
 		for l = 1, #buff do
 			renderlog[#renderlog + 1] = inAnimate(buff[l], log[a].frame, log[a].maxFrame)
-			if (log[a].frame == 0) and (canvas and enchatSettings.doNotif) then
-				notif.newNotification(
-					buff[l][1],
-					buff[l][2],
-					buff[l][3],
-					notif.time*4
-				)
-			end
 		end
 		if log[a].frame < log[a].maxFrame then
 			log[a].frame = log[a].frame + 1
