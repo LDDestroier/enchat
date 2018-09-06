@@ -606,7 +606,7 @@ local genRenderLog = function()
 	renderlog = {}
 	for a = 1, #log do
 		term.setCursorPos(1,1)
-		prebuff = {textToBlit(table.concat({log[a].prefix,"&r~r",log[a].name,"&r~r",log[a].suffix,"&r~r",log[a].message}), false, palate.txt, palate.bg)}
+		prebuff = {textToBlit(table.concat({log[a].prefix,"&r~r",log[a].name,"&r~r",log[a].suffix,"&r~r",log[a].message}), palate.txt, palate.bg)}
 		if (log[a].frame == 0) and (canvas and enchatSettings.doNotif) then
 			notif.newNotification(
 				prebuff[1],
