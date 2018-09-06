@@ -221,7 +221,7 @@ notif.alpha = 248
 notif.height = 10
 notif.width = 6
 notif.time = 30
-notif.wrapX = 300
+notif.wrapX = 400
 local nList = {}
 local colorTranslate = {
 	[" "] = {240, 240, 240},
@@ -271,7 +271,7 @@ if interface then
 			local drawEdgeLine = function(y,alpha)
 				local l = canvas.addRectangle(notif.wrapX, 1+(y-1)*notif.height, 1, notif.height)
 				l.setColor(table.unpack(colorTranslate["0"]))
-				l.setAlpha(alpha)
+				l.setAlpha(alpha / 2)
 			end
 			local getWordWidth = function(str)
 				local output = 0
@@ -737,6 +737,15 @@ commands.palate = function(_argument)
 					scrollMeter = colors.lightGray,
 				}
 				logadd("*","You cleansed your palate.")
+			elseif argument[1]:gsub("%s",""):lower() == "enchat2" then
+				palate = {
+					bg = colors.gray,
+					txt = colors.white,
+					promptbg = colors.lightGray,
+					prompttxt = colors.black,
+					scrollMeter = colors.white,
+				}
+				logadd("*","Switched to the old Enchat2 palate.")
 			else
 				logadd("*","Give me a color code next time.")
 			end
@@ -863,18 +872,20 @@ local main = function()
 		term.clearLine()
 		
 		local input = read(nil,mHistory) --replace later with fancier input
-		if checkIfCommand(input) then
-			local res = parseCommand(input)
-			if res == "exit" then
-				return "exit"
+		if input:gsub(" ","") ~= "" then --if you didn't just press ENTER or a bunch of spaces
+			if checkIfCommand(input) then
+				local res = parseCommand(input)
+				if res == "exit" then
+					return "exit"
+				end
+			else
+				enchatSend(yourName, input, true)
 			end
-		else
-			enchatSend(yourName, input, true)
+			if mHistory[#mHistory] ~= input then
+				mHistory[#mHistory+1] = input
+			end
+			os.queueEvent("render_enchat")
 		end
-		if mHistory[#mHistory] ~= input then
-			mHistory[#mHistory+1] = input
-		end
-		os.queueEvent("render_enchat")
 	end
 	
 end
