@@ -535,12 +535,12 @@ else
 end
 
 local moveOn
-local textToBlit = function(str,onlyString,initTxt,initBg) --returns output for term.blit, or blitWrap, with formatting codes for color selection. Modified for use specifically with Enchat.
+textToBlit = function(str,onlyString,initTxt,initBg) --returns output for term.blit, or blitWrap, with formatting codes for color selection. Modified for use specifically with Enchat.
 	if (not str) then
 		if onlyString then
 			return ""
 		else
-			return "","","",{}
+			return "","",""
 		end
 	end
 	str = tostring(str)
@@ -557,7 +557,7 @@ local textToBlit = function(str,onlyString,initTxt,initBg) --returns output for 
 	local origTX,origBG = initTxt or toblit[term.getTextColor()], initBg or toblit[term.getBackgroundColor()]
 	local cx,cy
 	moveOn = function(tx,bg)
-		if isKrazy and (str:sub(p,p) ~= " ") then -- and doFormatting then
+		if isKrazy and (str:sub(p,p) ~= " ") and doFormatting then
 			if kraziez[str:sub(p,p)] then
 				output = output..kraziez[str:sub(p,p)][math.random(1,#kraziez[str:sub(p,p)])]
 			else
@@ -620,7 +620,7 @@ local textToBlit = function(str,onlyString,initTxt,initBg) --returns output for 
 	if onlyString then
 		return output
 	else
-		return output, txcolorout, bgcolorout --, usedformats
+		return output, txcolorout, bgcolorout
 	end
 end
 
