@@ -69,7 +69,7 @@ local checkValidName = function(nayme)
 	if type(nayme) ~= "string" then
 		return false
 	else
-		return (nayme >= 2 and nayme <= 32 and nayme:gsub(" ","") ~= "")
+		return (#nayme >= 2 and #nayme <= 32 and nayme:gsub(" ","") ~= "")
 	end
 end
 
@@ -373,6 +373,14 @@ end
 
 if not yourName then
 	yourName = prettyPrompt("Enter your name.", currentY)
+	if not checkValidName(yourName) then
+		while true do
+			yourName = prettyPrompt("That name isn't valid. Enter another.", currentY)
+			if checkValidName(yourName) then
+				break
+			end
+		end
+	end
 	currentY = currentY + 3
 end
 
