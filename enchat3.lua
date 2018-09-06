@@ -10,6 +10,7 @@ enchat = {
 	isBeta = true,
 	port = 11000,
 	url = "https://github.com/LDDestroier/enchat/raw/master/enchat3.lua",
+	betaurl = "https://github.com/LDDestroier/enchat/raw/master/enchat3beta.lua",
 }
 
 enchatSettings = {
@@ -44,6 +45,37 @@ local palate = {
 	chevron = colors.black,		--color of ">" left of text prompt
 }
 
+local updateEnchat = function(doBeta)
+	local pPath = shell.getRunningProgram()
+	local h = http.get(doBeta and enchat.betaurl or enchat.url)
+	if not h then
+		return false, "Could not connect."
+	else
+		local content = h.readAll()
+		local file = fs.open(pPath, "w")
+		file.write(content)
+		file.close()
+		return true, "Updated!"
+	end
+end
+
+local checkValidName = function(nayme)
+	if type(nayme) ~= "string" then
+		return false
+	else
+		return (nayme >= 2 and nayme <= 32 and nayme:gsub(" ","") ~= "")
+	end
+end
+
+if tArg[1] == "update" then
+	local res, message = updateEnchat(tArg[2] == "beta")
+	return print(message)
+end
+
+if not checkValidName(yourName) then --not so fast, evildoers
+	yourName = nil
+end
+
 -- AES API START (thank you SquidDev) --
 
 local apipath
@@ -62,20 +94,6 @@ if not aes then
 end
 
 -- AES API STOP (thanks again) --
-
-local updateEnchat = function()
-	local pPath = shell.getRunningProgram()
-	local h = http.get(enchat.url)
-	if not h then
-		return false, "Could not connect."
-	else
-		local content = h.readAll()
-		local file = fs.open(pPath, "w")
-		file.write(content)
-		file.close()
-		return true, "Updated!"
-	end
-end
 
 local scr_x, scr_y = term.getSize()
 
@@ -680,7 +698,7 @@ commands.list = function()
 end
 commands.nick = function(newName)
 	if newName then
-		if #newName >= 2 and #newName <= 32 then
+		if checkValidName(newName) then
 			if newName == yourName then
 				logadd("*","But you're already called that!")
 			else
