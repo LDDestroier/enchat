@@ -1,6 +1,6 @@
  
 --[[
- Enchat 3.0 BETA (well, work in progress really)
+ Enchat 3.0 BETA
  Get with:
   wget https://github.com/LDDestroier/enchat/raw/master/enchat3.lua enchat3
 --]]
@@ -17,7 +17,7 @@ enchatSettings = {
 	doAnimate = true,	--whether or not to animate text moving from left side of screen
 	reverseScroll = false,	--whether or not to make scrolling up really scroll down
 	redrawDelay = 0.05,	--delay between redrawing
-	useSetVisible = false,	--whether or not to use term.current().setVisible(), which has performance and flickering improvements
+	useSetVisible = true,	--whether or not to use term.current().setVisible(), which has performance and flickering improvements
 	pageKeySpeed = 4,	--how far PageUP or PageDOWN should scroll
 	doNotif = true		--whether or not to use oveerlay glasses for notifications, if possible
 }
@@ -36,11 +36,12 @@ yourName = tArg[1]
 encKey = tArg[2]
 
 local palate = {
-	bg = colors.black,				--background color
-	txt = colors.white,				--text color (should contrast with bg)
-	promptbg = colors.gray,			--chat prompt background
-	prompttxt = colors.white,		--chat prompt text
+	bg = colors.black,		--background color
+	txt = colors.white,		--text color (should contrast with bg)
+	promptbg = colors.gray,		--chat prompt background
+	prompttxt = colors.white,	--chat prompt text
 	scrollMeter = colors.lightGray,	--scroll indicator
+	chevron = colors.black,		--color of ">" left of text prompt
 }
 
 -- AES API START (thank you SquidDev) --
@@ -650,7 +651,7 @@ commands.update = function()
 		term.setTextColor(colors.white)
 		term.clear()
 		term.setCursorPos(1,1)
-		print(res)
+		print(message)
 		return "exit"
 	else
 		logadd("*", res)
@@ -714,6 +715,7 @@ commands.key = function(newKey)
 		end
 	else
 		logadd("Key = '"..encKey.."&r~r'")
+		logadd("Channel = '"..enchat.port.."'")
 	end
 end
 commands.palate = function(_argument)
@@ -735,15 +737,17 @@ commands.palate = function(_argument)
 					promptbg = colors.gray,
 					prompttxt = colors.white,
 					scrollMeter = colors.lightGray,
+					chevron = colors.black,
 				}
 				logadd("*","You cleansed your palate.")
 			elseif argument[1]:gsub("%s",""):lower() == "enchat2" then
 				palate = {
 					bg = colors.gray,
 					txt = colors.white,
-					promptbg = colors.lightGray,
+					promptbg = colors.white,
 					prompttxt = colors.black,
 					scrollMeter = colors.white,
+					chevron = colors.lightGray
 				}
 				logadd("*","Switched to the old Enchat2 palate.")
 			else
@@ -785,9 +789,9 @@ commands.help = function(cmdname)
 			nick = "Give yourself a different username.",
 			whoami = "Tells you your current username.",
 			key = "Tells you the encryption key. Can also be used to change it.",
-			clear = "Clears the log.",
+			clear = "Clears the log. Not your inventory, I swear.",
 			ping = "Pong. *sigh*",
-			help = "Shows every command, or describes a command.",
+			help = "Shows every command, or describes a specific command.",
 		}
 		cmdname = cmdname:gsub(" ","")
 		if helpList[cmdname] then
@@ -868,6 +872,8 @@ local main = function()
 		
 		term.setCursorPos(1, scr_y - 1)
 		term.setBackgroundColor(palate.promptbg)
+		term.setTextColor(palate.chevron)
+		term.write(">")
 		term.setTextColor(palate.prompttxt)
 		term.clearLine()
 		
@@ -886,6 +892,7 @@ local main = function()
 			end
 			os.queueEvent("render_enchat")
 		end
+		
 	end
 	
 end
