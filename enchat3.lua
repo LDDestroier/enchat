@@ -18,7 +18,7 @@ enchatSettings = {
 	doAnimate = true,	--whether or not to animate text moving from left side of screen
 	reverseScroll = false,	--whether or not to make scrolling up really scroll down
 	redrawDelay = 0.05,	--delay between redrawing
-	useSetVisible = true,	--whether or not to use term.current().setVisible(), which has performance and flickering improvements
+	useSetVisible = false,	--whether or not to use term.current().setVisible(), which has performance and flickering improvements
 	pageKeySpeed = 4,	--how far PageUP or PageDOWN should scroll
 	doNotif = true,		--whether or not to use oveerlay glasses for notifications, if possible
 	doKrazy = true		--whether or not to add &k obfuscation
@@ -480,6 +480,13 @@ local colors_strnames = { --primarily for use when coloring palate
 	["coal"] = colors.black,
 	["onyx"] = colors.black,
 	["#191919"] = colors.black,
+}
+
+local codeNames = {
+	["r"] = "reset",	-- Sets either the text (&) or background (~) colors to their original color.
+	["{"] = "stopFormatting",	--Toggles formatting text off
+	["}"] = "startFormatting",	--Toggles formatting text on
+	["k"] = "krazy"	--Makes the font krazy!
 }
 
 local moveOn
