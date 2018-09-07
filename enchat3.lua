@@ -1179,7 +1179,7 @@ local handleEvents = function()
 			msg = decrite(msg)
 			if type(msg) == "table" then
 				if (type(msg.name) == "string") then
-					if checkValidName(msg.name) then
+					if #msg.name <= 32 then
 						userCryList[msg.name] = true
 						if (type(msg.message) == "string") then
 							handleReceiveMessage(msg.name, tostring(msg.message))
