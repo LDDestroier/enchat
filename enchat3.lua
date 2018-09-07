@@ -788,7 +788,7 @@ commands.exit = function()
 end
 commands.me = function(msg)
 	if msg then
-		enchatSend(nil, "&2 * "..yourName.."~r&2 "..msg, true)
+		enchatSend("&2*", yourName.."~r&2 "..msg, true)
 	else
 		logadd("*",commandInit.."me [message]")
 	end
