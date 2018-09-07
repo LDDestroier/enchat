@@ -20,7 +20,7 @@ enchatSettings = {
 	doAnimate = true,	--whether or not to animate text moving from left side of screen
 	reverseScroll = false,	--whether or not to make scrolling up really scroll down
 	redrawDelay = 0.05,	--delay between redrawing
-	useSetVisible = false,	--whether or not to use term.current().setVisible(), which has performance and flickering improvements
+	useSetVisible = true,	--whether or not to use term.current().setVisible(), which has performance and flickering improvements
 	pageKeySpeed = 4,	--how far PageUP or PageDOWN should scroll
 	doNotif = true,		--whether or not to use oveerlay glasses for notifications, if possible
 	doKrazy = true		--whether or not to add &k obfuscation
@@ -564,9 +564,7 @@ textToBlit = function(str,onlyString,initTxt,initBg,_checkPos) --returns output 
 	end
 	str = tostring(str)
 	local p = 1
-	local output = ""
-	local txcolorout = ""
-	local bgcolorout = ""
+	local output, txcolorout, bgcolorout = "", "", ""
 	local txcode = "&"
 	local bgcode = "~"
 	local isKrazy = false
@@ -595,36 +593,21 @@ textToBlit = function(str,onlyString,initTxt,initBg,_checkPos) --returns output 
 				txcol = str:sub(p+1,p+1)
 				usedformats.txcol = true
 				p = p + 1
-				if p <= checkPos then
-					checkMod = checkMod - 2
-				end
 			elseif codeNames[str:sub(p+1,p+1)] then
 				if str:sub(p+1,p+1) == "r" and doFormatting then
 					txcol = origTX
 					isKrazy = false
 					p = p + 1
-					if p <= checkPos then
-						checkMod = checkMod - 2
-					end
 				elseif str:sub(p+1,p+1) == "{" and doFormatting then
 					doFormatting = false
 					p = p + 1
-					if p <= checkPos then
-						checkMod = checkMod - 2
-					end
-				elseif str:sub(p+1,p+1) == "}" and (not doFormatting) then
+				elseif str:sub(p+1,p+1) == "}" and not doFormatting then
 					doFormatting = true
 					p = p + 1
-					if p <= checkPos then
-						checkMod = checkMod - 2
-					end
 				elseif str:sub(p+1,p+1) == "k" and doFormatting and enchatSettings.doKrazy then
 					isKrazy = true
 					usedformats.krazy = true
 					p = p + 1
-					if p <= checkPos then
-						checkMod = checkMod - 2
-					end
 				else
 					moveOn(txcol,bgcol)
 				end
@@ -637,21 +620,12 @@ textToBlit = function(str,onlyString,initTxt,initBg,_checkPos) --returns output 
 				bgcol = str:sub(p+1,p+1)
 				usedformats.bgcol = true
 				p = p + 1
-				if p <= checkPos then
-					checkMod = checkMod - 2
-				end
 			elseif codeNames[str:sub(p+1,p+1)] and (str:sub(p+1,p+1) == "r") and doFormatting then
 				bgcol = origBG
 				p = p + 1
-				if p <= checkPos then
-					checkMod = checkMod - 2
-				end
 			elseif str:sub(p+1,p+1) == "k" and doFormatting then
 				isKrazy = false
 				p = p + 1
-				if p <= checkPos then
-					checkMod = checkMod - 2
-				end
 			else
 				moveOn(txcol,bgcol)
 			end
@@ -664,11 +638,7 @@ textToBlit = function(str,onlyString,initTxt,initBg,_checkPos) --returns output 
 	if onlyString then
 		return output
 	else
-		if checkPos > 0 then
-			return {output, txcolorout, bgcolorout}
-		else
-			return {output, txcolorout, bgcolorout, checkMod}
-		end
+		return {output, txcolorout, bgcolorout}
 	end
 end
 
