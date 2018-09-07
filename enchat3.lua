@@ -1085,6 +1085,15 @@ commandAliases = {
 	die = function()
 		logadd("*","You would die, but the paperwork is too much.")
 	end,
+	nap = function()
+		logadd("*","The time for napping has passed.")
+	end,
+	sorry = function()
+		logadd("*","That's okay.")
+	end,
+	jump = function()
+		logadd("*","Sorry. This program is in a NO JUMPING zone.")
+	end,
 	OrElseYouWill = function()
 		enchatSend("*", "'"..yourName.."&r~r' buggered off. (disconnect)")
 		error("DIE")
