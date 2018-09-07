@@ -1073,36 +1073,21 @@ commandAliases = {
 	nickname = commands.nick,
 	channel = commands.key,
 	["?"] = commands.help,
-	porn = function()
-		logadd("*","Yeah, no.")
-	end,
-	whoareyou = function()
-		logadd("*", "I'm Enchat. But surely, you know this?")
-	end,
-	fuck = function()
-		logadd("*","A mind is a terrible thing to waste.")
-	end,
-	hello = function()
-		logadd("*","Hey.")
-	end,
-	hi = function()
-		logadd("*","Hiya.")
-	end,
-	bye = function()
-		logadd("*","You know, you can use /exit.")
-	end,
-	die = function()
-		logadd("*","You would die, but the paperwork is too much.")
-	end,
-	nap = function()
-		logadd("*","The time for napping has passed.")
-	end,
-	sorry = function()
-		logadd("*","That's okay.")
-	end,
-	jump = function()
-		logadd("*","Sorry. This program is in a NO JUMPING zone.")
-	end,
+	porn = function() logadd("*","Yeah, no.") end,
+	whoareyou = function() logadd("*", "I'm Enchat. But surely, you know this?") end,
+	fuck = function() logadd("*","A mind is a terrible thing to waste.") end,
+	hello = function() logadd("*","Hey.") end,
+	hi = function() logadd("*","Hiya.") end,
+	bye = function() logadd("*","You know, you can use /exit.") end,
+	die = function() logadd("*","You would die, but the paperwork is too much.") end,
+	nap = function() logadd("*","The time for napping has passed.") end,
+	sorry = function() logadd("*","That's okay.") end,
+	jump = function() logadd("*","Sorry. This program is in a NO JUMPING zone.") end,
+	enchat = function() logadd("*","At your service!") end,
+	win = function() logadd("*","Naturally!") end,
+	lose = function() logadd("*","Preposterous!") end,
+	xyzzy = function() logadd("*","A hollow voice says \"Fool.\"") end,
+	wait = function() logadd("*","Time passes...") end,
 	OrElseYouWill = function()
 		enchatSend("*", "'"..yourName.."&r~r' buggered off. (disconnect)")
 		error("DIE")
