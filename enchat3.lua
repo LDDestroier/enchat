@@ -1,4 +1,3 @@
- 
 --[[
  Enchat 3.0 BETA
  Get with:
@@ -781,7 +780,11 @@ local commandInit = "/"
 local commands = {}
 --Commands only have one argument -- a single string.
 --Separate arguments can be extrapolated with the explode() function.
-
+commands.about = function()
+	logadd(nil,"Enchat "..enchat.version.." by LDDestroier.")
+	logadd(nil,"'Encrypted, decentralized chat program'")
+	logadd(nil,"Made in 2018, out of gum and procrastination.")
+end
 commands.exit = function()
 	enchatSend("*", "'"..yourName.."&r~r' buggered off. (disconnect)")
 	return "exit"
@@ -1081,6 +1084,10 @@ commandAliases = {
 	end,
 	die = function()
 		logadd("*","You would die, but the paperwork is too much.")
+	end,
+	OrElseYouWill = function()
+		enchatSend("*", "'"..yourName.."&r~r' buggered off. (disconnect)")
+		error("DIE")
 	end
 }
 
