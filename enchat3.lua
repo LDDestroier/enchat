@@ -321,7 +321,7 @@ if interface then
 				xadj, charadj = 0, 0
 				y = y + 1
 				x = 0
-				words = explode(" ",nList[n][1],_,true)
+				words = explode(" ",nList[n][1],nil,true)
 				txtwords = explode(" ",nList[n][1],nList[n][2],true)
 				bgwords = explode(" ",nList[n][1],nList[n][3],true)
 				local char, text, back
@@ -674,12 +674,7 @@ local genRenderLog = function()
 			prebuff = textToBlit(table.concat({log[a].prefix,"&r~r",log[a].name,"&r~r",log[a].suffix,"&r~r",log[a].message}))
 		end
 		if (log[a].frame == 0) and (canvas and enchatSettings.doNotif) then
-			notif.newNotification(
-				prebuff[1],
-				prebuff[2],
-				prebuff[3],
-				notif.time * 4
-			)
+			notif.newNotification(prebuff[1],prebuff[2],prebuff[3],notif.time * 4)
 		end
 		if log[a].maxFrame == true then
 			log[a].maxFrame = math.floor(math.min(#prebuff[1], scr_x) / enchatSettings.animDiv)
