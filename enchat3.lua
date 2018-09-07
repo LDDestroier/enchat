@@ -1082,6 +1082,15 @@ commandAliases = {
 	fuck = function()
 		logadd("*","A mind is a terrible thing to waste.")
 	end,
+	hello = function()
+		logadd("*","Hey.")
+	end,
+	hi = function()
+		logadd("*","Hiya.")
+	end,
+	bye = function()
+		logadd("*","You know, you can use /exit.")
+	end,
 	die = function()
 		logadd("*","You would die, but the paperwork is too much.")
 	end,
