@@ -691,7 +691,7 @@ local genRenderLog = function()
 end
 
 local tsv = function(visible)
-        if term.current() and enchatSettings.useSetVisible then
+        if term.current().setVisible and enchatSettings.useSetVisible then
                 return term.current().setVisible(visible)
         end
 end
