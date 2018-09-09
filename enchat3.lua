@@ -30,12 +30,6 @@ local initcolors = {
 	txt = term.getTextColor()
 }
 
-local tsv = function(visible)
-	if term.current() and enchatSettings.useSetVisible then
-		return term.current().setVisible(visible)
-	end
-end
-
 local tArg = {...}
 
 local yourName, encKey
@@ -695,6 +689,14 @@ local genRenderLog = function()
 		scroll = maxScroll
 	end
 end
+
+local tsv = function(visible)
+        if term.current() and enchatSettings.useSetVisible then
+                return term.current().setVisible(visible)
+        end
+end
+
+
 
 local renderChat = function(doScrollBackUp)
 	tsv(false)
