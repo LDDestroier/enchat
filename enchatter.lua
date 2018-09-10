@@ -37,7 +37,7 @@ local tArg = {...}
 local yourName
 
 yourName = tArg[1]
-enchatSettings.hostname = tArg[2]
+enchatSettings.hostname = tArg[2] or enchatSettings.hostname
 
 local palate = {
 	bg = colors.black,		--background color
@@ -735,11 +735,22 @@ local enchatSend = function(name, message, doLog)
 	if doLog then
 		logadd(name, message)
 	end
-	local res = http.request("http://"..enchatSettings.hostname.."/",nil,{
+	local res, mess = http.request("http://"..enchatSettings.hostname.."/",nil,{
 		["data"] = message,
 		["user"] = textToBlit(name,true)[1],
 		["msgcolor"] = 1
 	})
+	local evt, yorl, response
+	local timeoutID = os.startTimer(5)
+	while true do
+		if (evt == "timer") and (yorl == timeoutID) then
+			return false, "timed out"
+		elseif evt == "http_failure" then
+			return false, "failed to connect"
+		elseif evt == "http_success" then
+			return true
+		end
+	end
 end
 
 local getTableLength = function(tbl)
@@ -1169,7 +1180,6 @@ local getMessages = function()
 	local lastSent = ""
 	local messageCount = 0
 	while true do
-		sleep(5)
 		local msg = send(enchatSettings.hostname,"._client.getMessages",yourName)
 		if msg == nil then
 			isConnected = false
@@ -1178,14 +1188,17 @@ local getMessages = function()
 			if type(ilog) == "table" then
 				isConnected = true
 				for i = 1, #ilog do
-					if (messageCount < #ilog) or lastSent ~= ilog[i].sent then
-						logadd("&"..toblit[ilog.color]..ilog.usr, "&"..toblit[ilog.msgcolor]..ilog.message)
-						lastSent = ilog[i].sent
-						messageCount = messageCount + 1
+					if type(ilog.user) == "string" and type(ilog.data) == "string" then
+						if (messageCount < #ilog) or lastSent ~= ilog[i].sent then
+							logadd("&"..toblit[tonumber(log.color) or 1]..ilog.usr, "&"..toblit[tonumber(ilog.msgcolor) or 1]..ilog.data)
+							lastSent = ilog[i].sent
+							messageCount = messageCount + 1
+						end
 					end
 				end
 			end
 		end
+		sleep(5)
 	end
 end
 
