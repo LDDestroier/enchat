@@ -11,7 +11,6 @@ local scr_x, scr_y = term.getSize()
 enchat = {
 	version = 3.0,
 	isBeta = true,
-	port = 11000,
 	url = "https://github.com/LDDestroier/enchat/raw/master/enchatter.lua",
 	betaurl = "https://github.com/LDDestroier/enchat/raw/master/enchatterbeta.lua",
 }
@@ -35,10 +34,10 @@ local initcolors = {
 
 local tArg = {...}
 
-local yourName, encKey
+local yourName
 
 yourName = tArg[1]
-encKey = tArg[2]
+enchatSettings.hostname = tArg[2]
 
 local palate = {
 	bg = colors.black,		--background color
@@ -116,17 +115,6 @@ local renderlog = {} --Only records straight terminal output. Generated from 'lo
 
 local scroll = 0
 local maxScroll = 0
-
-local getModem = function()
-	local modems = {peripheral.find("modem")}
-	return modems[1]
-end
-
-local modem = getModem()
-if not modem then
-	error("You should get a modem.")
-end
-modem.open(enchat.port)
 
 local encrite = function(input) --standardized encryption function, but it's unused in chatter
 	return input
@@ -373,7 +361,7 @@ end
 
 local currentY = 2
 
-if not (yourName and encKey) then
+if not yourName then
 	prettyClearScreen()
 end
 
@@ -387,11 +375,6 @@ if not yourName then
 			end
 		end
 	end
-	currentY = currentY + 3
-end
-
-if not encKey then
-	encKey = prettyPrompt("Enter an encryption key.", currentY, "*")
 	currentY = currentY + 3
 end
 
@@ -721,7 +704,7 @@ local renderChat = function(doScrollBackUp)
 		term.write(scroll.." / "..maxScroll.." "..(isConnected and "" or "(disconnected)").."  ")
 	end
 	
-	UIconf.title = yourName.." on "..encKey
+	UIconf.title = yourName.." on "..enchatSettings.hostname
 	
 	if UIconf.doTitle then
 		term.setTextColor(palate.chevron)
@@ -759,14 +742,6 @@ local enchatSend = function(name, message, doLog)
 	})
 end
 
-local cryOut = function(name, crying)
-	modem.transmit(enchat.port, enchat.port, encrite({
-		name = name,
-		cry = crying
-	}))
-end
-
-
 local getTableLength = function(tbl)
 	local output = 0
 	for k,v in pairs(tbl) do
@@ -774,8 +749,6 @@ local getTableLength = function(tbl)
 	end
 	return output
 end
-
-local userCryList = {}
 
 local commandInit = "/"
 local commands = {}
@@ -814,26 +787,6 @@ commands.update = function()
 		logadd("*", res)
 	end	
 end
-commands.list = function()
-	userCryList = {}
-	local tim = os.startTimer(0.1)
-	cryOut(yourName, true)
-	while true do
-		local evt = {os.pullEvent()}
-		if evt[1] == "timer" then
-			if evt[2] == tim then
-				break
-			end
-		end
-	end
-	if getTableLength(userCryList) == 0 then
-		logadd(nil,"Nobody's there.")
-	else
-		for k,v in pairs(userCryList) do
-			logadd(nil,"+'"..k.."'")
-		end
-	end
-end
 commands.nick = function(newName)
 	if newName then
 		if checkValidName(newName) then
@@ -859,21 +812,6 @@ commands.whoami = function(now)
 		logadd("*","You are still '"..yourName.."&r~r'!")
 	else
 		logadd("*","You are '"..yourName.."&r~r'!")
-	end
-end
-commands.key = function(newKey)
-	if newKey then
-		if newKey ~= encKey then
-			enchatSend("*", "'"..yourName.."&r~r' buggered off. (keychange)", false)
-			encKey = newKey
-			logadd("*", "Key changed to '"..encKey.."&r~r'.")
-			enchatSend("*", "'"..yourName.."&r~r' has moseyed on over.", false)
-		else
-			logadd("*", "That's already the key, though.")
-		end
-	else
-		logadd("*","Key = '"..encKey.."&r~r'")
-		logadd("*","Channel = '"..enchat.port.."'")
 	end
 end
 commands.palate = function(_argument)
@@ -1069,8 +1007,6 @@ end
 commandAliases = {
 	quit = commands.exit,
 	colours = commands.colors,
-	ls = commands.list,
-	cry = commands.list,
 	nickname = commands.nick,
 	channel = commands.key,
 	["?"] = commands.help,
@@ -1185,22 +1121,6 @@ local handleEvents = function()
 			if type(evt[2]) == "string" and type(evt[3]) == "string" then
 				handleReceiveMessage(evt[2], evt[3])
 			end
-		elseif evt[1] == "modem_message" then
-			local side, freq, repfreq, msg, distance = evt[2], evt[3], evt[4], evt[5], evt[6]
-			msg = decrite(msg)
-			if type(msg) == "table" then
-				if (type(msg.name) == "string") then
-					if #msg.name <= 32 then
-						userCryList[msg.name] = true
-						if (type(msg.message) == "string") then
-							handleReceiveMessage(msg.name, tostring(msg.message))
-						end
-						if (msg.cry == true) then
-							cryOut(yourName, false)
-						end
-					end
-				end
-			end
 		elseif evt[1] == "mouse_scroll" then
 			local dist = evt[2]
 			oldScroll = scroll
@@ -1268,8 +1188,6 @@ local getMessages = function()
 		end
 	end
 end
-
-getModem()
 
 enchatSend("*", "'"..yourName.."&r~r' has moseyed on over.", true)
 
