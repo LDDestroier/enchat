@@ -38,6 +38,7 @@ local yourName
 
 yourName = tArg[1]
 enchatSettings.hostname = tArg[2] or enchatSettings.hostname
+local ableToRefresh, ableToRefreshID = true
 
 local palate = {
 	bg = colors.black,		--background color
@@ -731,14 +732,11 @@ local logadd = function(name, message)
 	}
 end
 
-local enchatSend = function(name, message, doLog)
-	if doLog then
-		logadd(name, message)
-	end
+local enchatSend = function(name, message, color)
 	local res, mess = http.request("http://"..enchatSettings.hostname.."/",nil,{
-		["data"] = message,
+		["data"] = textToBlit(message,true)[1],
 		["user"] = textToBlit(name,true)[1],
-		["msgcolor"] = 1
+		["msgcolor"] = tonumber(color) or 1
 	})
 	local evt, yorl, response
 	local timeoutID = os.startTimer(5)
@@ -772,12 +770,12 @@ commands.about = function()
 	logadd(nil,"Made in 2018, out of gum and procrastination.")
 end
 commands.exit = function()
-	enchatSend("*", "'"..yourName.."&r~r' buggered off. (disconnect)")
+	enchatSend("*", "&8'"..yourName.."&r~r' buggered off. (disconnect)", colors.lightGray)
 	return "exit"
 end
 commands.me = function(msg)
 	if msg then
-		enchatSend("&2*", yourName.."~r&2 "..msg, true)
+		enchatSend("&2*", yourName.."~r&2 "..msg, colors.pink)
 	else
 		logadd("*",commandInit.."me [message]")
 	end
@@ -805,7 +803,7 @@ commands.nick = function(newName)
 			if newName == yourName then
 				logadd("*","But you're already called that!")
 			else
-				enchatSend("*","'"..yourName.."&r~r' is now known as '"..newName.."&r~r'.", true)
+				enchatSend("*","'"..yourName.."&r~r' is now known as '"..newName.."&r~r'.")
 				yourName = newName
 			end
 		else
@@ -990,7 +988,6 @@ commands.help = function(cmdname)
 			me = "Sends a message in the format of \"* yourName message\"",
 			colors = "Lists all the colors you can use.",
 			update = "Updates and overwrites Enchat, then exits if successful.",
-			list = "Lists all users in range using the same key.",
 			nick = "Give yourself a different username.",
 			whoami = "Tells you your current username.",
 			key = "Change the current encryption key. Tells you the key, if without argument.",
@@ -1020,7 +1017,6 @@ commandAliases = {
 	quit = commands.exit,
 	colours = commands.colors,
 	nickname = commands.nick,
-	channel = commands.key,
 	["?"] = commands.help,
 	porn = function() logadd("*","Yeah, no.") end,
 	whoareyou = function() logadd("*", "I'm Enchat. But surely, you know this?") end,
@@ -1038,7 +1034,7 @@ commandAliases = {
 	xyzzy = function() logadd("*","A hollow voice says \"Fool.\"") end,
 	wait = function() logadd("*","Time passes...") end,
 	OrElseYouWill = function()
-		enchatSend("*", "'"..yourName.."&r~r' buggered off. (disconnect)")
+		enchatSend("*", "&8'"..yourName.."&r~r' buggered off. (disconnect)",colors.lightGray)
 		error("DIE")
 	end
 }
@@ -1088,6 +1084,7 @@ local main = function()
 		term.setTextColor(palate.chevron)
 		term.write(UIconf.chevron)
 		term.setTextColor(palate.prompttxt)
+		ableToRefreshID = os.startTimer(2)
 		
 		local input = read(nil,mHistory) --replace later with fancier input
 		if UIconf.promptY == scr_y then
@@ -1100,13 +1097,15 @@ local main = function()
 					return "exit"
 				end
 			else
-				enchatSend(yourName, input, true)
+				enchatSend(yourName, input)
 			end
 			if mHistory[#mHistory] ~= input then
 				mHistory[#mHistory+1] = input
 			end
-		elseif input == "" then
-			logadd(nil,nil)
+			if ableToRefresh then
+				os.queueEvent("enchat_refresh")
+			end
+			ableToRefresh = false
 		end
 		os.queueEvent("render_enchat")
 		
@@ -1157,6 +1156,10 @@ local handleEvents = function()
 			keysDown[key] = nil
 		elseif (evt[1] == "render_enchat") then
 			dab(renderChat)
+		elseif evt[1] == "timer" then
+			if evt[2] == ableToRefreshID then
+				ableToRefresh = true
+			end
 		end
 	end
 end
@@ -1177,35 +1180,46 @@ local handleNotifications = function()
 	end
 end
 
-local getMessages = function()
-	local lastSent = ""
-	local messageCount = 0
-	while true do
-		local res, msg = enchatSend(enchatSettings.hostname,"._client.getMessages",yourName)
-		if not res then
-			isConnected = false
-		else
-			local ilog = json.decode( msg )
-			if type(ilog) == "table" then
-				isConnected = true
-				for i = 1, #ilog do
-					if type(ilog.user) == "string" and type(ilog.data) == "string" then
-						if (messageCount < #ilog) or lastSent ~= ilog[i].sent then
-							logadd("&"..toblit[tonumber(ilog.color) or 1]..ilog.usr, "&"..toblit[tonumber(ilog.msgcolor) or 1]..ilog.data)
-							lastSent = ilog[i].sent
-							messageCount = messageCount + 1
-						end
+local getMessages = function(_messageCount, _lastSent)
+	local messageCount, lastSent = _messageCount or #log, _lastSent or ""
+	local res, msg = enchatSend(yourName,"._client.getMessages")
+	if not res then
+		isConnected = false
+	else
+		local ilog = json.decode( msg )
+		if type(ilog) == "table" then
+			--error(textutils.serialize(ilog[#ilog]))
+			isConnected = true
+			for i = messageCount+1, #ilog do
+				if type(ilog[i].usr) == "string" and type(ilog[i].message) == "string" then
+					if (messageCount < #ilog) or lastSent ~= ilog[i].sent then
+						logadd("&"..toblit[tonumber(ilog[i].color) or 1]..ilog[i].usr, "&"..toblit[tonumber(ilog[i].msgcolor) or 1]..ilog[i].message)
+						lastSent = ilog[i].sent
+						messageCount = messageCount + 1
 					end
 				end
 			end
 		end
-		sleep(5)
+	end
+	return messageCount, lastSent
+end
+
+local keepGettingMessages = function()
+	local messageCount, lastSent, msgTimerID, evt, inid
+	messageCount, lastSent = getMessages(0, "")
+	msgTimerID = os.startTimer(5)
+	while true do
+		evt, inid = os.pullEvent()
+		if (evt == "timer" and inid == msgTimerID) or (evt == "enchat_refresh") then
+			messageCount, lastSent = getMessages(messageCount, lastSent)
+			msgTimerID = os.startTimer(5)
+		end
 	end
 end
 
-enchatSend("*", "'"..yourName.."&r~r' has moseyed on over.", true)
+enchatSend("*", "'"..yourName.."&r~r' has moseyed on over.", colors.yellow)
 
-parallel.waitForAny(main, handleEvents, keepRedrawing, handleNotifications, getMessages)
+parallel.waitForAny(main, handleEvents, keepRedrawing, handleNotifications, keepGettingMessages)
 
 term.setCursorPos(1,scr_y)
 term.setBackgroundColor(initcolors.bg)
