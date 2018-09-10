@@ -743,6 +743,7 @@ local enchatSend = function(name, message, doLog)
 	local evt, yorl, response
 	local timeoutID = os.startTimer(5)
 	while true do
+		evt, yorl, response = os.pullEvent()
 		if (evt == "timer") and (yorl == timeoutID) then
 			return false, "timed out"
 		elseif evt == "http_failure" then
