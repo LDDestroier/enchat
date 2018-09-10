@@ -1,14 +1,16 @@
 --[[
- Enchat 3.0 BETA
+ Enchat 3.0
  Get with:
   wget https://github.com/LDDestroier/enchat/raw/master/enchat3.lua enchat3
+
+This is a stable release. You fool!
 --]]
 
 local scr_x, scr_y = term.getSize()
 
 enchat = {
 	version = 3.0,
-	isBeta = true,
+	isBeta = false,
 	port = 11000,
 	url = "https://github.com/LDDestroier/enchat/raw/master/enchat3.lua",
 	betaurl = "https://github.com/LDDestroier/enchat/raw/master/enchat3beta.lua",
@@ -58,7 +60,7 @@ UIconf = {
 
 local updateEnchat = function(doBeta)
 	local pPath = shell.getRunningProgram()
-	local h = http.get(doBeta and enchat.betaurl or enchat.url)
+	local h = http.get((doBeta or enchat.isBeta) and enchat.betaurl or enchat.url)
 	if not h then
 		return false, "Could not connect."
 	else
