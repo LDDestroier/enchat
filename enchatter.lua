@@ -1185,13 +1185,13 @@ local getMessages = function()
 		if not res then
 			isConnected = false
 		else
-			local ilog = json.jdecode( msg )
+			local ilog = json.decode( msg )
 			if type(ilog) == "table" then
 				isConnected = true
 				for i = 1, #ilog do
 					if type(ilog.user) == "string" and type(ilog.data) == "string" then
 						if (messageCount < #ilog) or lastSent ~= ilog[i].sent then
-							logadd("&"..toblit[tonumber(log.color) or 1]..ilog.usr, "&"..toblit[tonumber(ilog.msgcolor) or 1]..ilog.data)
+							logadd("&"..toblit[tonumber(ilog.color) or 1]..ilog.usr, "&"..toblit[tonumber(ilog.msgcolor) or 1]..ilog.data)
 							lastSent = ilog[i].sent
 							messageCount = messageCount + 1
 						end
