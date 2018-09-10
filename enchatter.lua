@@ -749,7 +749,7 @@ local enchatSend = function(name, message, doLog)
 		elseif evt == "http_failure" then
 			return false, "failed to connect"
 		elseif evt == "http_success" then
-			return true
+			return true, response.readAll()
 		end
 	end
 end
