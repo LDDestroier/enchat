@@ -1181,8 +1181,8 @@ local getMessages = function()
 	local lastSent = ""
 	local messageCount = 0
 	while true do
-		local msg = send(enchatSettings.hostname,"._client.getMessages",yourName)
-		if msg == nil then
+		local res, msg = enchatSend(enchatSettings.hostname,"._client.getMessages",yourName)
+		if not res then
 			isConnected = false
 		else
 			local ilog = json.jdecode( msg )
