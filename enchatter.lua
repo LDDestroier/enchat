@@ -1181,7 +1181,7 @@ local handleNotifications = function()
 end
 
 local getMessages = function(_messageCount, _lastSent)
-	local messageCount, lastSent = _messageCount or #log, _lastSent or ""
+	local messageCount, lastSent = _messageCount, _lastSent
 	local res, msg = enchatSend(yourName,"._client.getMessages")
 	if not res then
 		isConnected = false
@@ -1205,13 +1205,13 @@ local getMessages = function(_messageCount, _lastSent)
 end
 
 local keepGettingMessages = function()
-	local messageCount, lastSent, msgTimerID, evt, inid
-	messageCount, lastSent = getMessages(0, "")
+	local messageCount, lastSent, msgTimerID, evt, inid = {}, {}
+	messageCount[enchatSettings.hostname], lastSent[enchatSettings.hostname] = getMessages(messageCount[enchatSettings.hostname] or 0, lastSent[enchatSettings.hostname] or "")
 	msgTimerID = os.startTimer(5)
 	while true do
 		evt, inid = os.pullEvent()
 		if (evt == "timer" and inid == msgTimerID) or (evt == "enchat_refresh") then
-			messageCount, lastSent = getMessages(messageCount, lastSent)
+			messageCount[enchatSettings.hostname], lastSent[enchatSettings.hostname] = getMessages(messageCount[enchatSettings.hostname] or 0, lastSent[enchatSettings.hostname] or "")
 			msgTimerID = os.startTimer(5)
 		end
 	end
