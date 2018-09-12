@@ -12,7 +12,7 @@ enchat = {
 	version = 3.0,
 	isBeta = true,
 	url = "https://github.com/LDDestroier/enchat/raw/master/enchatter.lua",
-	betaurl = "https://github.com/LDDestroier/enchat/raw/master/enchatterbeta.lua",
+	betaurl = "https://github.com/LDDestroier/enchat/raw/master/enchatter.lua",
 }
 
 enchatSettings = {
@@ -1167,7 +1167,7 @@ local handleEvents = function()
 			end
 		elseif evt[1] == "chat_message" then
 			local usr, message = evt[2], evt[3]
-			enchatSend(evt[2], evt[3], nil, true)
+			enchatSend(evt[2], evt[3], nil, enchatSettings.hostnameCB)
 		end
 	end
 end
