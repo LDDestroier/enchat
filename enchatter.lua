@@ -1166,8 +1166,8 @@ local handleEvents = function()
 				ableToRefresh = true
 			end
 		elseif evt[1] == "chat_message" then
-			local usr, message = evt[2], evt[3]
-			enchatSend(evt[2], evt[3], nil, enchatSettings.hostnameCB)
+			local usr, message = evt[3], evt[4]
+			enchatSend(usr, message, nil, enchatSettings.hostnameCB)
 		end
 	end
 end
@@ -1188,7 +1188,7 @@ local handleNotifications = function()
 	end
 end
 
-local getMessages = function(server, _messageCount, _lastSent, useChatBox, butStillAddLog)
+local getMessages = function(server, _messageCount, _lastSent, useChatBox, ignoreIt)
 	local messageCount, lastSent = _messageCount, _lastSent
 	local res, msg = enchatSend(yourName, "._client.getMessages", nil, server)
 	if not res then
@@ -1200,15 +1200,14 @@ local getMessages = function(server, _messageCount, _lastSent, useChatBox, butSt
 			for i = messageCount+1, #ilog do
 				if type(ilog[i].usr) == "string" and type(ilog[i].message) == "string" then
 					if (messageCount < #ilog) or lastSent ~= ilog[i].sent then
-						if useChatBox then
-							if chatbox then
-								chatbox.say("<"..ilog[i].usr.."> "..ilog[i].message)
-							end
-							if butStillAddLog then
+						if not ignoreIt then
+							if useChatBox then
+								if chatbox then
+									chatbox.say("<"..ilog[i].usr.."> "..ilog[i].message)
+								end
+							else
 								logadd("&"..toblit[tonumber(ilog[i].color) or 1]..ilog[i].usr, "&"..toblit[tonumber(ilog[i].msgcolor) or 1]..ilog[i].message)
 							end
-						else
-							logadd("&"..toblit[tonumber(ilog[i].color) or 1]..ilog[i].usr, "&"..toblit[tonumber(ilog[i].msgcolor) or 1]..ilog[i].message)
 						end
 						lastSent = ilog[i].sent
 						messageCount = messageCount + 1
@@ -1223,19 +1222,16 @@ end
 local keepGettingMessages = function()
 	local messageCount, lastSent, msgTimerID, evt, inid = {}, {}
 	messageCount[enchatSettings.hostname], lastSent[enchatSettings.hostname] = getMessages(enchatSettings.hostname, messageCount[enchatSettings.hostname] or 0, lastSent[enchatSettings.hostname] or "")
-	messageCount[enchatSettings.hostnameCB], lastSent[enchatSettings.hostnameCB] = getMessages(enchatSettings.hostnameCB, messageCount[enchatSettings.hostnameCB] or 0, lastSent[enchatSettings.hostnameCB] or "", enchatSettings.hostnameCB, messageCount[enchatSettings.hostnameCB] or 0, lastSent[enchatSettings.hostnameCB] or "", chatbox and enchatSettings.useChatBox)
+	messageCount[enchatSettings.hostnameCB], lastSent[enchatSettings.hostnameCB] = getMessages(enchatSettings.hostnameCB, messageCount[enchatSettings.hostnameCB] or 0, lastSent[enchatSettings.hostnameCB] or "", enchatSettings.hostnameCB, messageCount[enchatSettings.hostnameCB] or 0, lastSent[enchatSettings.hostnameCB] or "", chatbox and enchatSettings.useChatBox, true)
+	
 	msgTimerID = os.startTimer(5)
 	while true do
 		evt, inid = os.pullEvent()
 		if (evt == "timer" and inid == msgTimerID) or (evt == "enchat_refresh") then
-			if (enchatSettings.hostname ~= enchatSettings.hostnameCB) then
-				if enchatSettings.useChatBox then
-					messageCount[enchatSettings.hostnameCB], lastSent[enchatSettings.hostnameCB] = getMessages(enchatSettings.hostnameCB, messageCount[enchatSettings.hostnameCB] or 0, lastSent[enchatSettings.hostnameCB] or "", chatbox and enchatSettings.useChatBox)
-				end
-				messageCount[enchatSettings.hostname], lastSent[enchatSettings.hostname] = getMessages(enchatSettings.hostname, messageCount[enchatSettings.hostname] or 0, lastSent[enchatSettings.hostname] or "")
-			else
-				messageCount[enchatSettings.hostname], lastSent[enchatSettings.hostname] = getMessages(enchatSettings.hostname, messageCount[enchatSettings.hostname] or 0, lastSent[enchatSettings.hostname] or "", chatbox and enchatSettings.useChatBox, true)
+			if enchatSettings.useChatBox then
+				messageCount[enchatSettings.hostnameCB], lastSent[enchatSettings.hostnameCB] = getMessages(enchatSettings.hostnameCB, messageCount[enchatSettings.hostnameCB] or 0, lastSent[enchatSettings.hostnameCB] or "", chatbox and enchatSettings.useChatBox)
 			end
+			messageCount[enchatSettings.hostname], lastSent[enchatSettings.hostname] = getMessages(enchatSettings.hostname, messageCount[enchatSettings.hostname] or 0, lastSent[enchatSettings.hostname] or "")
 			msgTimerID = os.startTimer(5)
 		end
 	end
