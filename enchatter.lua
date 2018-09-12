@@ -25,7 +25,8 @@ enchatSettings = {
 	doNotif = true,				--whether or not to use oveerlay glasses for notifications, if possible
 	doKrazy = true,				--whether or not to add &k obfuscation
 	hostname = "chat.nothy.se:1337",	--server for chatter
-	hostnameCB = "chat.nothy.se:6789"	--server for chatter, when using chatboxes
+	hostnameCB = "chat.nothy.se:6789",	--server for chatter, when using chatboxes
+	useChatBox = true			--whether or not to even use chatboxes
 }
 
 local initcolors = {
@@ -1164,7 +1165,7 @@ local handleEvents = function()
 			if evt[2] == ableToRefreshID then
 				ableToRefresh = true
 			end
-		elseif evt[1] == "chat" then
+		elseif evt[1] == "chat_message" then
 			local usr, message = evt[2], evt[3]
 			enchatSend(evt[2], evt[3], nil, true)
 		end
