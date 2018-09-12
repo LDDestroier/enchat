@@ -737,6 +737,8 @@ local logadd = function(name, message)
 	}
 end
 
+local messageCount, lastSent, msgTimerID = {}, {}
+
 local enchatSend = function(name, message, color, server)
 	local res, mess = http.request("http://"..(server or enchatSettings.hostname).."/",nil,{
 		["data"] = textToBlit(message,true)[1],
@@ -1167,6 +1169,7 @@ local handleEvents = function()
 			end
 		elseif evt[1] == "chat_message" then
 			local usr, message = evt[3], evt[4]
+			messageCount[enchatSettings.hostnameCB] = messageCount[enchatSettings.hostnameCB] + 1
 			enchatSend(usr, message, nil, enchatSettings.hostnameCB)
 		end
 	end
@@ -1220,7 +1223,7 @@ local getMessages = function(server, _messageCount, _lastSent, useChatBox, ignor
 end
 
 local keepGettingMessages = function()
-	local messageCount, lastSent, msgTimerID, evt, inid = {}, {}
+	local evt, inid
 	messageCount[enchatSettings.hostname], lastSent[enchatSettings.hostname] = getMessages(enchatSettings.hostname, messageCount[enchatSettings.hostname] or 0, lastSent[enchatSettings.hostname] or "")
 	messageCount[enchatSettings.hostnameCB], lastSent[enchatSettings.hostnameCB] = getMessages(enchatSettings.hostnameCB, messageCount[enchatSettings.hostnameCB] or 0, lastSent[enchatSettings.hostnameCB] or "", enchatSettings.hostnameCB, messageCount[enchatSettings.hostnameCB] or 0, lastSent[enchatSettings.hostnameCB] or "", chatbox and enchatSettings.useChatBox, true)
 	
