@@ -16,15 +16,16 @@ enchat = {
 }
 
 enchatSettings = {
-	animDiv = 2,		--divisor of text animation speed (scrolling from left)
-	doAnimate = true,	--whether or not to animate text moving from left side of screen
-	reverseScroll = false,	--whether or not to make scrolling up really scroll down
-	redrawDelay = 0.05,	--delay between redrawing
-	useSetVisible = true,	--whether or not to use term.current().setVisible(), which has performance and flickering improvements
-	pageKeySpeed = 4,	--how far PageUP or PageDOWN should scroll
-	doNotif = true,		--whether or not to use oveerlay glasses for notifications, if possible
-	doKrazy = true,		--whether or not to add &k obfuscation
+	animDiv = 2,				--divisor of text animation speed (scrolling from left)
+	doAnimate = true,			--whether or not to animate text moving from left side of screen
+	reverseScroll = false,			--whether or not to make scrolling up really scroll down
+	redrawDelay = 0.05,			--delay between redrawing
+	useSetVisible = true,			--whether or not to use term.current().setVisible(), which has performance and flickering improvements
+	pageKeySpeed = 4,			--how far PageUP or PageDOWN should scroll
+	doNotif = true,				--whether or not to use oveerlay glasses for notifications, if possible
+	doKrazy = true,				--whether or not to add &k obfuscation
 	hostname = "chat.nothy.se:1337",	--server for chatter
+	hostnameCB = "chat.nothy.se:6789"	--server for chatter, when using chatboxes
 }
 
 local initcolors = {
@@ -75,6 +76,7 @@ end
 
 local isConnected = true
 
+
 local checkValidName = function(nayme)
 	if type(nayme) ~= "string" then
 		return false
@@ -116,6 +118,8 @@ local renderlog = {} --Only records straight terminal output. Generated from 'lo
 
 local scroll = 0
 local maxScroll = 0
+
+local chatbox = peripheral.find("chat_box") --computronics chatbox
 
 local encrite = function(input) --standardized encryption function, but it's unused in chatter
 	return input
@@ -732,8 +736,8 @@ local logadd = function(name, message)
 	}
 end
 
-local enchatSend = function(name, message, color)
-	local res, mess = http.request("http://"..enchatSettings.hostname.."/",nil,{
+local enchatSend = function(name, message, color, server)
+	local res, mess = http.request("http://"..(server or enchatSettings.hostname).."/",nil,{
 		["data"] = textToBlit(message,true)[1],
 		["user"] = textToBlit(name,true)[1],
 		["msgcolor"] = tonumber(color) or 1
@@ -1160,6 +1164,9 @@ local handleEvents = function()
 			if evt[2] == ableToRefreshID then
 				ableToRefresh = true
 			end
+		elseif evt[1] == "chat" then
+			local usr, message = evt[2], evt[3]
+			enchatSend(evt[2], evt[3], nil, true)
 		end
 	end
 end
@@ -1180,20 +1187,25 @@ local handleNotifications = function()
 	end
 end
 
-local getMessages = function(_messageCount, _lastSent)
+local getMessages = function(server, _messageCount, _lastSent, useChatBox)
 	local messageCount, lastSent = _messageCount, _lastSent
-	local res, msg = enchatSend(yourName,"._client.getMessages")
+	local res, msg = enchatSend(yourName, "._client.getMessages", nil, server)
 	if not res then
 		isConnected = false
 	else
 		local ilog = json.decode( msg )
 		if type(ilog) == "table" then
-			--error(textutils.serialize(ilog[#ilog]))
 			isConnected = true
 			for i = messageCount+1, #ilog do
 				if type(ilog[i].usr) == "string" and type(ilog[i].message) == "string" then
 					if (messageCount < #ilog) or lastSent ~= ilog[i].sent then
-						logadd("&"..toblit[tonumber(ilog[i].color) or 1]..ilog[i].usr, "&"..toblit[tonumber(ilog[i].msgcolor) or 1]..ilog[i].message)
+						if useChatBox then
+							if chatbox then
+								chatbox.say("<"..ilog[i].usr.."> "..ilog[i].message)
+							end
+						else
+							logadd("&"..toblit[tonumber(ilog[i].color) or 1]..ilog[i].usr, "&"..toblit[tonumber(ilog[i].msgcolor) or 1]..ilog[i].message)
+						end
 						lastSent = ilog[i].sent
 						messageCount = messageCount + 1
 					end
@@ -1206,12 +1218,20 @@ end
 
 local keepGettingMessages = function()
 	local messageCount, lastSent, msgTimerID, evt, inid = {}, {}
-	messageCount[enchatSettings.hostname], lastSent[enchatSettings.hostname] = getMessages(messageCount[enchatSettings.hostname] or 0, lastSent[enchatSettings.hostname] or "")
+	messageCount[enchatSettings.hostname], lastSent[enchatSettings.hostname] = getMessages(enchatSettings.hostname, messageCount[enchatSettings.hostname] or 0, lastSent[enchatSettings.hostname] or "")
+	messageCount[enchatSettings.hostnameCB], lastSent[enchatSettings.hostnameCB] = getMessages(enchatSettings.hostnameCB, messageCount[enchatSettings.hostnameCB] or 0, lastSent[enchatSettings.hostnameCB] or "")
 	msgTimerID = os.startTimer(5)
 	while true do
 		evt, inid = os.pullEvent()
 		if (evt == "timer" and inid == msgTimerID) or (evt == "enchat_refresh") then
-			messageCount[enchatSettings.hostname], lastSent[enchatSettings.hostname] = getMessages(messageCount[enchatSettings.hostname] or 0, lastSent[enchatSettings.hostname] or "")
+			if (enchatSettings.hostname ~= enchatSettings.hostnameCB) then
+				if enchatSettings.useChatBox then
+					messageCount[enchatSettings.hostnameCB], lastSent[enchatSettings.hostnameCB] = getMessages(enchatSettings.hostnameCB, messageCount[enchatSettings.hostnameCB] or 0, lastSent[enchatSettings.hostnameCB] or "", chatbox and enchatSettings.useChatBox)
+				end
+				messageCount[enchatSettings.hostname], lastSent[enchatSettings.hostname] = getMessages(enchatSettings.hostname, messageCount[enchatSettings.hostname] or 0, lastSent[enchatSettings.hostname] or "")
+			else
+				messageCount[enchatSettings.hostname], lastSent[enchatSettings.hostname] = getMessages(enchatSettings.hostname, messageCount[enchatSettings.hostname] or 0, lastSent[enchatSettings.hostname] or "", chatbox and enchatSettings.useChatBox)
+			end
 			msgTimerID = os.startTimer(5)
 		end
 	end
