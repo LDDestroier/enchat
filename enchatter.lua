@@ -101,7 +101,7 @@ local apipath
 if shell then apipath = fs.combine(shell.dir(),"json") else apipath = "json" end
 if (not json) and (not fs.exists(apipath)) then
 	print("JSON API not found! Downloading...")
-	local prog = http.get("http://pastebin.com/raw/4nRg9CHU")
+	local prog = http.get("https://raw.githubusercontent.com/LDDestroier/enchat/master/json")
 	if not prog then error("FAIL!") end
 	local file = fs.open(apipath,"w")
 	file.write(prog.readAll())
