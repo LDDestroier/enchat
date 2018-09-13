@@ -538,16 +538,40 @@ else
 end
 
 local moveOn
-textToBlit = function(str,onlyString,initTxt,initBg,_checkPos) --returns output for term.blit, or blitWrap, with formatting codes for color selection. Modified for use specifically with Enchat.
+textToBlit = function(_str,onlyString,initTxt,initBg,_checkPos,ignoreEmotes) --returns output for term.blit, or blitWrap, with formatting codes for color selection. Modified for use specifically with Enchat.
 	checkPos = _checkPos or -1
-	if (not str) then
+	if (not _str) then
 		if onlyString then
 			return ""
 		else
 			return "","",""
 		end
 	end
-	str = tostring(str)
+	local str = tostring(_str)
+	if not ignoreEmotes then
+		local emoteList = {
+			":heart:" = "\3",
+			":fem:" = "\12",
+			":mal:" = "\11",
+			":smile:" = "\2",
+			":double_exclaim:" = "\19",
+			":2!:" = "\19",
+			":mus_note:" = "\15",
+			":up_arrow:" = "\24",
+			":up:" = "\24",
+			":down_arrow:" = "\25",
+			":down:" = "\25",
+			":right_arrow:" = "\26",
+			":right:" = "\26",
+			":left_arrow:" = "\27",
+			":left:" = "\27",
+			":deg:" = "\176",
+			":degree:" = "\176"
+		}
+		for k,v in pairs(emoteList) do
+			str = str:gsub(k, v)
+		end
+	end
 	local p = 1
 	local output, txcolorout, bgcolorout = "", "", ""
 	local txcode = "&"
