@@ -801,12 +801,12 @@ commands.about = function()
 	logadd(nil,"Made in 2018, out of gum and procrastination.")
 end
 commands.exit = function()
-	enchatSend("*", "&8'"..yourName.."&r~r' buggered off. (disconnect)", colors.lightGray)
+	os.queueEvent("enchat_send", "*", "&8'"..yourName.."&r~r' buggered off. (disconnect)", colors.lightGray)
 	return "exit"
 end
 commands.me = function(msg)
 	if msg then
-		enchatSend("&2*", yourName.."~r&2 "..msg, colors.pink)
+		os.queueEvent("enchat_send", "&2*", yourName.."~r&2 "..msg, colors.pink)
 	else
 		logadd("*",commandInit.."me [message]")
 	end
@@ -834,7 +834,7 @@ commands.nick = function(newName)
 			if newName == yourName then
 				logadd("*","But you're already called that!")
 			else
-				enchatSend("*","'"..yourName.."&r~r' is now known as '"..newName.."&r~r'.")
+				os.queueEvent("enchat_send", "*","'"..yourName.."&r~r' is now known as '"..newName.."&r~r'.")
 				yourName = newName
 			end
 		else
@@ -1128,7 +1128,7 @@ local main = function()
 					return "exit"
 				end
 			else
-				enchatSend(yourName, input)
+				os.queueEvent("enchat_send", yourName, input)
 			end
 			if mHistory[#mHistory] ~= input then
 				mHistory[#mHistory+1] = input
@@ -1194,7 +1194,16 @@ local handleEvents = function()
 		elseif evt[1] == "chat_message" then
 			local usr, message = evt[3], evt[4]
 			messageCount[enchatSettings.hostnameCB] = messageCount[enchatSettings.hostnameCB] + 1
-			enchatSend(usr, message, nil, enchatSettings.hostnameCB)
+			os.queueEvent("enchat_send", usr, message, nil, enchatSettings.hostnameCB)
+		end
+	end
+end
+
+local enchatSendThread = function()
+	while true do
+		local evt, name, message, color, server = os.pullEvent("enchat_send")
+		if type(name) == "string" and type(message) == "string" then
+			enchatSend(name, message, color, server)
 		end
 	end
 end
@@ -1266,7 +1275,7 @@ end
 
 enchatSend("*", "'"..yourName.."&r~r' has moseyed on over.", colors.yellow)
 
-parallel.waitForAny(main, handleEvents, keepRedrawing, handleNotifications, keepGettingMessages)
+parallel.waitForAny(main, handleEvents, keepRedrawing, handleNotifications, keepGettingMessages, enchatSendThread)
 
 term.setCursorPos(1,scr_y)
 term.setBackgroundColor(initcolors.bg)
