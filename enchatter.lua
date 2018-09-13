@@ -1221,7 +1221,7 @@ local getMessages = function(server, _messageCount, _lastSent, useChatBox, ignor
 	if not res then
 		isConnected = false
 	else
-		local ilog = json.decode( msg )
+		local ilog = json.jdecode( msg )
 		if type(ilog) == "table" then
 			isConnected = true
 			for i = messageCount+1, #ilog do
