@@ -1218,7 +1218,7 @@ end
 local getMessages = function(server, _messageCount, _lastSent, useChatBox, ignoreIt)
 	local messageCount, lastSent = _messageCount, _lastSent
 	local res, msg = enchatSend(yourName, "._client.getMessages", nil, server)
-	if not res then
+	if (not res) or (not msg) or (msg == "") then
 		isConnected = false
 	else
 		local ilog = json.jdecode( msg )
