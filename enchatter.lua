@@ -26,7 +26,7 @@ enchatSettings = {
 	doKrazy = true,				--whether or not to add &k obfuscation
 	hostname = "chat.nothy.se:1337",	--server for chatter
 	hostnameCB = "chat.nothy.se:6789",	--server for chatter, when using chatboxes
-	useChatBox = true			--whether or not to even use chatboxes
+	useChatBox = false			--whether or not to even use chatboxes
 }
 
 local initcolors = {
@@ -1205,11 +1205,11 @@ local handleEvents = function()
 			if evt[2] == ableToRefreshID then
 				ableToRefresh = true
 			end
-		elseif evt[1] == "chat_message" then --computronics
+		elseif evt[1] == "chat_message" and enchatSettings.useChatBox then --computronics
 			local usr, message = evt[3], evt[4]
 			messageCount[enchatSettings.hostnameCB] = messageCount[enchatSettings.hostnameCB] + 1
 			os.queueEvent("enchat_send", usr, message, nil, enchatSettings.hostnameCB)
-		elseif evt[1] == "chat" then --minimalperipherals
+		elseif evt[1] == "chat" and enchatSettings.useChatBox then --minimalperipherals
                         local usr, message = evt[2], evt[3]
                         messageCount[enchatSettings.hostnameCB] = messageCount[enchatSettings.hostnameCB] + 1
                         os.queueEvent("enchat_send", usr, message, nil, enchatSettings.hostnameCB)
