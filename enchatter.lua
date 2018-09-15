@@ -1210,7 +1210,7 @@ local handleEvents = function()
 			messageCount[enchatSettings.hostnameCB] = messageCount[enchatSettings.hostnameCB] + 1
 			os.queueEvent("enchat_send", usr, message, nil, enchatSettings.hostnameCB)
 		elseif evt[1] == "chat" then --minimalperipherals
-                        local usr, message = evt[2], evt[2]
+                        local usr, message = evt[2], evt[3]
                         messageCount[enchatSettings.hostnameCB] = messageCount[enchatSettings.hostnameCB] + 1
                         os.queueEvent("enchat_send", usr, message, nil, enchatSettings.hostnameCB)
 
