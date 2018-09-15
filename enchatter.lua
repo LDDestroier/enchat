@@ -99,7 +99,7 @@ end
 
 local apipath
 if shell then apipath = fs.combine(shell.dir(),"json") else apipath = "json" end
-if (not json) and (not fs.exists(apipath)) then
+if (not fs.exists(apipath)) then
 	print("JSON API not found! Downloading...")
 	local prog = http.get("https://raw.githubusercontent.com/LDDestroier/enchat/master/json")
 	if not prog then error("FAIL!") end
@@ -1230,7 +1230,7 @@ local getMessages = function(server, _messageCount, _lastSent, useChatBox, ignor
 	if (not res) or (msg == "") or (not msg:find("{")) then
 		isConnected = false
 	else
-		local ilog = json.decode( msg )
+		local ilog = json.jdecode( msg )
 		if type(ilog) == "table" then
 			isConnected = true
 			for i = messageCount+1, #ilog do
