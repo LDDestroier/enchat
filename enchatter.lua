@@ -120,7 +120,10 @@ local renderlog = {} --Only records straight terminal output. Generated from 'lo
 local scroll = 0
 local maxScroll = 0
 
-local chatbox = peripheral.find("chat_box") --computronics chatbox
+local chatbox = peripheral.find("chat_box") --computronics OR minimalperipherals chatbox
+if chatbox.setTitle then
+	chatbox.setTitle("EC")
+end
 
 local encrite = function(input) --standardized encryption function, but it's unused in chatter
 	return input
@@ -1191,11 +1194,16 @@ local handleEvents = function()
 			if evt[2] == ableToRefreshID then
 				ableToRefresh = true
 			end
-		elseif evt[1] == "chat_message" then
+		elseif evt[1] == "chat_message" then --computronics
 			local usr, message = evt[3], evt[4]
 			messageCount[enchatSettings.hostnameCB] = messageCount[enchatSettings.hostnameCB] + 1
 			os.queueEvent("enchat_send", usr, message, nil, enchatSettings.hostnameCB)
-		end
+		elseif evt[1] == "chat" then --minimalperipherals
+                        local usr, message = evt[2], evt[2]
+                        messageCount[enchatSettings.hostnameCB] = messageCount[enchatSettings.hostnameCB] + 1
+                        os.queueEvent("enchat_send", usr, message, nil, enchatSettings.hostnameCB)
+
+                end
 	end
 end
 
