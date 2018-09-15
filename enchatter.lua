@@ -121,10 +121,11 @@ local scroll = 0
 local maxScroll = 0
 
 local chatbox = peripheral.find("chat_box") --computronics OR minimalperipherals chatbox
-local SAY = chatbox.say
+local SAY
 if chatbox then
 	if chatbox.setTitle then --if using computronics
 		chatbox.setTitle("EC")
+		SAY = chatbox.say
 	else --if using minimalperipherals
 		SAY = function(text)
 			local players = chatbox.getPlayerList()
