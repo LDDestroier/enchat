@@ -107,7 +107,7 @@ if (not fs.exists(apipath)) then
 	file.write(prog.readAll())
 	file.close()
 end
-if not json then
+if not json.jdecode then --gotta have this specific version god damn it
 	local res = os.loadAPI(apipath)
 	if not res then error("Didn't load JSON API!") end
 end
@@ -1230,7 +1230,7 @@ local getMessages = function(server, _messageCount, _lastSent, useChatBox, ignor
 	if (not res) or (msg == "") or (not msg:find("{")) then
 		isConnected = false
 	else
-		local ilog = (json.decode or json.jdecode)( msg ) --why oh why is it ever jdecode
+		local ilog = json.jdecode( msg ) --why oh why is it ever jdecode
 		if type(ilog) == "table" then
 			isConnected = true
 			for i = messageCount+1, #ilog do
