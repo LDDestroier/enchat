@@ -121,8 +121,15 @@ local scroll = 0
 local maxScroll = 0
 
 local chatbox = peripheral.find("chat_box") --computronics OR minimalperipherals chatbox
-if chatbox.setTitle then
+if chatbox.setTitle then --if using computronics
 	chatbox.setTitle("EC")
+else --if using minimalperipherals
+	chatbox.say = function(text)
+		local players = chatbox.getPlayerList()
+		for i = 1, #players do
+			chatbox.tell(players[i], text)
+		end
+	end
 end
 
 local encrite = function(input) --standardized encryption function, but it's unused in chatter
