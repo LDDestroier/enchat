@@ -1240,6 +1240,7 @@ local getMessages = function(server, _messageCount, _lastSent, useChatBox, ignor
 							if useChatBox then
 								if chatbox then
 									chatbox.say("<"..ilog[i].usr.."> "..ilog[i].message)
+									logadd("[CB]&"..toblit[tonumber(ilog[i].color) or 1]..ilog[i].usr, "&"..toblit[tonumber(ilog[i].msgcolor) or 1]..ilog[i].message)
 								end
 							else
 								logadd("&"..toblit[tonumber(ilog[i].color) or 1]..ilog[i].usr, "&"..toblit[tonumber(ilog[i].msgcolor) or 1]..ilog[i].message)
