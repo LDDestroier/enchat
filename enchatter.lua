@@ -121,11 +121,12 @@ local scroll = 0
 local maxScroll = 0
 
 local chatbox = peripheral.find("chat_box") --computronics OR minimalperipherals chatbox
+local SAY = chatbox.say
 if chatbox then
 	if chatbox.setTitle then --if using computronics
 		chatbox.setTitle("EC")
 	else --if using minimalperipherals
-		chatbox.say = function(text)
+		SAY = function(text)
 			local players = chatbox.getPlayerList()
 			for i = 1, #players do
 				chatbox.tell(players[i], text)
@@ -1256,7 +1257,7 @@ local getMessages = function(server, _messageCount, _lastSent, useChatBox, ignor
 						if not ignoreIt then
 							if useChatBox then
 								if chatbox then
-									chatbox.say("<"..ilog[i].usr.."> "..ilog[i].message)
+									SAY("<"..ilog[i].usr.."> "..ilog[i].message)
 									logadd("[CB]&"..toblit[tonumber(ilog[i].color) or 1]..ilog[i].usr, "&"..toblit[tonumber(ilog[i].msgcolor) or 1]..ilog[i].message)
 								end
 							else
