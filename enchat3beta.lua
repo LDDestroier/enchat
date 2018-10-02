@@ -1267,7 +1267,7 @@ local handleEvents = function()
 			local side, freq, repfreq, msg, distance
 			if evt[1] == "modem_message" then
 				side, freq, repfreq, msg, distance = evt[2], evt[3], evt[4], evt[5], evt[6]
-			else then
+			else
 				side, freq, repfreq, msg, distance = nil, evt[2], evt[2], evt[3], 0
 			end
 			msg = decrite(msg)
