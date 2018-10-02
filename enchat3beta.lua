@@ -153,13 +153,12 @@ if not modem then
 	if ccemux then
 		ccemux.attach("top","wireless_modem")
 		modem = getModem()
-		modem.open(enchat.port)
 	elseif not skynet then
 		error("You should get a modem.")
 	end
-else
-	modem.open(enchat.port)
 end
+
+if modem then modem.open(enchat.port) end
 
 local modemTransmit = function(freq, repfreq, message)
 	if modem then
