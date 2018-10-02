@@ -838,17 +838,14 @@ local enchatSend = function(name, message, doLog, animType, crying)
 	if doLog then
 		logadd(name, message, animType)
 	end
-	modemTransmit(enchat.port, enchat.port, encrite({
+	local outmsg = encrite({
 		name = name,
 		message = message,
 		cry = crying
-	}))
+	})
+	modemTransmit(enchat.port, enchat.port, outmsg)
 	if skynet and enchatSettings.useSkynet then
-		skynet.send(enchat.port, encrite({
-			name = name,
-			message = message,
-			cry = crying
-		}))
+		skynet.send(enchat.port, outmsg)
 	end
 end
 
@@ -1346,16 +1343,6 @@ local handleNotifications = function()
 	end
 end
 
-local getSkynetMessages = function()
-	while true do
-		if skynet and enchatSettings.useSkynet then
-			skynet.listen()
-		else --why do I make these precautions
-			sleep(0.5)
-		end
-	end
-end
-
 getModem()
 
 enchatSend("*", "'"..yourName.."&r~r' has moseyed on over.", true)
@@ -1367,7 +1354,7 @@ local funky = {
 	handleNotifications
 }
 if skynet then
-	funky[#funky+1] = getSkynetMessages
+	funky[#funky+1] = skynet.listen
 end
 
 parallel.waitForAny(unpack(funky))
