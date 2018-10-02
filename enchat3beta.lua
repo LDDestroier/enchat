@@ -14,6 +14,7 @@ enchat = {
 	port = 11000,
 	url = "https://github.com/LDDestroier/enchat/raw/master/enchat3.lua",
 	betaurl = "https://github.com/LDDestroier/enchat/raw/master/enchat3beta.lua",
+	ignoreModem = true
 }
 
 enchatSettings = {
@@ -138,8 +139,12 @@ local scroll = 0
 local maxScroll = 0
 
 local getModem = function()
-	local modems = {peripheral.find("modem")}
-	return modems[1]
+	if enchat.ignoreModem then
+		return nil
+	else
+		local modems = {peripheral.find("modem")}
+		return modems[1]
+	end
 end
 
 local modem = getModem()
@@ -147,11 +152,14 @@ if not modem then
 	if ccemux then
 		ccemux.attach("top","wireless_modem")
 		modem = getModem()
+		modem.open(enchat.port)
 	elseif not skynet then
 		error("You should get a modem.")
 	end
+else
+	modem.open(enchat.port)
 end
-modem.open(enchat.port)
+
 local modemTransmit = function(freq, repfreq, message)
 	if modem then
 		modem.transmit(freq, repfreq, message)
