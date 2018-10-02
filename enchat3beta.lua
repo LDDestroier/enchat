@@ -1,9 +1,11 @@
 --[[
- Enchat 3.0 BETA
+ Enchat 3.0
  Get with:
   wget https://github.com/LDDestroier/enchat/raw/master/enchat3.lua enchat3
-  
-  This is a beta release. You git
+
+This is a beta release. You fool!
+To do:
+	+ try out more animations
 --]]
 
 local scr_x, scr_y = term.getSize()
@@ -121,7 +123,12 @@ end
 
 local modem = getModem()
 if not modem then
-	error("You should get a modem.")
+	if ccemux then
+		ccemux.attach("top","wireless_modem")
+		modem = getModem()
+	else
+		error("You should get a modem.")
+	end
 end
 modem.open(enchat.port)
 
@@ -637,14 +644,19 @@ textToBlit = function(str,onlyString,initTxt,initBg,_checkPos) --returns output 
 	end
 end
 
-local inAnimate = function(buff, frame, maxFrame, length)
+local inAnimate = function(animType, buff, frame, maxFrame, length)
 	local char, text, back = buff[1], buff[2], buff[3]
+	local anim = {
+		slideFromLeft = function()
+			return {
+				char:sub((length or #char) - ((frame/maxFrame)*(length or #char))),
+				text:sub((length or #text) - ((frame/maxFrame)*(length or #text))),
+				back:sub((length or #back) - ((frame/maxFrame)*(length or #back))),
+			}
+		end,
+	}
 	if enchatSettings.doAnimate and frame >= 0 then
-		return {
-			char:sub((length or #char) - ((frame/maxFrame)*(length or #char))),
-			text:sub((length or #text) - ((frame/maxFrame)*(length or #text))),
-			back:sub((length or #back) - ((frame/maxFrame)*(length or #back))),
-		}
+		return anim[animType or "slideFromleft"]()
 	else
 		return {char,text,back}
 	end
@@ -678,7 +690,7 @@ local genRenderLog = function()
 		buff, maxLength = blitWrap(unpack(prebuff))
 		--repeat every line in multiline entries
 		for l = 1, #buff do
-			renderlog[#renderlog + 1] = inAnimate(buff[l], log[a].frame, log[a].maxFrame, maxLength)
+			renderlog[#renderlog + 1] = inAnimate("slideFromLeft", buff[l], log[a].frame, log[a].maxFrame, maxLength)
 		end
 		if (log[a].frame < log[a].maxFrame) and log[a].frame >= 0 then
 			log[a].frame = log[a].frame + 1
