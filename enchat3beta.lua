@@ -667,7 +667,7 @@ local inAnimate = function(animType, buff, frame, maxFrame, length)
 			}
 		end,
 	}
-	if enchatSettings.doAnimate and frame >= 0 then
+	if enchatSettings.doAnimate and (frame >= 0) and (maxFrame > 0) then
 		return anim[animType or "slideFromleft"]()
 	else
 		return {char,text,back}
