@@ -853,6 +853,7 @@ end
 commands.update = function()
 	local res, message = updateEnchat()
 	if res then
+		enchatSend("*",yourName.."&r~r has updated and exited.")
 		term.setBackgroundColor(colors.black)
 		term.setTextColor(colors.white)
 		term.clear()
@@ -1093,7 +1094,7 @@ commands.help = function(cmdname)
 			nick = "Give yourself a different username.",
 			whoami = "Tells you your current username.",
 			key = "Change the current encryption key. Tells you the key, if without argument.",
-			clear = "Clears the log. Not your inventory, I swear.",
+			clear = "Clears the local chat log. Not your inventory, I swear.",
 			ping = "Pong. *sigh*",
 			set = "Changes config options during the current session. Lists all options, if without argument.",
 			help = "Shows every command, or describes a specific command.",
@@ -1123,22 +1124,26 @@ commandAliases = {
 	nickname = commands.nick,
 	channel = commands.key,
 	["?"] = commands.help,
-	porn = function() logadd("*","Yeah, no.") end,
-	whoareyou = function() logadd("*", "I'm Enchat. But surely, you know this?") end,
-	fuck = function() logadd("*","A mind is a terrible thing to waste.") end,
-	hello = function() logadd("*","Hey.") end,
-	hi = function() logadd("*","Hiya.") end,
-	bye = function() logadd("*","You know, you can use /exit.") end,
-	die = function() logadd("*","You would die, but the paperwork is too much.") end,
-	nap = function() logadd("*","The time for napping has passed.") end,
-	sorry = function() logadd("*","That's okay.") end,
-	jump = function() logadd("*","Sorry. This program is in a NO JUMPING zone.") end,
-	enchat = function() logadd("*","At your service!") end,
-	win = function() logadd("*","Naturally!") end,
-	lose = function() logadd("*","Preposterous!") end,
-	xyzzy = function() logadd("*","A hollow voice says \"Fool.\"") end,
-	wait = function() logadd("*","Time passes...") end,
-	stop = function() logadd("*","Hammertime!","fadeIn") end,
+	porn = function() 	logadd("*","Yeah, no.") end,
+	whoareyou = function() 	logadd("*", "I'm Enchat. But surely, you know this?") end,
+	fuck = function() 	logadd("*","A mind is a terrible thing to waste.") end,
+	hello = function() 	logadd("*","Hey.") end,
+	hi = function() 	logadd("*","Hiya.") end,
+	hey = function() 	logadd("*","That's for horses.") end,
+	bye = function() 	logadd("*","You know, you can use /exit.") end,
+	die = function() 	logadd("*","You wish.") end,
+	nap = function() 	logadd("*","The time for napping has passed.") end,
+	sorry = function() 	logadd("*","That's okay.") end,
+	jump = function() 	logadd("*","Sorry. This program is in a NO JUMPING zone.") end,
+	enchat = function() 	logadd("*","At your service!") end,
+	win = function() 	logadd("*","Naturally!") end,
+	lose = function() 	logadd("*","Preposterous!") end,
+	xyzzy = function() 	logadd("*","A hollow voice says \"Fool.\"") end,
+	wait = function() 	logadd("*","Time passes...") end,
+	stop = function() 	logadd("*","Hammertime!","fadeIn") end,
+	shit = function() 	logadd("*","You're telling me!") end,
+	eat = function() 	logadd("*","You're not hungry.") end,
+	what = function() 	logadd("*","What indeed.") end,
 	OrElseYouWill = function()
 		enchatSend("*", "'"..yourName.."&r~r' buggered off. (disconnect)")
 		error("DIE")
