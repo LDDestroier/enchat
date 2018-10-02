@@ -147,7 +147,7 @@ if not modem then
 	if ccemux then
 		ccemux.attach("top","wireless_modem")
 		modem = getModem()
-	else
+	elseif not skynet then
 		error("You should get a modem.")
 	end
 end
