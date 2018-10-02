@@ -654,6 +654,19 @@ local inAnimate = function(animType, buff, frame, maxFrame, length)
 				back:sub((length or #back) - ((frame/maxFrame)*(length or #back))),
 			}
 		end,
+		fadeIn = function()
+			local fadeList = {
+				colors.black,
+				colors.gray,
+				colors.lightGray,
+				palate.txt
+			}
+			return {
+				char,
+				toblit[fadeList[math.ceil((frame/maxFrame)*#fadeList)]]:rep(#text),
+				back
+			}
+		end,
 	}
 	if enchatSettings.doAnimate and frame >= 0 then
 		return anim[animType or "slideFromleft"]()
@@ -690,7 +703,7 @@ local genRenderLog = function()
 		buff, maxLength = blitWrap(unpack(prebuff))
 		--repeat every line in multiline entries
 		for l = 1, #buff do
-			renderlog[#renderlog + 1] = inAnimate("slideFromLeft", buff[l], log[a].frame, log[a].maxFrame, maxLength)
+			renderlog[#renderlog + 1] = inAnimate("fadeIn", buff[l], log[a].frame, log[a].maxFrame, maxLength)
 		end
 		if (log[a].frame < log[a].maxFrame) and log[a].frame >= 0 then
 			log[a].frame = log[a].frame + 1
