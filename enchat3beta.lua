@@ -127,7 +127,7 @@ if not fs.exists(apipath) then
 	end
 end
 if skynet then
-	skynet = require(apipath)
+	skynet = require("/"..apipath)
 	skynet.open(enchat.port)
 end
 
