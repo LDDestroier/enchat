@@ -702,7 +702,8 @@ local genRenderLog = function()
 		buff, maxLength = blitWrap(unpack(prebuff))
 		--repeat every line in multiline entries
 		for l = 1, #buff do
-			renderlog[#renderlog + 1] = inAnimate("fadeIn", buff[l], log[a].frame, log[a].maxFrame, maxLength)
+			--holy shit, two animations at once
+			renderlog[#renderlog + 1] = inAnimate("fadeIn", inAnimate("slideFromLeft", buff[l], log[a].frame, log[a].maxFrame, maxLength) log[a].frame, log[a].maxFrame, maxLength)
 		end
 		if (log[a].frame < log[a].maxFrame) and log[a].frame >= 0 then
 			log[a].frame = log[a].frame + 1
