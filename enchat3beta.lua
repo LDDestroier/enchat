@@ -662,7 +662,7 @@ local inAnimate = function(animType, buff, frame, maxFrame, length)
 			}
 			return {
 				char,
-				toblit[fadeList[math.min(1,math.ceil((frame/maxFrame)*#fadeList))]]:rep(#text),
+				toblit[fadeList[math.max(1,math.ceil((frame/maxFrame)*#fadeList))]]:rep(#text),
 				back
 			}
 		end,
