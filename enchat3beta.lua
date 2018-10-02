@@ -838,12 +838,12 @@ local enchatSend = function(name, message, doLog, animType, crying)
 	if doLog then
 		logadd(name, message, animType)
 	end
-	local outmsg = encrite({
+	local outmsg = {
 		name = name,
 		message = message,
 		cry = crying
-	})
-	modemTransmit(enchat.port, enchat.port, outmsg)
+	}
+	modemTransmit(enchat.port, enchat.port, encrite(outmsg))
 	if skynet and enchatSettings.useSkynet then
 		skynet.send(enchat.port, outmsg)
 	end
@@ -1282,10 +1282,10 @@ local handleEvents = function()
 			local side, freq, repfreq, msg, distance
 			if evt[1] == "modem_message" then
 				side, freq, repfreq, msg, distance = evt[2], evt[3], evt[4], evt[5], evt[6]
+				msg = decrite(msg)
 			else
 				side, freq, repfreq, msg, distance = nil, evt[2], evt[2], evt[3], 0
 			end
-			msg = decrite(msg)
 			if type(msg) == "table" then
 				if (type(msg.name) == "string") then
 					if #msg.name <= 32 then
