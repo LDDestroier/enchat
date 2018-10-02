@@ -669,7 +669,7 @@ local inAnimate = function(animType, buff, frame, maxFrame, length)
 			return {
 				char:sub((length or #char) - ((frame/maxFrame)*(length or #char))),
 				text:sub((length or #text) - ((frame/maxFrame)*(length or #text))),
-				back:sub((length or #back) - ((frame/maxFrame)*(length or #back))),
+				back:sub((length or #back) - ((frame/maxFrame)*(length or #back)))
 			}
 		end,
 		fadeIn = function()
@@ -683,6 +683,9 @@ local inAnimate = function(animType, buff, frame, maxFrame, length)
 				toblit[fadeList[math.max(1,math.ceil((frame/maxFrame)*#fadeList))]]:rep(#text),
 				back
 			}
+		end,
+		none = function()
+			return buff
 		end,
 	}
 	if enchatSettings.doAnimate and (frame >= 0) and (maxFrame > 0) then
@@ -721,7 +724,11 @@ local genRenderLog = function()
 		--repeat every line in multiline entries
 		for l = 1, #buff do
 			--holy shit, two animations at once
-			renderlog[#renderlog + 1] = inAnimate("fadeIn", inAnimate("slideFromLeft", buff[l], log[a].frame, log[a].maxFrame, maxLength), log[a].frame, log[a].maxFrame, maxLength)
+			if log[a].animType then
+				renderlog[#renderlog + 1] = inAnimate(log[a].animType, buff[l], log[a].frame, log[a].maxFrame, maxLength)
+			else
+				renderlog[#renderlog + 1] = inAnimate("fadeIn", inAnimate("slideFromLeft", buff[l], log[a].frame, log[a].maxFrame, maxLength), log[a].frame, log[a].maxFrame, maxLength)
+			end
 		end
 		if (log[a].frame < log[a].maxFrame) and log[a].frame >= 0 then
 			log[a].frame = log[a].frame + 1
@@ -779,20 +786,21 @@ local renderChat = function(doScrollBackUp)
 	tsv(true)
 end
 
-local logadd = function(name, message)
+local logadd = function(name, message, animType)
 	log[#log + 1] = {
 		prefix = name and "<" or "",
 		suffix = name and "> " or "",
 		name = name and name or "",
 		message = message or "",
 		frame = 0,
-		maxFrame = true
+		maxFrame = true,
+		animType = animType
 	}
 end
 
-local enchatSend = function(name, message, doLog)
+local enchatSend = function(name, message, doLog, animType)
 	if doLog then
-		logadd(name, message)
+		logadd(name, message, animType)
 	end
 	modem.transmit(enchat.port, enchat.port, encrite({
 		name = name,
@@ -1130,6 +1138,7 @@ commandAliases = {
 	lose = function() logadd("*","Preposterous!") end,
 	xyzzy = function() logadd("*","A hollow voice says \"Fool.\"") end,
 	wait = function() logadd("*","Time passes...") end,
+	stop = function() logadd("*","Hammertime!","fadeIn") end,
 	OrElseYouWill = function()
 		enchatSend("*", "'"..yourName.."&r~r' buggered off. (disconnect)")
 		error("DIE")
