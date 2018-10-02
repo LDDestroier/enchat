@@ -128,8 +128,8 @@ if not fs.exists(apipath) then
 end
 if skynet then
 	skynet = require("/"..apipath)
-	if enckey then
-		skynet.open(enckey)
+	if encKey then
+		skynet.open(encKey)
 	end
 end
 
@@ -853,7 +853,7 @@ local enchatSend = function(name, message, doLog, animType, crying)
 	}
 	modemTransmit(enchat.port, enchat.port, encrite(outmsg))
 	if skynet and enchatSettings.useSkynet then
-		skynet.send(enchat.port, outmsg)
+		skynet.send(enckey, outmsg)
 	end
 end
 
@@ -1294,15 +1294,17 @@ local handleEvents = function()
 			else
 				side, freq, repfreq, msg, distance = nil, evt[2], evt[2], evt[3], 0
 			end
-			if type(msg) == "table" then
-				if (type(msg.name) == "string") then
-					if #msg.name <= 32 then
-						userCryList[msg.name] = true
-						if (type(msg.message) == "string") then
-							handleReceiveMessage(msg.name, tostring(msg.message))
-						end
-						if (msg.cry == true) then
-							cryOut(yourName, false)
+			if (freq == enchat.port) or (freq == enckey) then
+				if type(msg) == "table" then
+					if (type(msg.name) == "string") then
+						if #msg.name <= 32 then
+							userCryList[msg.name] = true
+							if (type(msg.message) == "string") then
+								handleReceiveMessage(msg.name, tostring(msg.message))
+							end
+							if (msg.cry == true) then
+								cryOut(yourName, false)
+							end
 						end
 					end
 				end
