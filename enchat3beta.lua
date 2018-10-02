@@ -128,7 +128,9 @@ if not fs.exists(apipath) then
 end
 if skynet then
 	skynet = require("/"..apipath)
-	skynet.open(enchat.port)
+	if enckey then
+		skynet.open(enckey)
+	end
 end
 
 -- SKYNET API STOP (thanks again) --
@@ -138,6 +140,12 @@ local renderlog = {} --Only records straight terminal output. Generated from 'lo
 
 local scroll = 0
 local maxScroll = 0
+
+local setEncKey = function(newKey)
+	skynet.open_channels = {}
+	skynet.open(newKey)
+	enckey = newKey
+end
 
 local getModem = function()
 	if enchat.ignoreModem then
@@ -149,8 +157,8 @@ local getModem = function()
 end
 
 local modem = getModem()
-if not modem then
-	if ccemux then
+if (not modem) or enchatSettings.ignoreModem then
+	if ccemux and (not enchatSettings.ignoreModem) then
 		ccemux.attach("top","wireless_modem")
 		modem = getModem()
 	elseif not skynet then
@@ -451,7 +459,7 @@ if not yourName then
 end
 
 if not encKey then
-	encKey = prettyPrompt("Enter an encryption key.", currentY, "*")
+	setEncKey(prettyPrompt("Enter an encryption key.", currentY, "*"))
 	currentY = currentY + 3
 end
 
@@ -953,7 +961,7 @@ commands.key = function(newKey)
 	if newKey then
 		if newKey ~= encKey then
 			enchatSend("*", "'"..yourName.."&r~r' buggered off. (keychange)", false)
-			encKey = newKey
+			setEncKey(newKey)
 			logadd("*", "Key changed to '"..encKey.."&r~r'.")
 			enchatSend("*", "'"..yourName.."&r~r' has moseyed on over.", false)
 		else
