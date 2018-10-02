@@ -93,7 +93,7 @@ end
 -- AES API START (thank you SquidDev) --
 
 local apipath
-if shell then apipath = fs.combine(shell.dir(),".enchatapi/aes") else apipath = ".enchatapi/aes" end
+if shell then apipath = fs.combine(shell.dir(),"aes") else apipath = "aes" end
 if (not aes) and (not fs.exists(apipath)) then
 	print("AES API not found! Downloading...")
 	local prog = http.get("http://pastebin.com/raw/9E5UHiqv")
@@ -112,7 +112,7 @@ end
 -- SKYNET API START (thanks gollark) --
 
 local skynet = true
-if shell then apipath = fs.combine(shell.dir(),".enchatapi/skynet") else apipath = ".enchatapi/skynet" end
+if shell then apipath = fs.combine(shell.dir(),"skynet") else apipath = "skynet" end
 if not fs.exists(apipath) then
 	print("Skynet API not found! Downloading...")
 	local prog = http.get("https://raw.githubusercontent.com/osmarks/skynet/master/client.lua")
