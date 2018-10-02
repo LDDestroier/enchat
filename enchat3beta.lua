@@ -658,12 +658,11 @@ local inAnimate = function(animType, buff, frame, maxFrame, length)
 			local fadeList = {
 				colors.black,
 				colors.gray,
-				colors.lightGray,
-				palate.txt
+				colors.lightGray
 			}
 			return {
 				char,
-				toblit[fadeList[math.ceil((frame/maxFrame)*#fadeList)]]:rep(#text),
+				toblit[fadeList[math.min(1,math.ceil((frame/maxFrame)*#fadeList))]]:rep(#text),
 				back
 			}
 		end,
