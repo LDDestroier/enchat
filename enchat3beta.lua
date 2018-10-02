@@ -152,6 +152,11 @@ if not modem then
 	end
 end
 modem.open(enchat.port)
+local modemTransmit = function(freq, repfreq, message)
+	if modem then
+		modem.transmit(freq, repfreq, message)
+	end
+end
 
 local encrite = function(input) --standardized encryption function
 	if not input then return input end
@@ -821,27 +826,26 @@ local logadd = function(name, message, animType)
 	}
 end
 
-local enchatSend = function(name, message, doLog, animType)
+local enchatSend = function(name, message, doLog, animType, crying)
 	if doLog then
 		logadd(name, message, animType)
 	end
-	modem.transmit(enchat.port, enchat.port, encrite({
+	modemTransmit(enchat.port, enchat.port, encrite({
 		name = name,
-		message = message
+		message = message,
+		cry = crying
 	}))
 	if skynet and enchatSettings.useSkynet then
 		skynet.send(enchat.port, encrite({
 			name = name,
-			message = message
+			message = message,
+			cry = crying
 		}))
 	end
 end
 
 local cryOut = function(name, crying)
-	modem.transmit(enchat.port, enchat.port, encrite({
-		name = name,
-		cry = crying
-	}))
+	enchatSend(name, nil, false, nil, crying)
 end
 
 
