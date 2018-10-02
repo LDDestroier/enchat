@@ -144,7 +144,7 @@ local maxScroll = 0
 local setEncKey = function(newKey)
 	skynet.open_channels = {}
 	skynet.open(newKey)
-	enckey = newKey
+	encKey = newKey
 end
 
 local getModem = function()
@@ -853,7 +853,7 @@ local enchatSend = function(name, message, doLog, animType, crying)
 	}
 	modemTransmit(enchat.port, enchat.port, encrite(outmsg))
 	if skynet and enchatSettings.useSkynet then
-		skynet.send(enckey, outmsg)
+		skynet.send(encKey, outmsg)
 	end
 end
 
@@ -1294,7 +1294,7 @@ local handleEvents = function()
 			else
 				side, freq, repfreq, msg, distance = nil, evt[2], evt[2], evt[3], 0
 			end
-			if (freq == enchat.port) or (freq == enckey) then
+			if (freq == enchat.port) or (freq == encKey) then
 				if type(msg) == "table" then
 					if (type(msg.name) == "string") then
 						if #msg.name <= 32 then
