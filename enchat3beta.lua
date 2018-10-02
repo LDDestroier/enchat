@@ -126,7 +126,7 @@ if not fs.exists(apipath) then
 	end
 end
 if skynet then
-	skynet = require apipath
+	skynet = require(apipath)
 end
 
 -- SKYNET API STOP (thanks again) --
