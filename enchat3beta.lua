@@ -829,6 +829,12 @@ local enchatSend = function(name, message, doLog, animType)
 		name = name,
 		message = message
 	}))
+	if skynet and enchatSettings.useSkynet then
+		skynet.send(enchat.port, encrite({
+			name = name,
+			message = message
+		}))
+	end
 end
 
 local cryOut = function(name, crying)
@@ -1263,7 +1269,7 @@ local handleEvents = function()
 			if type(evt[2]) == "string" and type(evt[3]) == "string" then
 				handleReceiveMessage(evt[2], evt[3])
 			end
-		elseif (evt[1] == "modem_message") or (evt[1] == "skynet_message") then
+		elseif (evt[1] == "modem_message") or (evt[1] == "skynet_message" and enchatSettings.useSkynet) then
 			local side, freq, repfreq, msg, distance
 			if evt[1] == "modem_message" then
 				side, freq, repfreq, msg, distance = evt[2], evt[3], evt[4], evt[5], evt[6]
@@ -1330,10 +1336,10 @@ end
 
 local getSkynetMessages = function()
 	while true do
-		if skynet then
+		if skynet and enchatSettings.useSkynet then
 			skynet.listen()
 		else --why do I make these precautions
-			sleep(1)
+			sleep(0.5)
 		end
 	end
 end
