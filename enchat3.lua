@@ -121,7 +121,12 @@ end
 
 local modem = getModem()
 if not modem then
-	error("You should get a modem.")
+	if ccemux then
+		ccemux.attach("top","wireless_modem")
+		modem = getModem()
+	else
+		error("You should get a modem.")
+	end
 end
 modem.open(enchat.port)
 
