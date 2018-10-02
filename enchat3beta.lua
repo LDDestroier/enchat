@@ -3,9 +3,7 @@
  Get with:
   wget https://github.com/LDDestroier/enchat/raw/master/enchat3.lua enchat3
 
-This is a beta release. You fool!
-To do:
-	+ try out more animations
+This is a stable release. You fool!
 --]]
 
 local scr_x, scr_y = term.getSize()
@@ -23,10 +21,11 @@ enchatSettings = {
 	doAnimate = true,	--whether or not to animate text moving from left side of screen
 	reverseScroll = false,	--whether or not to make scrolling up really scroll down
 	redrawDelay = 0.05,	--delay between redrawing
-	useSetVisible = true,	--whether or not to use term.current().setVisible(), which has performance and flickering improvements
+	useSetVisible = false,	--whether or not to use term.current().setVisible(), which has performance and flickering improvements
 	pageKeySpeed = 4,	--how far PageUP or PageDOWN should scroll
 	doNotif = true,		--whether or not to use oveerlay glasses for notifications, if possible
-	doKrazy = true		--whether or not to add &k obfuscation
+	doKrazy = true,		--whether or not to add &k obfuscation
+	useSkynet = true	--whether or not to use gollark's Skynet in addition to modem calls
 }
 
 local initcolors = {
@@ -109,6 +108,28 @@ if not aes then
 end
 
 -- AES API STOP (thanks again) --
+
+-- SKYNET API START (thanks gollark) --
+
+local skynet = true
+if shell then apipath = fs.combine(shell.dir(),"skynet") else apipath = "skynet" end
+if not fs.exists(apipath) then
+	print("Skynet API not found! Downloading...")
+	local prog = http.get("https://raw.githubusercontent.com/osmarks/skynet/master/client.lua")
+	if prog then
+		local file = fs.open(apipath,"w")
+		file.write(prog.readAll())
+		file.close()
+	else
+		printError("FAIL! Oh, well.")
+		skynet = nil
+	end
+end
+if skynet then
+	skynet = require apipath
+end
+
+-- SKYNET API STOP (thanks again) --
 
 local log = {} --Records all sorts of data on text.
 local renderlog = {} --Only records straight terminal output. Generated from 'log'
@@ -671,7 +692,7 @@ local inAnimate = function(animType, buff, frame, maxFrame, length)
 			return {
 				char:sub((length or #char) - ((frame/maxFrame)*(length or #char))),
 				text:sub((length or #text) - ((frame/maxFrame)*(length or #text))),
-				back:sub((length or #back) - ((frame/maxFrame)*(length or #back))),
+				back:sub((length or #back) - ((frame/maxFrame)*(length or #back)))
 			}
 		end,
 		fadeIn = function()
@@ -685,6 +706,9 @@ local inAnimate = function(animType, buff, frame, maxFrame, length)
 				toblit[fadeList[math.max(1,math.ceil((frame/maxFrame)*#fadeList))]]:rep(#text),
 				back
 			}
+		end,
+		none = function()
+			return buff
 		end,
 	}
 	if enchatSettings.doAnimate and (frame >= 0) and (maxFrame > 0) then
@@ -723,7 +747,11 @@ local genRenderLog = function()
 		--repeat every line in multiline entries
 		for l = 1, #buff do
 			--holy shit, two animations at once
-			renderlog[#renderlog + 1] = inAnimate("fadeIn", inAnimate("slideFromLeft", buff[l], log[a].frame, log[a].maxFrame, maxLength), log[a].frame, log[a].maxFrame, maxLength)
+			if log[a].animType then
+				renderlog[#renderlog + 1] = inAnimate(log[a].animType, buff[l], log[a].frame, log[a].maxFrame, maxLength)
+			else
+				renderlog[#renderlog + 1] = inAnimate("fadeIn", inAnimate("slideFromLeft", buff[l], log[a].frame, log[a].maxFrame, maxLength), log[a].frame, log[a].maxFrame, maxLength)
+			end
 		end
 		if (log[a].frame < log[a].maxFrame) and log[a].frame >= 0 then
 			log[a].frame = log[a].frame + 1
@@ -781,20 +809,21 @@ local renderChat = function(doScrollBackUp)
 	tsv(true)
 end
 
-local logadd = function(name, message)
+local logadd = function(name, message, animType)
 	log[#log + 1] = {
 		prefix = name and "<" or "",
 		suffix = name and "> " or "",
 		name = name and name or "",
 		message = message or "",
 		frame = 0,
-		maxFrame = true
+		maxFrame = true,
+		animType = animType
 	}
 end
 
-local enchatSend = function(name, message, doLog)
+local enchatSend = function(name, message, doLog, animType)
 	if doLog then
-		logadd(name, message)
+		logadd(name, message, animType)
 	end
 	modem.transmit(enchat.port, enchat.port, encrite({
 		name = name,
@@ -847,6 +876,7 @@ end
 commands.update = function()
 	local res, message = updateEnchat()
 	if res then
+		enchatSend("*",yourName.."&r~r has updated and exited.")
 		term.setBackgroundColor(colors.black)
 		term.setTextColor(colors.white)
 		term.clear()
@@ -1087,7 +1117,7 @@ commands.help = function(cmdname)
 			nick = "Give yourself a different username.",
 			whoami = "Tells you your current username.",
 			key = "Change the current encryption key. Tells you the key, if without argument.",
-			clear = "Clears the log. Not your inventory, I swear.",
+			clear = "Clears the local chat log. Not your inventory, I swear.",
 			ping = "Pong. *sigh*",
 			set = "Changes config options during the current session. Lists all options, if without argument.",
 			help = "Shows every command, or describes a specific command.",
@@ -1117,21 +1147,26 @@ commandAliases = {
 	nickname = commands.nick,
 	channel = commands.key,
 	["?"] = commands.help,
-	porn = function() logadd("*","Yeah, no.") end,
-	whoareyou = function() logadd("*", "I'm Enchat. But surely, you know this?") end,
-	fuck = function() logadd("*","A mind is a terrible thing to waste.") end,
-	hello = function() logadd("*","Hey.") end,
-	hi = function() logadd("*","Hiya.") end,
-	bye = function() logadd("*","You know, you can use /exit.") end,
-	die = function() logadd("*","You would die, but the paperwork is too much.") end,
-	nap = function() logadd("*","The time for napping has passed.") end,
-	sorry = function() logadd("*","That's okay.") end,
-	jump = function() logadd("*","Sorry. This program is in a NO JUMPING zone.") end,
-	enchat = function() logadd("*","At your service!") end,
-	win = function() logadd("*","Naturally!") end,
-	lose = function() logadd("*","Preposterous!") end,
-	xyzzy = function() logadd("*","A hollow voice says \"Fool.\"") end,
-	wait = function() logadd("*","Time passes...") end,
+	porn = function() 	logadd("*","Yeah, no.") end,
+	whoareyou = function() 	logadd("*", "I'm Enchat. But surely, you know this?") end,
+	fuck = function() 	logadd("*","A mind is a terrible thing to waste.") end,
+	hello = function() 	logadd("*","Hey.") end,
+	hi = function() 	logadd("*","Hiya.") end,
+	hey = function() 	logadd("*","That's for horses.") end,
+	bye = function() 	logadd("*","You know, you can use /exit.") end,
+	die = function() 	logadd("*","You wish.") end,
+	nap = function() 	logadd("*","The time for napping has passed.") end,
+	sorry = function() 	logadd("*","That's okay.") end,
+	jump = function() 	logadd("*","Sorry. This program is in a NO JUMPING zone.") end,
+	enchat = function() 	logadd("*","At your service!") end,
+	win = function() 	logadd("*","Naturally!") end,
+	lose = function() 	logadd("*","Preposterous!") end,
+	xyzzy = function() 	logadd("*","A hollow voice says \"Fool.\"") end,
+	wait = function() 	logadd("*","Time passes...") end,
+	stop = function() 	logadd("*","Hammertime!","fadeIn") end,
+	shit = function() 	logadd("*","Man, you're telling me!") end,
+	eat = function() 	logadd("*","You're not hungry.") end,
+	what = function() 	logadd("*","What indeed.") end,
 	OrElseYouWill = function()
 		enchatSend("*", "'"..yourName.."&r~r' buggered off. (disconnect)")
 		error("DIE")
@@ -1228,8 +1263,13 @@ local handleEvents = function()
 			if type(evt[2]) == "string" and type(evt[3]) == "string" then
 				handleReceiveMessage(evt[2], evt[3])
 			end
-		elseif evt[1] == "modem_message" then
-			local side, freq, repfreq, msg, distance = evt[2], evt[3], evt[4], evt[5], evt[6]
+		elseif (evt[1] == "modem_message") or (evt[1] == "skynet_message") then
+			local side, freq, repfreq, msg, distance
+			if evt[1] == "modem_message" then
+				side, freq, repfreq, msg, distance = evt[2], evt[3], evt[4], evt[5], evt[6]
+			else then
+				side, freq, repfreq, msg, distance = nil, evt[2], evt[2], evt[3], 0
+			end
 			msg = decrite(msg)
 			if type(msg) == "table" then
 				if (type(msg.name) == "string") then
@@ -1288,11 +1328,31 @@ local handleNotifications = function()
 	end
 end
 
+local getSkynetMessages = function()
+	while true do
+		if skynet then
+			skynet.listen()
+		else --why do I make these precautions
+			sleep(1)
+		end
+	end
+end
+
 getModem()
 
 enchatSend("*", "'"..yourName.."&r~r' has moseyed on over.", true)
 
-parallel.waitForAny(main, handleEvents, keepRedrawing, handleNotifications)
+local funky = {
+	main,
+	handleEvents,
+	keepRedrawing,
+	handleNotifications
+}
+if skynet then
+	funky[#funky+1] = getSkynetMessages
+end
+
+parallel.waitForAny(unpack(funky))
 
 term.setCursorPos(1,scr_y)
 term.setBackgroundColor(initcolors.bg)
