@@ -163,10 +163,30 @@ local explode = function(div,str,replstr,includeDiv)
 	return arr
 end
 
+local splitStr = function(str, maxLength)
+	local output = {}
+	for l = 1, #str, maxLength do
+		output[#output+1] = str:sub(l,l+maxLength+-1)
+	end
+	return output
+end
+
+local splitStrTbl = function(tbl, maxLength)
+	local output, tline = {}
+	for w = 1, #tbl do
+		tline = splitStr(tbl[w], maxLength)
+		for t = 1, #tline do
+			output[#output+1] = tline[t]
+		end
+	end
+	return output
+end
+
 local blitWrap = function(char, text, back, noWrite)
-	local cWords = explode(" ",char,nil, true)
-	local tWords = explode(" ",char,text,true)
-	local bWords = explode(" ",char,back,true)
+	local cWords = splitStrTbl(explode(" ",char,nil, true), scr_x)
+	local tWords = splitStrTbl(explode(" ",char,text,true), scr_x)
+	local bWords = splitStrTbl(explode(" ",char,back,true), scr_x)
+	
 	local ox,oy = term.getCursorPos()
 	local cx,cy,ty = ox,oy,1
 	local scr_x, scr_y = term.getSize()
