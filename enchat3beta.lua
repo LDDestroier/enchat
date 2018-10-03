@@ -34,6 +34,10 @@ local initcolors = {
 	txt = term.getTextColor()
 }
 
+--prevent terminating. It is reversed upon exit.
+local oldePullEvent = os.pullEvent
+os.pullEvent = os.pullEventRaw
+
 local tArg = {...}
 
 local yourName, encKey
@@ -915,7 +919,7 @@ commands.list = function()
 	local tim = os.startTimer(0.1)
 	cryOut(yourName, true)
 	while true do
-		local evt = {os.pullEventRaw()}
+		local evt = {os.pullEvent()}
 		if evt[1] == "timer" then
 			if evt[2] == tim then
 				break
@@ -1281,7 +1285,7 @@ local handleEvents = function()
 	local oldScroll
 	local keysDown = {}
 	while true do
-		local evt = {os.pullEventRaw()}
+		local evt = {os.pullEvent()}
 		if evt[1] == "enchat_receive" then
 			if type(evt[2]) == "string" and type(evt[3]) == "string" then
 				handleReceiveMessage(evt[2], evt[3])
@@ -1348,7 +1352,7 @@ end
 
 local handleNotifications = function()
 	while true do
-		os.pullEventRaw("render_enchat")
+		os.pullEvent("render_enchat")
 		if canvas and enchatSettings.doNotif then
 			notif.displayNotifications(true)
 		end
@@ -1371,6 +1375,7 @@ end
 
 parallel.waitForAny(unpack(funky))
 
+os.pullEvent = oldePullEvent
 if skynet then
 	if skynet.socket then
 		skynet.socket.close()
