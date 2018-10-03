@@ -915,7 +915,7 @@ commands.list = function()
 	local tim = os.startTimer(0.1)
 	cryOut(yourName, true)
 	while true do
-		local evt = {os.pullEvent()}
+		local evt = {os.pullEventRaw()}
 		if evt[1] == "timer" then
 			if evt[2] == tim then
 				break
@@ -1281,7 +1281,7 @@ local handleEvents = function()
 	local oldScroll
 	local keysDown = {}
 	while true do
-		local evt = {os.pullEvent()}
+		local evt = {os.pullEventRaw()}
 		if evt[1] == "enchat_receive" then
 			if type(evt[2]) == "string" and type(evt[3]) == "string" then
 				handleReceiveMessage(evt[2], evt[3])
@@ -1333,6 +1333,8 @@ local handleEvents = function()
 			keysDown[key] = nil
 		elseif (evt[1] == "render_enchat") then
 			dab(renderChat)
+		elseif evt[1] == "terminate" then
+			return "exit"
 		end
 	end
 end
@@ -1346,7 +1348,7 @@ end
 
 local handleNotifications = function()
 	while true do
-		os.pullEvent("render_enchat")
+		os.pullEventRaw("render_enchat")
 		if canvas and enchatSettings.doNotif then
 			notif.displayNotifications(true)
 		end
@@ -1368,6 +1370,12 @@ if skynet then
 end
 
 parallel.waitForAny(unpack(funky))
+
+if skynet then
+	if skynet.socket then
+		skynet.socket.close()
+	end
+end
 
 term.setCursorPos(1,scr_y)
 term.setBackgroundColor(initcolors.bg)
