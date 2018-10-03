@@ -157,8 +157,8 @@ local getModem = function()
 end
 
 local modem = getModem()
-if (not modem) and (not enchatSettings.ignoreModem) then
-	if ccemux and (not enchatSettings.ignoreModem) then
+if (not modem) and (not enchat.ignoreModem) then
+	if ccemux and (not enchat.ignoreModem) then
 		ccemux.attach("top","wireless_modem")
 		modem = getModem()
 	elseif not skynet then
