@@ -857,7 +857,7 @@ local enchatSend = function(name, message, doLog, animType, crying)
 		message = message,
 		cry = crying
 	}
-	modemTransmit(enchat.port, enchat.port, encrite(outmsg))
+	if not enchat.ignoreModem then modemTransmit(enchat.port, enchat.port, encrite(outmsg)) end
 	if skynet and enchatSettings.useSkynet then
 		skynet.send(enchat.skynetPort, outmsg)
 	end
