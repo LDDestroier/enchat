@@ -1,7 +1,7 @@
 --[[
  Enchat 3.0
  Get with:
-  wget https://github.com/LDDestroier/enchat/raw/master/enchat3.lua enchat3
+  wget https://github.com/LDDestroier/enchat/raw/master/enchat3beta.lua enchat3beta.lua
 
 This is a stable release. You fool!
 --]]
@@ -14,7 +14,7 @@ enchat = {
 	port = 11000,
 	url = "https://github.com/LDDestroier/enchat/raw/master/enchat3.lua",
 	betaurl = "https://github.com/LDDestroier/enchat/raw/master/enchat3beta.lua",
-	ignoreModem = false
+	ignoreModem = true
 }
 
 enchatSettings = {
