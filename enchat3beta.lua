@@ -3,7 +3,10 @@
  Get with:
   wget https://github.com/LDDestroier/enchat/raw/master/enchat3beta.lua enchat3beta.lua
 
-This is a stable release. You fool!
+This is a beta release. You fool!
+To do:
+	+ GET ENCRYPTED SKYNET WORKING
+	+ last minute touching up
 --]]
 
 local scr_x, scr_y = term.getSize()
@@ -849,12 +852,12 @@ local enchatSend = function(name, message, doLog, animType, crying)
 	if doLog then
 		logadd(name, message, animType)
 	end
-	local outmsg = encrite({
+	local outmsg = {
 		name = name,
 		message = message,
 		cry = crying
-	})
-	modemTransmit(enchat.port, enchat.port, outmsg)
+	}
+	modemTransmit(enchat.port, enchat.port, encrite(outmsg))
 	if skynet and enchatSettings.useSkynet then
 		skynet.send(enchat.skynetPort, outmsg)
 	end
@@ -1295,8 +1298,8 @@ local handleEvents = function()
 				side, freq, repfreq, msg, distance = evt[2], evt[3], evt[4], evt[5], evt[6]
 			else
 				side, freq, repfreq, msg, distance = nil, evt[2], evt[2], evt[3], 0
+				msg = decrite(msg)
 			end
-			msg = decrite(msg)
 			if (freq == enchat.port) or (freq == enchat.skynetPort) then
 				if type(msg) == "table" then
 					if (type(msg.name) == "string") then
