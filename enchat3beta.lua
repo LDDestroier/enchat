@@ -14,7 +14,7 @@ enchat = {
 	port = 11000,
 	url = "https://github.com/LDDestroier/enchat/raw/master/enchat3.lua",
 	betaurl = "https://github.com/LDDestroier/enchat/raw/master/enchat3beta.lua",
-	ignoreModem = true
+	ignoreModem = false
 }
 
 enchatSettings = {
