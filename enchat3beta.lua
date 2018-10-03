@@ -12,6 +12,7 @@ enchat = {
 	version = 3.0,
 	isBeta = true,
 	port = 11000,
+	skynetPort = "enchat3-default",
 	url = "https://github.com/LDDestroier/enchat/raw/master/enchat3.lua",
 	betaurl = "https://github.com/LDDestroier/enchat/raw/master/enchat3beta.lua",
 	ignoreModem = true
@@ -133,7 +134,7 @@ end
 if skynet then
 	skynet = require("/"..apipath)
 	if encKey then
-		skynet.open(encKey)
+		skynet.open(enchat.skynetPort)
 	end
 end
 
@@ -146,8 +147,6 @@ local scroll = 0
 local maxScroll = 0
 
 local setEncKey = function(newKey)
-	skynet.open_channels = {}
-	skynet.open(newKey)
 	encKey = newKey
 end
 
@@ -850,14 +849,14 @@ local enchatSend = function(name, message, doLog, animType, crying)
 	if doLog then
 		logadd(name, message, animType)
 	end
-	local outmsg = {
+	local outmsg = encrite({
 		name = name,
 		message = message,
 		cry = crying
-	}
-	modemTransmit(enchat.port, enchat.port, encrite(outmsg))
+	})
+	modemTransmit(enchat.port, enchat.port, outmsg)
 	if skynet and enchatSettings.useSkynet then
-		skynet.send(encKey, outmsg)
+		skynet.send(enchat.skynetPort, outmsg)
 	end
 end
 
@@ -1298,7 +1297,7 @@ local handleEvents = function()
 			else
 				side, freq, repfreq, msg, distance = nil, evt[2], evt[2], evt[3], 0
 			end
-			if (freq == enchat.port) or (freq == encKey) then
+			if (freq == enchat.port) or (freq == enchat.skynetPort) then
 				if type(msg) == "table" then
 					if (type(msg.name) == "string") then
 						if #msg.name <= 32 then
