@@ -5,8 +5,7 @@
 
 This is a beta release. You fool!
 To do:
-	+ GET ENCRYPTED SKYNET WORKING
-	+ last minute touching up
+	+ find and eradicate all bugs
 --]]
 
 local scr_x, scr_y = term.getSize()
