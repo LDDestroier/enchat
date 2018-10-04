@@ -1009,7 +1009,7 @@ end
 commands.asay = function(_argument)
 	local sPoint = (_argument or ""):find(" ")
 	if not sPoint then
-		logadd("*",Animation types:)
+		logadd("*","Animation types:")
 		for k,v in pairs(animations) do
 			logadd(nil," '"..k.."'")
 		end
