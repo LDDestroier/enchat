@@ -992,6 +992,9 @@ commands.key = function(newKey)
 		logadd("*","Channel = '"..enchat.port.."'")
 	end
 end
+commands.shrug = function(more)
+	enchatSend(yourName, "¯\_(?)_/¯"..(more or ""), true)
+end
 commands.palette = function(_argument)
 	local argument = _argument or ""
 	if argument:gsub("%s","") == "" then
@@ -1162,6 +1165,7 @@ commands.help = function(cmdname)
 			key = "Change the current encryption key. Tells you the key, if without argument.",
 			clear = "Clears the local chat log. Not your inventory, I swear.",
 			ping = "Pong. *sigh*",
+			shrug = "Sends out a shrugging emoticon.",
 			set = "Changes config options during the current session. Lists all options, if without argument.",
 			help = "Shows every command, or describes a specific command.",
 		}
