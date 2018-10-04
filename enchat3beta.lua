@@ -17,10 +17,11 @@ enchat = {
 	skynetPort = "enchat3-default",
 	url = "https://github.com/LDDestroier/enchat/raw/master/enchat3.lua",
 	betaurl = "https://github.com/LDDestroier/enchat/raw/master/enchat3beta.lua",
-	ignoreModem = true
+	ignoreModem = true,
+	dataDir = "/.enchat"
 }
 
-enchatSettings = {
+local enchatSettings = {	--DEFAULT settings.
 	animDiv = 2,		--divisor of text animation speed (scrolling from left)
 	doAnimate = true,	--whether or not to animate text moving from left side of screen
 	reverseScroll = false,	--whether or not to make scrolling up really scroll down
@@ -31,22 +32,6 @@ enchatSettings = {
 	doKrazy = true,		--whether or not to add &k obfuscation
 	useSkynet = true	--whether or not to use gollark's Skynet in addition to modem calls
 }
-
-local initcolors = {
-	bg = term.getBackgroundColor(),
-	txt = term.getTextColor()
-}
-
---prevent terminating. It is reversed upon exit.
-local oldePullEvent = os.pullEvent
-os.pullEvent = os.pullEventRaw
-
-local tArg = {...}
-
-local yourName, encKey
-
-yourName = tArg[1]
-encKey = tArg[2]
 
 local palette = {
 	bg = colors.black,		--background color
@@ -66,6 +51,50 @@ UIconf = {
 	doTitle = false,		--whether or not to draw UIconf.title at the top of the screen
 	nameDecolor = false,	--if true, sets all names to palette.chevron color
 }
+
+local saveSettings = function()
+	local file = fs.open(fs.combine(enchat.dataDir,"settings"),"w")
+	file.write(textutils.serialize({
+		enchatSettings = enchatSettings,
+		palette = palette,
+		UIconf = UIconf
+	}))
+	file.close()
+end
+
+local loadSettings = function()
+	local contents
+	if not fs.exists(fs.combine(enchat.dataDir,"settings")) then
+		saveSettings()
+	end
+	local file = fs.open(fs.combine(enchat.dataDir,"settings"),"r")
+	contents = file.readAll()
+	file.close()
+	local newSettings = textutils.unserialize(contents)
+	if newSettings then
+		enchatSettings = newSettings.enchatSettings
+		palette = newSettings.palette,
+		UIconf = newSettings.UIconf
+	else
+		saveSettings()
+	end
+end
+
+local initcolors = {
+	bg = term.getBackgroundColor(),
+	txt = term.getTextColor()
+}
+
+--prevent terminating. It is reversed upon exit.
+local oldePullEvent = os.pullEvent
+os.pullEvent = os.pullEventRaw
+
+local tArg = {...}
+
+local yourName, encKey
+
+yourName = tArg[1]
+encKey = tArg[2]
 
 local updateEnchat = function(doBeta)
 	local pPath = shell.getRunningProgram()
@@ -250,20 +279,19 @@ local explode = function(div,str,replstr,includeDiv)
 end
 
 local moveOn
-textToBlit = function(str,onlyString,initTxt,initBg,_checkPos) --returns output for term.blit, or blitWrap, with formatting codes for color selection. Modified for use specifically with Enchat.
+textToBlit = function(_str,onlyString,initTxt,initBg,_checkPos) --returns output for term.blit, or blitWrap, with formatting codes for color selection. Modified for use specifically with Enchat.
 	checkPos = _checkPos or -1
-	if (not str) then
+	if (not _str) then
 		if onlyString then
 			return ""
 		else
 			return "","",""
 		end
 	end
-	str = tostring(str)
+	local str = tostring(_str)
 	local p = 1
 	local output, txcolorout, bgcolorout = "", "", ""
-	local txcode = "&"
-	local bgcode = "~"
+	local txcode, bgcode = "&", "~"
 	local isKrazy = false
 	local doFormatting = true
 	local usedformats = {}
@@ -440,8 +468,7 @@ end
 
 -- AES API START (thank you SquidDev) --
 
-local apipath
-if shell then apipath = fs.combine(shell.dir(),"aes") else apipath = "aes" end
+local apipath = fs.combine(enchat.dataDir,"/api/aes")
 if (not aes) and (not fs.exists(apipath)) then
 	print("AES API not found! Downloading...")
 	local prog = http.get("http://pastebin.com/raw/9E5UHiqv")
@@ -460,7 +487,7 @@ end
 -- SKYNET API START (thanks gollark) --
 
 local skynet = true
-if shell then apipath = fs.combine(shell.dir(),"skynet") else apipath = "skynet" end
+apipath = fs.combine(enchat.dataDir,"/api/skynet")
 if not fs.exists(apipath) then
 	print("Skynet API not found! Downloading...")
 	local prog = http.get("https://raw.githubusercontent.com/osmarks/skynet/master/client.lua")
@@ -474,7 +501,7 @@ if not fs.exists(apipath) then
 	end
 end
 if skynet then
-	skynet = require("/"..apipath)
+	skynet = dofile(apipath) --require my left asshole
 	if encKey then
 		skynet.open(enchat.skynetPort)
 	end
@@ -1179,6 +1206,7 @@ commands.set = function(_argument)
 				if type(enchatSettings[arguments[1]]) == type(newval) then
 					enchatSettings[arguments[1]] = newval
 					logadd("*","Set '&4"..arguments[1].."&r' to &{"..contextualQuote(newval,textutils.serialize(newval).."&}").." ("..type(newval)..")")
+					saveSettings()
 				else
 					logadd("*","Wrong value type (it's "..type(enchatSettings[arguments[1]])..")")
 				end
@@ -1305,21 +1333,11 @@ local main = function()
 		term.write(UIconf.chevron)
 		term.setTextColor(palette.prompttxt)
 		
-		local input = read(nil,mHistory,function(str)
-			local output = {}
-			if checkIfCommand(str) then
-				for name,v in pairs(commands) do
-					if name:sub(1,#str) == str:sub(2) then
-						output[#output+1] = name:sub(#str)
-					end
-				end
-			end
-			return output
-		end) --replace later with fancier input
+		local input = read(nil,mHistory) --replace later with fancier input
 		if UIconf.promptY == scr_y then
 			term.scroll(1)
 		end
-		if textToBlit(input,true):gsub(" ","") ~= "" then --if you didn't just press ENTER or a bunch of spaces
+		if textToBlit(input,true):gsub(" ","") ~= "" then --people who send blank messages in chat programs deserve to die
 			if checkIfCommand(input) then
 				local res = parseCommand(input)
 				if res == "exit" then
@@ -1428,6 +1446,8 @@ local handleNotifications = function()
 		end
 	end
 end
+
+loadSettings()
 
 getModem()
 
