@@ -1112,6 +1112,7 @@ commands.palette = function(_argument)
 				term.setBackgroundColor(palette.bg)
 				term.clear()
 				logadd("*","You cleansed your palette.")
+				saveSettings()
 			elseif argument[1]:gsub("%s",""):lower() == "enchat2" then
 				palette = {
 					bg = colors.gray,
@@ -1133,6 +1134,7 @@ commands.palette = function(_argument)
 				term.setBackgroundColor(palette.bg)
 				term.clear()
 				logadd("*","Switched to the old Enchat2 palette.")
+				saveSettings()
 			elseif argument[1]:gsub("%s",""):lower() == "chat.lua" then
 				palette = {
 					bg = colors.black,
@@ -1154,6 +1156,7 @@ commands.palette = function(_argument)
 				term.setBackgroundColor(palette.bg)
 				term.clear()
 				logadd("*","Switched to /rom/programs/rednet/chat.lua palette.")
+				saveSettings()
 			else
 				if not palette[argument[1]] then
 					logadd("*","There's no such palette option.")
@@ -1174,7 +1177,8 @@ commands.palette = function(_argument)
 					logadd("*","That isn't a valid color code. (0-f)")
 				else
 					palette[argument[1]] = (tocolors[newcol] or colors_strnames[newcol])
-					logadd("*","palette changed.",false)
+					logadd("*","Palette changed.",false)
+					saveSettings()
 				end
 			end
 		end
@@ -1363,6 +1367,7 @@ local main = function()
 					return "exit"
 				end
 			else
+				logadd(nil,nil) --readability
 				enchatSend(yourName, input, true)
 			end
 			if mHistory[#mHistory] ~= input then
