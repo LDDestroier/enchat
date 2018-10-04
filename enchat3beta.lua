@@ -466,20 +466,38 @@ if not encKey then
 	currentY = currentY + 3
 end
 
+local bottomMessage = function(text)
+	term.setCursorPos(1,scr_y)
+	term.setTextColor(colors.gray)
+	term.clearLine()
+	term.write(text)
+end
+
+term.setBackgroundColor(colors.black)
+term.clear()
+
 -- AES API START (thank you SquidDev) --
 
 local apipath = fs.combine(enchat.dataDir,"/api/aes")
-if (not aes) and (not fs.exists(apipath)) then
-	print("AES API not found! Downloading...")
+if (not fs.exists(apipath)) then
+	bottomMessage("AES API not found! Downloading...")
 	local prog = http.get("http://pastebin.com/raw/9E5UHiqv")
-	if not prog then error("FAIL!") end
+	if not prog then
+		bottomMessage("Failed to download AES. Abort.")
+		term.setCursorPos(1,1)
+		return
+	end
 	local file = fs.open(apipath,"w")
 	file.write(prog.readAll())
 	file.close()
 end
 if not aes then
 	local res = os.loadAPI(apipath)
-	if not res then error("Didn't load AES API!") end
+	if not res then
+		bottomMessage("Failed to load AES. Abort.")
+		term.setCursorPos(1,1)
+		return
+	end
 end
 
 -- AES API STOP (thanks again) --
@@ -489,20 +507,21 @@ end
 local skynet = true
 apipath = fs.combine(enchat.dataDir,"/api/skynet")
 if not fs.exists(apipath) then
-	print("Skynet API not found! Downloading...")
+	bottomMessage("Skynet API not found! Downloading...")
 	local prog = http.get("https://raw.githubusercontent.com/osmarks/skynet/master/client.lua")
 	if prog then
 		local file = fs.open(apipath,"w")
 		file.write(prog.readAll())
 		file.close()
 	else
-		printError("FAIL! Oh, well.")
+		bottomMessage("Failed to download Skynet. Ignoring.")
 		skynet = nil
 	end
 end
 if skynet then
 	skynet = dofile(apipath) --require my left asshole
 	if encKey then
+		bottomMessage("Connecting to Skynet...")
 		skynet.open(enchat.skynetPort)
 	end
 end
