@@ -48,7 +48,7 @@ local yourName, encKey
 yourName = tArg[1]
 encKey = tArg[2]
 
-local palate = {
+local palette = {
 	bg = colors.black,		--background color
 	txt = colors.white,		--text color (should contrast with bg)
 	promptbg = colors.gray,		--chat prompt background
@@ -64,7 +64,7 @@ UIconf = {
 	chatlogTop = 1,			--top of where chatlog is written to screen
 	title = "",				--overwritten every render, don't bother here
 	doTitle = false,		--whether or not to draw UIconf.title at the top of the screen
-	nameDecolor = false,	--if true, sets all names to palate.chevron color
+	nameDecolor = false,	--if true, sets all names to palette.chevron color
 }
 
 local updateEnchat = function(doBeta)
@@ -85,17 +85,157 @@ local setEncKey = function(newKey)
 	encKey = newKey
 end
 
-local checkValidName = function(nayme)
-	if type(nayme) ~= "string" then
-		return false
-	else
-		return (#nayme >= 2 and #nayme <= 32 and nayme:gsub(" ","") ~= "")
-	end
+local toblit = {
+	[0] = " ",
+	[1] = "0",
+	[2] = "1",
+	[4] = "2",
+	[8] = "3",
+	[16] = "4",
+	[32] = "5",
+	[64] = "6",
+	[128] = "7",
+	[256] = "8",
+	[512] = "9",
+	[1024] = "a",
+	[2048] = "b",
+	[4096] = "c",
+	[8192] = "d",
+	[16384] = "e",
+	[32768] = "f"
+}
+local tocolors = {}
+for k,v in pairs(toblit) do
+	tocolors[v] = k
 end
 
-if tArg[1] == "update" then
-	local res, message = updateEnchat(tArg[2] == "beta")
-	return print(message)
+local colors_strnames = { --primarily for use when coloring palette
+	["white"] = colors.white,
+	["pearl"] = colors.white,
+	["aryan"] = colors.white,
+	["#f0f0f0"] = colors.white,
+	["orange"] = colors.orange,
+	["carrot"] = colors.orange,
+	["pumpkin"] = colors.orange,
+	["#f2b233"] = colors.orange,
+	["magenta"] = colors.magenta,
+	["hotpink"] = colors.magenta,
+	["lightpurple"] = colors.magenta,
+	["light purple"] = colors.magenta,
+	["#e57fd8"] = colors.magenta,
+	["lightblue"] = colors.lightBlue,
+	["light blue"] = colors.lightBlue,
+	["skyblue"] = colors.lightBlue,
+	["#99b2f2"] = colors.lightBlue,
+	["yellow"] = colors.yellow,
+	["piss"] = colors.yellow,
+	["lemon"] = colors.yellow,
+	["cowardice"] = colors.yellow,
+	["#dede6c"] = colors.yellow,
+	["lime"] = colors.lime,
+	["lightgreen"] = colors.lime,
+	["light green"] = colors.lime,
+	["slime"] = colors.lime,
+	["#7fcc19"] = colors.lime,
+	["pink"] = colors.pink,
+	["lightishred"] = colors.pink,
+	["lightish red"] = colors.pink,
+	["communist"] = colors.pink,
+	["#f2b2cc"] = colors.pink,
+	["gray"] = colors.gray,
+	["grey"] = colors.gray,
+	["graey"] = colors.gray,
+	["#4c4c4c"] = colors.gray,
+	["lightgray"] = colors.lightGray,
+	["lightgrey"] = colors.lightGray,
+	["light gray"] = colors.lightGray,
+	["light grey"] = colors.lightGray,
+	["#999999"] = colors.lightGray,
+	["cyan"] = colors.cyan,
+	["seawater"] = colors.cyan,
+	["#4c99b2"] = colors.cyan,
+	["purple"] = colors.purple,
+	["purble"] = colors.purple,
+	["obsidian"] = colors.purple,
+	["#b266e5"] = colors.purple,
+	["blue"] = colors.blue,
+	["blu"] = colors.blue,
+	["blueberry"] = colors.blue,
+	["x"] = colors.blue,
+	["megaman"] = colors.blue,
+	["#3366bb"] = colors.blue,
+	["brown"] = colors.brown,
+	["shit"] = colors.brown,
+	["dirt"] = colors.brown,
+	["#7f664c"] = colors.brown,
+	["green"] = colors.green,
+	["grass"] = colors.green,
+	["#57a64e"] = colors.green,
+	["red"] = colors.red,
+	["menstration"] = colors.red,
+	["blood"] = colors.red,
+	["marinara"] = colors.red,
+	["zero"] = colors.red,
+	["protoman"] = colors.red,
+	["communism"] = colors.red,
+	["#cc4c4c"] = colors.red,
+	["black"] = colors.black,
+	["dark"] = colors.black,
+	["coal"] = colors.black,
+	["onyx"] = colors.black,
+	["#191919"] = colors.black,
+}
+
+local codeNames = {
+	["r"] = "reset",	-- Sets either the text (&) or background (~) colors to their original color.
+	["{"] = "stopFormatting",	--Toggles formatting text off
+	["}"] = "startFormatting",	--Toggles formatting text on
+	["k"] = "krazy"	--Makes the font krazy!
+}
+
+local kraziez = {
+	["l"] = {
+		"!",
+		"l",
+		"1",
+		"|",
+		"i",
+		"I",
+		":",
+		";",
+	},
+	["m"] = {
+		"M",
+		"W",
+		"w",
+		"m",
+		"X",
+		"N",
+		"_",
+		"%",
+		"@",
+	},
+	["all"] = {}
+}
+
+for a = 1, #kraziez["l"] do
+	kraziez[kraziez["l"][a]] = kraziez["l"]
+end
+for k,v in pairs(kraziez) do
+	for a = 1, #v do
+		kraziez[kraziez[k][a]] = v
+	end
+end
+if tonumber(_CC_VERSION or 0) >= 1.76 then
+	for a = 1, 255 do
+		if (a ~= 32) and (a ~= 13) and (a ~= 10) then
+			kraziez["all"][#kraziez["all"]+1] = string.char(a)
+		end
+	end
+else
+	for a = 33, 126 do
+		kraziez["all"][#kraziez["all"]+1] = string.char(a)
+	end
 end
 
 local explode = function(div,str,replstr,includeDiv)
@@ -107,6 +247,112 @@ local explode = function(div,str,replstr,includeDiv)
 	end
 	table.insert(arr,string.sub(replstr or str,pos))
 	return arr
+end
+
+local moveOn
+textToBlit = function(str,onlyString,initTxt,initBg,_checkPos) --returns output for term.blit, or blitWrap, with formatting codes for color selection. Modified for use specifically with Enchat.
+	checkPos = _checkPos or -1
+	if (not str) then
+		if onlyString then
+			return ""
+		else
+			return "","",""
+		end
+	end
+	str = tostring(str)
+	local p = 1
+	local output, txcolorout, bgcolorout = "", "", ""
+	local txcode = "&"
+	local bgcode = "~"
+	local isKrazy = false
+	local doFormatting = true
+	local usedformats = {}
+	local txcol,bgcol = initTxt or toblit[term.getTextColor()], initBg or toblit[term.getBackgroundColor()]
+	local origTX,origBG = initTxt or toblit[term.getTextColor()], initBg or toblit[term.getBackgroundColor()]
+	local cx,cy
+	moveOn = function(tx,bg)
+		if isKrazy and (str:sub(p,p) ~= " ") and doFormatting then
+			if kraziez[str:sub(p,p)] then
+				output = output..kraziez[str:sub(p,p)][math.random(1,#kraziez[str:sub(p,p)])]
+			else
+				output = output..kraziez.all[math.random(1,#kraziez.all)]
+			end
+		else
+			output = output..str:sub(p,p)
+		end
+		txcolorout = txcolorout..tx --(doFormatting and tx or origTX)
+		bgcolorout = bgcolorout..bg --(doFormatting and bg or origBG)
+	end
+	local checkMod = 0
+	while p <= #str do
+		if str:sub(p,p) == txcode then
+			if tocolors[str:sub(p+1,p+1)] and doFormatting then
+				txcol = str:sub(p+1,p+1)
+				usedformats.txcol = true
+				p = p + 1
+			elseif codeNames[str:sub(p+1,p+1)] then
+				if str:sub(p+1,p+1) == "r" and doFormatting then
+					txcol = origTX
+					isKrazy = false
+					p = p + 1
+				elseif str:sub(p+1,p+1) == "{" and doFormatting then
+					doFormatting = false
+					p = p + 1
+				elseif str:sub(p+1,p+1) == "}" and not doFormatting then
+					doFormatting = true
+					p = p + 1
+				elseif str:sub(p+1,p+1) == "k" and doFormatting then
+					if enchatSettings.doKrazy then
+						isKrazy = true
+						usedformats.krazy = true
+					end
+					p = p + 1
+				else
+					moveOn(txcol,bgcol)
+				end
+			else
+				moveOn(txcol,bgcol)
+			end
+			p = p + 1
+		elseif str:sub(p,p) == bgcode then
+			if tocolors[str:sub(p+1,p+1)] and doFormatting then
+				bgcol = str:sub(p+1,p+1)
+				usedformats.bgcol = true
+				p = p + 1
+			elseif codeNames[str:sub(p+1,p+1)] and (str:sub(p+1,p+1) == "r") and doFormatting then
+				bgcol = origBG
+				p = p + 1
+			elseif str:sub(p+1,p+1) == "k" and doFormatting then
+				isKrazy = false
+				p = p + 1
+			else
+				moveOn(txcol,bgcol)
+			end
+			p = p + 1
+		else
+			moveOn(txcol,bgcol)
+			p = p + 1
+		end
+	end
+	if onlyString then
+		return output
+	else
+		return {output, txcolorout, bgcolorout}
+	end
+end
+
+local checkValidName = function(_nayme)
+	local nayme = textToBlit(_nayme,true)
+	if type(nayme) ~= "string" then
+		return false
+	else
+		return (#nayme >= 2 and #nayme <= 32 and nayme:gsub(" ","") ~= "")
+	end
+end
+
+if tArg[1] == "update" then
+	local res, message = updateEnchat(tArg[2] == "beta")
+	return print(message)
 end
 
 local prettyClearScreen = function()
@@ -468,251 +714,6 @@ if interface then
 	end
 end
 
-local toblit = {
-	[0] = " ",
-	[1] = "0",
-	[2] = "1",
-	[4] = "2",
-	[8] = "3",
-	[16] = "4",
-	[32] = "5",
-	[64] = "6",
-	[128] = "7",
-	[256] = "8",
-	[512] = "9",
-	[1024] = "a",
-	[2048] = "b",
-	[4096] = "c",
-	[8192] = "d",
-	[16384] = "e",
-	[32768] = "f"
-}
-local tocolors = {}
-for k,v in pairs(toblit) do
-	tocolors[v] = k
-end
-
-local colors_strnames = { --primarily for use when coloring palate
-	["white"] = colors.white,
-	["pearl"] = colors.white,
-	["aryan"] = colors.white,
-	["#f0f0f0"] = colors.white,
-	["orange"] = colors.orange,
-	["carrot"] = colors.orange,
-	["pumpkin"] = colors.orange,
-	["#f2b233"] = colors.orange,
-	["magenta"] = colors.magenta,
-	["hotpink"] = colors.magenta,
-	["lightpurple"] = colors.magenta,
-	["light purple"] = colors.magenta,
-	["#e57fd8"] = colors.magenta,
-	["lightblue"] = colors.lightBlue,
-	["light blue"] = colors.lightBlue,
-	["skyblue"] = colors.lightBlue,
-	["#99b2f2"] = colors.lightBlue,
-	["yellow"] = colors.yellow,
-	["piss"] = colors.yellow,
-	["lemon"] = colors.yellow,
-	["cowardice"] = colors.yellow,
-	["#dede6c"] = colors.yellow,
-	["lime"] = colors.lime,
-	["lightgreen"] = colors.lime,
-	["light green"] = colors.lime,
-	["slime"] = colors.lime,
-	["#7fcc19"] = colors.lime,
-	["pink"] = colors.pink,
-	["lightishred"] = colors.pink,
-	["lightish red"] = colors.pink,
-	["communist"] = colors.pink,
-	["#f2b2cc"] = colors.pink,
-	["gray"] = colors.gray,
-	["grey"] = colors.gray,
-	["graey"] = colors.gray,
-	["#4c4c4c"] = colors.gray,
-	["lightgray"] = colors.lightGray,
-	["lightgrey"] = colors.lightGray,
-	["light gray"] = colors.lightGray,
-	["light grey"] = colors.lightGray,
-	["#999999"] = colors.lightGray,
-	["cyan"] = colors.cyan,
-	["seawater"] = colors.cyan,
-	["#4c99b2"] = colors.cyan,
-	["purple"] = colors.purple,
-	["purble"] = colors.purple,
-	["obsidian"] = colors.purple,
-	["#b266e5"] = colors.purple,
-	["blue"] = colors.blue,
-	["blu"] = colors.blue,
-	["blueberry"] = colors.blue,
-	["x"] = colors.blue,
-	["megaman"] = colors.blue,
-	["#3366bb"] = colors.blue,
-	["brown"] = colors.brown,
-	["shit"] = colors.brown,
-	["dirt"] = colors.brown,
-	["#7f664c"] = colors.brown,
-	["green"] = colors.green,
-	["grass"] = colors.green,
-	["#57a64e"] = colors.green,
-	["red"] = colors.red,
-	["menstration"] = colors.red,
-	["blood"] = colors.red,
-	["marinara"] = colors.red,
-	["zero"] = colors.red,
-	["protoman"] = colors.red,
-	["communism"] = colors.red,
-	["#cc4c4c"] = colors.red,
-	["black"] = colors.black,
-	["dark"] = colors.black,
-	["coal"] = colors.black,
-	["onyx"] = colors.black,
-	["#191919"] = colors.black,
-}
-
-local codeNames = {
-	["r"] = "reset",	-- Sets either the text (&) or background (~) colors to their original color.
-	["{"] = "stopFormatting",	--Toggles formatting text off
-	["}"] = "startFormatting",	--Toggles formatting text on
-	["k"] = "krazy"	--Makes the font krazy!
-}
-
-local kraziez = {
-	["l"] = {
-		"!",
-		"l",
-		"1",
-		"|",
-		"i",
-		"I",
-		":",
-		";",
-	},
-	["m"] = {
-		"M",
-		"W",
-		"w",
-		"m",
-		"X",
-		"N",
-		"_",
-		"%",
-		"@",
-	},
-	["all"] = {}
-}
-
-for a = 1, #kraziez["l"] do
-	kraziez[kraziez["l"][a]] = kraziez["l"]
-end
-for k,v in pairs(kraziez) do
-	for a = 1, #v do
-		kraziez[kraziez[k][a]] = v
-	end
-end
-if tonumber(_CC_VERSION or 0) >= 1.76 then
-	for a = 1, 255 do
-		if (a ~= 32) and (a ~= 13) and (a ~= 10) then
-			kraziez["all"][#kraziez["all"]+1] = string.char(a)
-		end
-	end
-else
-	for a = 33, 126 do
-		kraziez["all"][#kraziez["all"]+1] = string.char(a)
-	end
-end
-
-local moveOn
-textToBlit = function(str,onlyString,initTxt,initBg,_checkPos) --returns output for term.blit, or blitWrap, with formatting codes for color selection. Modified for use specifically with Enchat.
-	checkPos = _checkPos or -1
-	if (not str) then
-		if onlyString then
-			return ""
-		else
-			return "","",""
-		end
-	end
-	str = tostring(str)
-	local p = 1
-	local output, txcolorout, bgcolorout = "", "", ""
-	local txcode = "&"
-	local bgcode = "~"
-	local isKrazy = false
-	local doFormatting = true
-	local usedformats = {}
-	local txcol,bgcol = initTxt or toblit[term.getTextColor()], initBg or toblit[term.getBackgroundColor()]
-	local origTX,origBG = initTxt or toblit[term.getTextColor()], initBg or toblit[term.getBackgroundColor()]
-	local cx,cy
-	moveOn = function(tx,bg)
-		if isKrazy and (str:sub(p,p) ~= " ") and doFormatting then
-			if kraziez[str:sub(p,p)] then
-				output = output..kraziez[str:sub(p,p)][math.random(1,#kraziez[str:sub(p,p)])]
-			else
-				output = output..kraziez.all[math.random(1,#kraziez.all)]
-			end
-		else
-			output = output..str:sub(p,p)
-		end
-		txcolorout = txcolorout..tx --(doFormatting and tx or origTX)
-		bgcolorout = bgcolorout..bg --(doFormatting and bg or origBG)
-	end
-	local checkMod = 0
-	while p <= #str do
-		if str:sub(p,p) == txcode then
-			if tocolors[str:sub(p+1,p+1)] and doFormatting then
-				txcol = str:sub(p+1,p+1)
-				usedformats.txcol = true
-				p = p + 1
-			elseif codeNames[str:sub(p+1,p+1)] then
-				if str:sub(p+1,p+1) == "r" and doFormatting then
-					txcol = origTX
-					isKrazy = false
-					p = p + 1
-				elseif str:sub(p+1,p+1) == "{" and doFormatting then
-					doFormatting = false
-					p = p + 1
-				elseif str:sub(p+1,p+1) == "}" and not doFormatting then
-					doFormatting = true
-					p = p + 1
-				elseif str:sub(p+1,p+1) == "k" and doFormatting then
-					if enchatSettings.doKrazy then
-						isKrazy = true
-						usedformats.krazy = true
-					end
-					p = p + 1
-				else
-					moveOn(txcol,bgcol)
-				end
-			else
-				moveOn(txcol,bgcol)
-			end
-			p = p + 1
-		elseif str:sub(p,p) == bgcode then
-			if tocolors[str:sub(p+1,p+1)] and doFormatting then
-				bgcol = str:sub(p+1,p+1)
-				usedformats.bgcol = true
-				p = p + 1
-			elseif codeNames[str:sub(p+1,p+1)] and (str:sub(p+1,p+1) == "r") and doFormatting then
-				bgcol = origBG
-				p = p + 1
-			elseif str:sub(p+1,p+1) == "k" and doFormatting then
-				isKrazy = false
-				p = p + 1
-			else
-				moveOn(txcol,bgcol)
-			end
-			p = p + 1
-		else
-			moveOn(txcol,bgcol)
-			p = p + 1
-		end
-	end
-	if onlyString then
-		return output
-	else
-		return {output, txcolorout, bgcolorout}
-	end
-end
-
 local inAnimate = function(animType, buff, frame, maxFrame, length)
 	local char, text, back = buff[1], buff[2], buff[3]
 	local anim = {
@@ -724,14 +725,25 @@ local inAnimate = function(animType, buff, frame, maxFrame, length)
 			}
 		end,
 		fadeIn = function()
-			local fadeList = {
-				colors.black,
+			local fadeList = { -- works best on a black background with white text
 				colors.gray,
-				colors.lightGray
+				colors.lightGray,
+				palette.txt
 			}
 			return {
 				char,
 				toblit[fadeList[math.max(1,math.ceil((frame/maxFrame)*#fadeList))]]:rep(#text),
+				back
+			}
+		end,
+		flash = function()
+			local col
+			if frame ~= maxFrame then
+				col = (frame % 2 == 0) and palette.txt or palette.bg
+			end
+			return {
+				char,
+				toblit[col]:rep(#text),
 				back
 			}
 		end,
@@ -750,8 +762,8 @@ local genRenderLog = function()
 	local buff, prebuff, maxLength
 	local scrollToBottom = scroll == maxScroll
 	renderlog = {}
-	term.setTextColor(palate.txt)
-	term.setBackgroundColor(palate.bg)
+	term.setTextColor(palette.txt)
+	term.setBackgroundColor(palette.bg)
 	for a = 1, #log do
 		term.setCursorPos(1,1)
 		if UIconf.nameDecolor then
@@ -759,8 +771,8 @@ local genRenderLog = function()
 			local dcMessage = textToBlit(log[a].message)
 			prebuff = {
 				dcName..dcMessage[1],
-				toblit[palate.chevron]:rep(#dcName)..dcMessage[2],
-				toblit[palate.bg]:rep(#dcName)..dcMessage[3]
+				toblit[palette.chevron]:rep(#dcName)..dcMessage[2],
+				toblit[palette.bg]:rep(#dcName)..dcMessage[3]
 			}
 		else
 			prebuff = textToBlit(table.concat({log[a].prefix,"&r~r",log[a].name,"&r~r",log[a].suffix,"&r~r",log[a].message}))
@@ -805,7 +817,7 @@ local renderChat = function(doScrollBackUp)
 	tsv(false)
 	genRenderLog(log)
 	local ry
-	term.setBackgroundColor(palate.bg)
+	term.setBackgroundColor(palette.bg)
 	for y = UIconf.chatlogTop, UIconf.promptY - 1 do
 		ry = (y + scroll - (UIconf.chatlogTop - 1))
 		term.setCursorPos(1,y)
@@ -816,7 +828,7 @@ local renderChat = function(doScrollBackUp)
 	end
 	if UIconf.promptY ~= scr_y then
 		term.setCursorPos(1,scr_y)
-		term.setTextColor(palate.scrollMeter)
+		term.setTextColor(palette.scrollMeter)
 		term.clearLine()
 		term.write(scroll.." / "..maxScroll.."  ")
 	end
@@ -824,7 +836,7 @@ local renderChat = function(doScrollBackUp)
 	UIconf.title = yourName.." on "..encKey
 	
 	if UIconf.doTitle then
-		term.setTextColor(palate.chevron)
+		term.setTextColor(palette.chevron)
 		if UIconf.nameDecolor then
 			cwrite((" "):rep(scr_x)..textToBlit(UIconf.title, true)..(" "):rep(scr_x), 1)
 		else
@@ -980,20 +992,20 @@ commands.key = function(newKey)
 		logadd("*","Channel = '"..enchat.port.."'")
 	end
 end
-commands.palate = function(_argument)
+commands.palette = function(_argument)
 	local argument = _argument or ""
 	if argument:gsub("%s","") == "" then
 		local buff = ""
-		for k,v in pairs(palate) do
+		for k,v in pairs(palette) do
 			buff = buff..k..", "
 		end
 		buff = buff:sub(1,-3)
-		logadd("*","/palate "..buff.." <colorcode>")
+		logadd("*","/palette "..buff.." <colorcode>")
 	else
 		argument = explode(" ",argument)
 		if #argument == 1 then
 			if argument[1]:gsub("%s",""):lower() == "reset" then
-				palate = {
+				palette = {
 					bg = colors.black,
 					txt = colors.white,
 					promptbg = colors.gray,
@@ -1010,11 +1022,11 @@ commands.palate = function(_argument)
 					doTitle = false,
 					nameDecolor = false,
 				}
-				term.setBackgroundColor(palate.bg)
+				term.setBackgroundColor(palette.bg)
 				term.clear()
-				logadd("*","You cleansed your palate.")
+				logadd("*","You cleansed your palette.")
 			elseif argument[1]:gsub("%s",""):lower() == "enchat2" then
-				palate = {
+				palette = {
 					bg = colors.gray,
 					txt = colors.white,
 					promptbg = colors.white,
@@ -1031,11 +1043,11 @@ commands.palate = function(_argument)
 					doTitle = false,
 					nameDecolor = false,
 				}
-				term.setBackgroundColor(palate.bg)
+				term.setBackgroundColor(palette.bg)
 				term.clear()
-				logadd("*","Switched to the old Enchat2 palate.")
+				logadd("*","Switched to the old Enchat2 palette.")
 			elseif argument[1]:gsub("%s",""):lower() == "chat.lua" then
-				palate = {
+				palette = {
 					bg = colors.black,
 					txt = colors.white,
 					promptbg = colors.black,
@@ -1052,14 +1064,14 @@ commands.palate = function(_argument)
 					doTitle = true,
 					nameDecolor = true,
 				}
-				term.setBackgroundColor(palate.bg)
+				term.setBackgroundColor(palette.bg)
 				term.clear()
-				logadd("*","Switched to /rom/programs/rednet/chat.lua palate.")
+				logadd("*","Switched to /rom/programs/rednet/chat.lua palette.")
 			else
-				if not palate[argument[1]] then
-					logadd("*","There's no such palate option.")
+				if not palette[argument[1]] then
+					logadd("*","There's no such palette option.")
 				else
-					logadd("*","'"..argument[1].."' = '"..toblit[palate[argument[1]]].."'")
+					logadd("*","'"..argument[1].."' = '"..toblit[palette[argument[1]]].."'")
 				end
 			end
 		else
@@ -1068,14 +1080,14 @@ commands.palate = function(_argument)
 			end
 			argument[1] = argument[1]:lower()
 			local newcol = argument[2]:lower()
-			if not palate[argument[1]] then
-				logadd("*","That's not a valid palate choice.")
+			if not palette[argument[1]] then
+				logadd("*","That's not a valid palette choice.")
 			else
 				if not (tocolors[newcol] or colors_strnames[newcol]) then
 					logadd("*","That isn't a valid color code. (0-f)")
 				else
-					palate[argument[1]] = (tocolors[newcol] or colors_strnames[newcol])
-					logadd("*","Palate changed.",false)
+					palette[argument[1]] = (tocolors[newcol] or colors_strnames[newcol])
+					logadd("*","palette changed.",false)
 				end
 			end
 		end
@@ -1177,6 +1189,7 @@ commandAliases = {
 	cry = commands.list,
 	nickname = commands.nick,
 	channel = commands.key,
+	palate = commands.palette,
 	["?"] = commands.help,
 	porn = function() 	logadd("*","Yeah, no.") end,
 	whoareyou = function() 	logadd("*", "I'm Enchat. But surely, you know this?") end,
@@ -1236,7 +1249,7 @@ local parseCommand = function(input)
 end
 
 local main = function()
-	term.setBackgroundColor(palate.bg)
+	term.setBackgroundColor(palette.bg)
 	term.clear()
 	os.queueEvent("render_enchat")
 	local mHistory = {}
@@ -1244,17 +1257,17 @@ local main = function()
 	while true do
 		
 		term.setCursorPos(1, UIconf.promptY)
-		term.setBackgroundColor(palate.promptbg)
+		term.setBackgroundColor(palette.promptbg)
 		term.clearLine()
-		term.setTextColor(palate.chevron)
+		term.setTextColor(palette.chevron)
 		term.write(UIconf.chevron)
-		term.setTextColor(palate.prompttxt)
+		term.setTextColor(palette.prompttxt)
 		
 		local input = read(nil,mHistory) --replace later with fancier input
 		if UIconf.promptY == scr_y then
 			term.scroll(1)
 		end
-		if input:gsub(" ","") ~= "" then --if you didn't just press ENTER or a bunch of spaces
+		if textToBlit(input,true):gsub(" ","") ~= "" then --if you didn't just press ENTER or a bunch of spaces
 			if checkIfCommand(input) then
 				local res = parseCommand(input)
 				if res == "exit" then
