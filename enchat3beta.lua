@@ -1021,7 +1021,8 @@ commands.asay = function(_argument)
 		local animType = _argument:sub(1,sPoint-1)
 		local message = _argument:sub(sPoint+1)
 		local animFrameMod = {
-			flash = 8
+			flash = 8,
+			fadeIn = 4,
 		}
 		if animations[animType] then
 			if textToBlit(message,true):gsub(" ","") ~= "" then
