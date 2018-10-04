@@ -82,6 +82,10 @@ local updateEnchat = function(doBeta)
 	end
 end
 
+local setEncKey = function(newKey)
+	encKey = newKey
+end
+
 local checkValidName = function(nayme)
 	if type(nayme) ~= "string" then
 		return false
@@ -238,10 +242,6 @@ local renderlog = {} --Only records straight terminal output. Generated from 'lo
 
 local scroll = 0
 local maxScroll = 0
-
-local setEncKey = function(newKey)
-	encKey = newKey
-end
 
 local getModem = function()
 	if enchat.ignoreModem then
