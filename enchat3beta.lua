@@ -73,7 +73,7 @@ local loadSettings = function()
 	local newSettings = textutils.unserialize(contents)
 	if newSettings then
 		enchatSettings = newSettings.enchatSettings
-		palette = newSettings.palette,
+		palette = newSettings.palette
 		UIconf = newSettings.UIconf
 	else
 		saveSettings()
