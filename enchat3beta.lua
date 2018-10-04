@@ -91,10 +91,6 @@ local initcolors = {
 	txt = term.getTextColor()
 }
 
---prevent terminating. It is reversed upon exit.
-local oldePullEvent = os.pullEvent
-os.pullEvent = os.pullEventRaw
-
 local tArg = {...}
 
 local yourName, encKey
@@ -471,6 +467,10 @@ if not encKey then
 	setEncKey(prettyPrompt("Enter an encryption key.", currentY, "*"))
 	currentY = currentY + 3
 end
+
+--prevent terminating. It is reversed upon exit.
+local oldePullEvent = os.pullEvent
+os.pullEvent = os.pullEventRaw
 
 local bottomMessage = function(text)
 	term.setCursorPos(1,scr_y)
