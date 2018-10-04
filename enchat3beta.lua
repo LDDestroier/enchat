@@ -673,9 +673,11 @@ textToBlit = function(str,onlyString,initTxt,initBg,_checkPos) --returns output 
 				elseif str:sub(p+1,p+1) == "}" and not doFormatting then
 					doFormatting = true
 					p = p + 1
-				elseif str:sub(p+1,p+1) == "k" and doFormatting and enchatSettings.doKrazy then
-					isKrazy = true
-					usedformats.krazy = true
+				elseif str:sub(p+1,p+1) == "k" and doFormatting then
+					if enchatSettings.doKrazy then
+						isKrazy = true
+						usedformats.krazy = true
+					end
 					p = p + 1
 				else
 					moveOn(txcol,bgcol)
