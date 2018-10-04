@@ -596,7 +596,7 @@ end
 
 local cfwrite = function(text, y)
 	local cx, cy = term.getCursorPos()
-	term.setCursorPos((scr_x/2) - math.ceil(#text/2), y or cy)
+	term.setCursorPos((scr_x/2) - math.ceil(#textToBlit(text,true)/2), y or cy)
 	fwrite(text)
 end
 
@@ -725,14 +725,14 @@ if interface then
 end
 
 local animations = {
-	slideFromLeft = function()
+	slideFromLeft = function(char, text, back, frame, maxFrame, length)
 		return {
 			char:sub((length or #char) - ((frame/maxFrame)*(length or #char))),
 			text:sub((length or #text) - ((frame/maxFrame)*(length or #text))),
 			back:sub((length or #back) - ((frame/maxFrame)*(length or #back)))
 		}
 	end,
-	fadeIn = function()
+	fadeIn = function(char, text, back, frame, maxFrame, length)
 		local fadeList = { -- works best on a black background with white text
 			colors.gray,
 			colors.lightGray,
@@ -744,7 +744,7 @@ local animations = {
 			back
 		}
 	end,
-	flash = function()
+	flash = function(char, text, back, frame, maxFrame, length)
 		local col
 		if frame ~= maxFrame then
 			col = (frame % 2 == 0) and palette.txt or palette.bg
@@ -755,15 +755,19 @@ local animations = {
 			back
 		}
 	end,
-	none = function()
-		return buff
+	none = function(char, text, back, frame, maxFrame, length)
+		return {
+			char,
+			text,
+			back
+		}
 	end
 }
 
 local inAnimate = function(animType, buff, frame, maxFrame, length)
 	local char, text, back = buff[1], buff[2], buff[3]
 	if enchatSettings.doAnimate and (frame >= 0) and (maxFrame > 0) then
-		return animations[animType or "slideFromleft"]()
+		return animations[animType or "slideFromleft"](char, text, back, frame, maxFrame, length)
 	else
 		return {char,text,back}
 	end
