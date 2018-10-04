@@ -1017,7 +1017,7 @@ commands.asay = function(_argument)
 		local animType = _argument:sub(1,sPoint-1)
 		local message = _argument:sub(sPoint+1)
 		if animations[animType] then
-			textToBlit(message,true):gsub(" ","") ~= "" then
+			if textToBlit(message,true):gsub(" ","") ~= "" then
 				enchatSend(yourName, message, true, animType)
 			else
 				logadd("*","That message is no good.")
