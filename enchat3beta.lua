@@ -95,6 +95,61 @@ if tArg[1] == "update" then
 	return print(message)
 end
 
+local prettyClearScreen = function()
+	term.setTextColor(colors.lightGray)
+	term.setBackgroundColor(colors.gray)
+	if _VERSION then
+		for y = 1, scr_y do
+			term.setCursorPos(1,y)
+			if y == 1 then
+				term.write(("\135"):rep(scr_x))
+			elseif y == scr_y then
+				term.setTextColor(colors.gray)
+				term.setBackgroundColor(colors.lightGray)
+				term.write(("\135"):rep(scr_x))
+			else
+				term.clearLine()
+			end
+		end
+	else
+		term.clear()
+	end
+end
+
+local cwrite = function(text, y)
+	local cx, cy = term.getCursorPos()
+	term.setCursorPos((scr_x/2) - math.ceil(#text/2), y or cy)
+	return write(text)
+end
+
+local prettyCenterWrite = function(text, y)
+	local words = explode(" ", text, nil, true)
+	local buff = ""
+	local lines = 0
+	for w = 1, #words do
+		if #buff + #words[w] > scr_x then
+			cwrite(buff, y + lines)
+			buff = ""
+			lines = lines + 1
+		end
+		buff = buff..words[w]
+	end
+	cwrite(buff, y + lines)
+	return lines
+end
+
+local prettyPrompt = function(prompt, y, replchar, history)
+	local cy, cx = term.getCursorPos()
+	term.setBackgroundColor(colors.gray)
+	term.setTextColor(colors.white)
+	local yadj = 1 + prettyCenterWrite(prompt, y or cy)
+	term.setCursorPos(1, y + yadj)
+	term.setBackgroundColor(colors.lightGray)
+	term.clearLine()
+	local output = read(replchar, history) --will eventually add fancy colored read function
+	return output
+end
+
 if not checkValidName(yourName) then --not so fast, evildoers
 	yourName = nil
 end
@@ -288,61 +343,6 @@ local blitWrap = function(char, text, back, noWrite)
 		output[ty][3] = output[ty][3]..bWords[a]
 	end
 	return output, maxLength
-end
-
-prettyClearScreen = function()
-	term.setTextColor(colors.lightGray)
-	term.setBackgroundColor(colors.gray)
-	if _VERSION then
-		for y = 1, scr_y do
-			term.setCursorPos(1,y)
-			if y == 1 then
-				term.write(("\135"):rep(scr_x))
-			elseif y == scr_y then
-				term.setTextColor(colors.gray)
-				term.setBackgroundColor(colors.lightGray)
-				term.write(("\135"):rep(scr_x))
-			else
-				term.clearLine()
-			end
-		end
-	else
-		term.clear()
-	end
-end
-
-local cwrite = function(text, y)
-	local cx, cy = term.getCursorPos()
-	term.setCursorPos((scr_x/2) - math.ceil(#text/2), y or cy)
-	return write(text)
-end
-
-local prettyCenterWrite = function(text, y)
-	local words = explode(" ", text, nil, true)
-	local buff = ""
-	local lines = 0
-	for w = 1, #words do
-		if #buff + #words[w] > scr_x then
-			cwrite(buff, y + lines)
-			buff = ""
-			lines = lines + 1
-		end
-		buff = buff..words[w]
-	end
-	cwrite(buff, y + lines)
-	return lines
-end
-
-local prettyPrompt = function(prompt, y, replchar, history)
-	local cy, cx = term.getCursorPos()
-	term.setBackgroundColor(colors.gray)
-	term.setTextColor(colors.white)
-	local yadj = 1 + prettyCenterWrite(prompt, y or cy)
-	term.setCursorPos(1, y + yadj)
-	term.setBackgroundColor(colors.lightGray)
-	term.clearLine()
-	local output = read(replchar, history) --will eventually add fancy colored read function
-	return output
 end
 
 local notif = {}
