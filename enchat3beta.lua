@@ -1052,7 +1052,7 @@ commands.key = function(newKey)
 	end
 end
 commands.shrug = function(more)
-	enchatSend(yourName, "¯\_(?)_/¯"..(more or ""), true)
+	enchatSend(yourName, "¯\\_(?)_/¯"..(more or ""), true)
 end
 commands.asay = function(_argument)
 	local sPoint = (_argument or ""):find(" ")
