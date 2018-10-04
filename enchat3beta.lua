@@ -590,6 +590,16 @@ local blitWrap = function(char, text, back, noWrite)
 	return output, maxLength
 end
 
+local fwrite = function(text)
+	term.blit(unpack(textToBlit(text)))
+end
+
+local cfwrite = function(text, y)
+	local cx, cy = term.getCursorPos()
+	term.setCursorPos((scr_x/2) - math.ceil(#text/2), y or cy)
+	fwrite(text)
+end
+
 local notif = {}
 notif.alpha = 248
 notif.height = 10
@@ -714,45 +724,46 @@ if interface then
 	end
 end
 
+local animations = {
+	slideFromLeft = function()
+		return {
+			char:sub((length or #char) - ((frame/maxFrame)*(length or #char))),
+			text:sub((length or #text) - ((frame/maxFrame)*(length or #text))),
+			back:sub((length or #back) - ((frame/maxFrame)*(length or #back)))
+		}
+	end,
+	fadeIn = function()
+		local fadeList = { -- works best on a black background with white text
+			colors.gray,
+			colors.lightGray,
+			palette.txt
+		}
+		return {
+			char,
+			toblit[fadeList[math.max(1,math.ceil((frame/maxFrame)*#fadeList))]]:rep(#text),
+			back
+		}
+	end,
+	flash = function()
+		local col
+		if frame ~= maxFrame then
+			col = (frame % 2 == 0) and palette.txt or palette.bg
+		end
+		return {
+			char,
+			toblit[col]:rep(#text),
+			back
+		}
+	end,
+	none = function()
+		return buff
+	end
+}
+
 local inAnimate = function(animType, buff, frame, maxFrame, length)
 	local char, text, back = buff[1], buff[2], buff[3]
-	local anim = {
-		slideFromLeft = function()
-			return {
-				char:sub((length or #char) - ((frame/maxFrame)*(length or #char))),
-				text:sub((length or #text) - ((frame/maxFrame)*(length or #text))),
-				back:sub((length or #back) - ((frame/maxFrame)*(length or #back)))
-			}
-		end,
-		fadeIn = function()
-			local fadeList = { -- works best on a black background with white text
-				colors.gray,
-				colors.lightGray,
-				palette.txt
-			}
-			return {
-				char,
-				toblit[fadeList[math.max(1,math.ceil((frame/maxFrame)*#fadeList))]]:rep(#text),
-				back
-			}
-		end,
-		flash = function()
-			local col
-			if frame ~= maxFrame then
-				col = (frame % 2 == 0) and palette.txt or palette.bg
-			end
-			return {
-				char,
-				toblit[col]:rep(#text),
-				back
-			}
-		end,
-		none = function()
-			return buff
-		end,
-	}
 	if enchatSettings.doAnimate and (frame >= 0) and (maxFrame > 0) then
-		return anim[animType or "slideFromleft"]()
+		return animations[animType or "slideFromleft"]()
 	else
 		return {char,text,back}
 	end
@@ -994,6 +1005,27 @@ commands.key = function(newKey)
 end
 commands.shrug = function(more)
 	enchatSend(yourName, "¯\_(?)_/¯"..(more or ""), true)
+end
+commands.asay = function(_argument)
+	local sPoint = (_argument or ""):find(" ")
+	if not sPoint then
+		logadd("*",Animation types:)
+		for k,v in pairs(animations) do
+			logadd(nil," '"..k.."'")
+		end
+	else
+		local animType = _argument:sub(1,sPoint-1)
+		local message = _argument:sub(sPoint+1)
+		if animations[animType] then
+			textToBlit(message,true):gsub(" ","") ~= "" then
+				enchatSend(yourName, message, true, animType)
+			else
+				logadd("*","That message is no good.")
+			end
+		else
+			logadd("*","Invalid animation type.")
+		end
+	end
 end
 commands.palette = function(_argument)
 	local argument = _argument or ""
@@ -1294,6 +1326,7 @@ end
 
 local handleReceiveMessage = function(user, message)
 	local isAtBottom = (scroll == maxScroll)
+	logadd(nil,nil) --readability
 	logadd(user, message)
 	os.queueEvent("render_enchat")
 end
@@ -1390,11 +1423,12 @@ local funky = {
 	keepRedrawing,
 	handleNotifications
 }
+
 if skynet then
 	funky[#funky+1] = skynet.listen
 end
-local res, outcome = pcall(
-function()
+
+local res, outcome = pcall(function()
 	return parallel.waitForAny(unpack(funky))
 end)
 
@@ -1410,11 +1444,13 @@ tsv(true) --in case it's false
 if not res then
 	prettyClearScreen(1,scr_y-1)
 	term.setTextColor(colors.white)
+	term.setBackgroundColor(colors.gray)
 	cwrite("There was an error.",2)
-	cwrite("Report this to @LDDestroier#2901 on Discord,",3)
+	cfwrite("Report this to &3@LDDestroier#2901&r on Discord,",3)
 	cwrite("if you feel like it.",4)
 	term.setCursorPos(1,6)
 	printError(outcome)
+	term.setTextColor(colors.lightGray)
 	cwrite("I'll probably fix it, maybe.",9)
 end
 
