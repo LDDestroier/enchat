@@ -864,21 +864,21 @@ local renderChat = function(doScrollBackUp)
 	tsv(true)
 end
 
-local logadd = function(name, message, animType)
+local logadd = function(name, message, animType, maxFrame)
 	log[#log + 1] = {
 		prefix = name and "<" or "",
 		suffix = name and "> " or "",
 		name = name and name or "",
 		message = message or "",
 		frame = 0,
-		maxFrame = true,
+		maxFrame = maxFrame or true,
 		animType = animType
 	}
 end
 
-local enchatSend = function(name, message, doLog, animType, crying)
+local enchatSend = function(name, message, doLog, animType, maxFrame, crying)
 	if doLog then
-		logadd(name, message, animType)
+		logadd(name, message, animType, maxFrame)
 	end
 	local outmsg = encrite({
 		name = name,
@@ -893,7 +893,7 @@ local enchatSend = function(name, message, doLog, animType, crying)
 end
 
 local cryOut = function(name, crying)
-	enchatSend(name, nil, false, nil, crying)
+	enchatSend(name, nil, false, nil, nil, crying)
 end
 
 
@@ -1020,9 +1020,12 @@ commands.asay = function(_argument)
 	else
 		local animType = _argument:sub(1,sPoint-1)
 		local message = _argument:sub(sPoint+1)
+		local animFrameMod = {
+			flash = 8
+		}
 		if animations[animType] then
 			if textToBlit(message,true):gsub(" ","") ~= "" then
-				enchatSend(yourName, message, true, animType)
+				enchatSend(yourName, message, true, animType, animFrameMod[animType])
 			else
 				logadd("*","That message is no good.")
 			end
