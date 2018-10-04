@@ -99,6 +99,30 @@ if not checkValidName(yourName) then --not so fast, evildoers
 	yourName = nil
 end
 
+local currentY = 2
+
+if not (yourName and encKey) then
+	prettyClearScreen()
+end
+
+if not yourName then
+	yourName = prettyPrompt("Enter your name.", currentY)
+	if not checkValidName(yourName) then
+		while true do
+			yourName = prettyPrompt("That name isn't valid. Enter another.", currentY)
+			if checkValidName(yourName) then
+				break
+			end
+		end
+	end
+	currentY = currentY + 3
+end
+
+if not encKey then
+	setEncKey(prettyPrompt("Enter an encryption key.", currentY, "*"))
+	currentY = currentY + 3
+end
+
 -- AES API START (thank you SquidDev) --
 
 local apipath
@@ -443,30 +467,6 @@ if interface then
 			end
 		end
 	end
-end
-
-local currentY = 2
-
-if not (yourName and encKey) then
-	prettyClearScreen()
-end
-
-if not yourName then
-	yourName = prettyPrompt("Enter your name.", currentY)
-	if not checkValidName(yourName) then
-		while true do
-			yourName = prettyPrompt("That name isn't valid. Enter another.", currentY)
-			if checkValidName(yourName) then
-				break
-			end
-		end
-	end
-	currentY = currentY + 3
-end
-
-if not encKey then
-	setEncKey(prettyPrompt("Enter an encryption key.", currentY, "*"))
-	currentY = currentY + 3
 end
 
 local toblit = {
