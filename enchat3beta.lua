@@ -821,12 +821,10 @@ local genRenderLog = function()
 end
 
 local tsv = function(visible)
-        if term.current().setVisible and enchatSettings.useSetVisible then
-                return term.current().setVisible(visible)
-        end
+	if term.current().setVisible and enchatSettings.useSetVisible then
+		return term.current().setVisible(visible)
+	end
 end
-
-
 
 local renderChat = function(doScrollBackUp)
 	tsv(false)
@@ -1307,7 +1305,17 @@ local main = function()
 		term.write(UIconf.chevron)
 		term.setTextColor(palette.prompttxt)
 		
-		local input = read(nil,mHistory) --replace later with fancier input
+		local input = read(nil,mHistory,function(str)
+			local output = {}
+			if checkIfCommand(str) then
+				for name,v in pairs(commands) do
+					if name:sub(1,#str) == str:sub(2) then
+						output[#output+1] = name:sub(#str)
+					end
+				end
+			end
+			return output
+		end) --replace later with fancier input
 		if UIconf.promptY == scr_y then
 			term.scroll(1)
 		end
