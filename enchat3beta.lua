@@ -355,15 +355,15 @@ if tArg[1] == "update" then
 	return print(message)
 end
 
-local prettyClearScreen = function()
+local prettyClearScreen = function(start, stop)
 	term.setTextColor(colors.lightGray)
 	term.setBackgroundColor(colors.gray)
 	if _VERSION then
-		for y = 1, scr_y do
+		for y = start or 1, stop or scr_y do
 			term.setCursorPos(1,y)
-			if y == 1 then
+			if y == (start or 1) then
 				term.write(("\135"):rep(scr_x))
-			elseif y == scr_y then
+			elseif y == (stop or scr_y) then
 				term.setTextColor(colors.gray)
 				term.setBackgroundColor(colors.lightGray)
 				term.write(("\135"):rep(scr_x))
@@ -1389,8 +1389,10 @@ local funky = {
 if skynet then
 	funky[#funky+1] = skynet.listen
 end
-
-parallel.waitForAny(unpack(funky))
+local res, outcome = pcall(
+function()
+	return parallel.waitForAny(unpack(funky))
+end)
 
 os.pullEvent = oldePullEvent
 if skynet then
@@ -1399,8 +1401,20 @@ if skynet then
 	end
 end
 
+tsv(true) --in case it's false
+
+if not res then
+	prettyClearScreen(1,scr_y-1)
+	term.setTextColor(colors.white)
+	cwrite("There was an error.",2)
+	cwrite("Report this to @LDDestroier#2901 on Discord,",3)
+	cwrite("if you feel like it.",4)
+	term.setCursorPos(1,6)
+	printError(outcome)
+	cwrite("I'll probably fix it, maybe.",9)
+end
+
 term.setCursorPos(1,scr_y)
 term.setBackgroundColor(initcolors.bg)
 term.setTextColor(initcolors.txt)
 term.clearLine()
-tsv(true) --in case it's false
