@@ -745,9 +745,9 @@ local animations = {
 		}
 	end,
 	flash = function(char, text, back, frame, maxFrame, length)
-		local col
+		local col = palette.txt
 		if frame ~= maxFrame then
-			col = (frame % 2 == 0) and palette.txt or palette.bg
+			col = (frame % 2 == 0) and col or palette.bg
 		end
 		return {
 			char,
