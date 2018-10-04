@@ -95,6 +95,17 @@ if tArg[1] == "update" then
 	return print(message)
 end
 
+local explode = function(div,str,replstr,includeDiv)
+	if (div=='') then return false end
+	local pos,arr = 0,{}
+	for st,sp in function() return string.find(str,div,pos,false) end do
+		table.insert(arr,string.sub(replstr or str,pos,st-1+(includeDiv and #div or 0)))
+		pos = sp + 1
+	end
+	table.insert(arr,string.sub(replstr or str,pos))
+	return arr
+end
+
 local prettyClearScreen = function()
 	term.setTextColor(colors.lightGray)
 	term.setBackgroundColor(colors.gray)
@@ -277,17 +288,6 @@ local dab = function(func, ...) --"no and back", not...never mind
 	term.setTextColor(t)
 	term.setBackgroundColor(b)
 	return unpack(output)
-end
-
-local explode = function(div,str,replstr,includeDiv)
-	if (div=='') then return false end
-	local pos,arr = 0,{}
-	for st,sp in function() return string.find(str,div,pos,false) end do
-		table.insert(arr,string.sub(replstr or str,pos,st-1+(includeDiv and #div or 0)))
-		pos = sp + 1
-	end
-	table.insert(arr,string.sub(replstr or str,pos))
-	return arr
 end
 
 local splitStr = function(str, maxLength)
