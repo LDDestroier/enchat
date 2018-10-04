@@ -918,7 +918,7 @@ commands.update = function()
 end
 commands.list = function()
 	userCryList = {}
-	local tim = os.startTimer(0.1)
+	local tim = os.startTimer(0.5)
 	cryOut(yourName, true)
 	while true do
 		local evt = {os.pullEvent()}
