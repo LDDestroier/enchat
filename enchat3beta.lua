@@ -72,9 +72,15 @@ local loadSettings = function()
 	file.close()
 	local newSettings = textutils.unserialize(contents)
 	if newSettings then
-		enchatSettings = newSettings.enchatSettings
-		palette = newSettings.palette
-		UIconf = newSettings.UIconf
+		for k,v in pairs(newSettings.enchatSettings) do
+			enchatSettings[k] = v
+		end
+		for k,v in pairs(newSettings.palette) do
+			palette[k] = v
+		end
+		for k,v in pairs(newSettings.UIconf) do
+			UIconf[k] = v
+		end
 	else
 		saveSettings()
 	end
