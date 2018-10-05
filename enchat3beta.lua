@@ -941,7 +941,7 @@ local enchatSend = function(name, message, doLog, animType, maxFrame, crying, re
 	if doLog then
 		logadd(name, message, animType, maxFrame)
 	end
-	local messageID = makeRandomString(256)
+	local messageID = makeRandomString(64)
 	local outmsg = encrite({
 		name = name,
 		message = message,
