@@ -1391,8 +1391,8 @@ end
 
 local handleReceiveMessage = function(user, message, animType)
 	local isAtBottom = (scroll == maxScroll)
-	logadd(nil,nil,animType) --readability
-	logadd(user, message)
+	logadd(nil,nil) --readability
+	logadd(user, message,animType)
 	os.queueEvent("render_enchat")
 end
 
