@@ -1112,7 +1112,7 @@ commands.msg = function(_argument)
 		if not message then
 			logadd("*","You got half of the arguments down pat, at least.")
 		else
-			if textToBlit(message,true):gsub(" ","") ~= "" then
+			if textToBlit(message,true):gsub(" ","") == "" then
 				logadd("*","That message is no good.")
 			else
 				enchatSend(yourName, message, false, nil, nil, false, recipient)
