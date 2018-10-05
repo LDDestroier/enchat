@@ -17,16 +17,16 @@ enchat = {
 	skynetPort = "enchat3-default",
 	url = "https://github.com/LDDestroier/enchat/raw/master/enchat3.lua",
 	betaurl = "https://github.com/LDDestroier/enchat/raw/master/enchat3beta.lua",
-	ignoreModem = true,
+	ignoreModem = false,
 	dataDir = "/.enchat"
 }
 
 local enchatSettings = {	--DEFAULT settings.
-	animDiv = 2,		--divisor of text animation speed (scrolling from left)
+	animDiv = 4,		--divisor of text animation speed (scrolling from left)
 	doAnimate = true,	--whether or not to animate text moving from left side of screen
 	reverseScroll = false,	--whether or not to make scrolling up really scroll down
-	redrawDelay = 0.05,	--delay between redrawing
-	useSetVisible = false,	--whether or not to use term.current().setVisible(), which has performance and flickering improvements
+	redrawDelay = 0.1,	--delay between redrawing
+	useSetVisible = true,	--whether or not to use term.current().setVisible(), which has performance and flickering improvements
 	pageKeySpeed = 4,	--how far PageUP or PageDOWN should scroll
 	doNotif = true,		--whether or not to use oveerlay glasses for notifications, if possible
 	doKrazy = true,		--whether or not to add &k obfuscation
