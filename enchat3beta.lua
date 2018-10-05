@@ -1548,6 +1548,10 @@ if skynet then
 	end
 end
 
+if canvas then
+	canvas.clear()
+end
+
 tsv(true) --in case it's false
 
 if not res then
