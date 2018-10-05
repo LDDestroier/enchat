@@ -536,6 +536,7 @@ end
 
 local log = {} --Records all sorts of data on text.
 local renderlog = {} --Only records straight terminal output. Generated from 'log'
+local IDlog = {} --Really only used with skynet, will prevent duplicate messages.
 
 local scroll = 0
 local maxScroll = 0
@@ -926,6 +927,14 @@ local logadd = function(name, message, animType, maxFrame)
 	}
 end
 
+local makeRandomString = function(length)
+	local output = ""
+	for a = 1, length do
+		output = output .. string.char(math.random(1,255))
+	end
+	return output
+end
+
 local enchatSend = function(name, message, doLog, animType, maxFrame, crying)
 	if doLog then
 		logadd(name, message, animType, maxFrame)
@@ -936,6 +945,7 @@ local enchatSend = function(name, message, doLog, animType, maxFrame, crying)
 		version = enchat.version,
 		animType = animType,
 		maxFrame = maxFrame,
+		messageID = makeRandomString(256),
 		cry = crying
 	})
 	if not enchat.ignoreModem then modemTransmit(enchat.port, enchat.port, outmsg) end
@@ -1194,6 +1204,7 @@ commands.palette = function(_argument)
 end
 commands.clear = function()
 	log = {}
+	IDlog = {}
 end
 commands.ping = function(pong)
 	logadd(nil, pong or "Pong!")
@@ -1422,12 +1433,15 @@ local handleEvents = function()
 				if type(msg) == "table" then
 					if (type(msg.name) == "string") then
 						if #msg.name <= 32 then
-							userCryList[msg.name] = true
-							if (type(msg.message) == "string") then
-								handleReceiveMessage(msg.name, tostring(msg.message), msg.animType, msg.maxFrame)
-							end
-							if (msg.cry == true) then
-								cryOut(yourName, false)
+							if msg.messageID and (not IDlog[msg.messageID]) then
+								userCryList[msg.name] = true
+								IDlog[msg.messageID] = true
+								if (type(msg.message) == "string") then
+									handleReceiveMessage(msg.name, tostring(msg.message), msg.animType, msg.maxFrame)
+								end
+								if (msg.cry == true) then
+									cryOut(yourName, false)
+								end
 							end
 						end
 					end
