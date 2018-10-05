@@ -797,14 +797,14 @@ local animations = {
 		}
 	end,
 	flash = function(char, text, back, frame, maxFrame, length)
-		local col = palette.txt
+		local t = palette.txt
 		if frame ~= maxFrame then
-			col = (frame % 2 == 0) and col or palette.bg
+			t = (frame % 2 == 0) and t or palette.bg
 		end
 		return {
 			char,
-			toblit[col]:rep(#text),
-			back
+			toblit[t]:rep(#text),
+			(frame % 2 == 0) and back or (" "):rep(#back)
 		}
 	end,
 	none = function(char, text, back, frame, maxFrame, length)
