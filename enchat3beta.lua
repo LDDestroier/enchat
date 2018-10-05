@@ -934,6 +934,7 @@ local enchatSend = function(name, message, doLog, animType, maxFrame, crying)
 		name = name,
 		message = message,
 		version = enchat.version,
+		animType = animType,
 		cry = crying
 	})
 	if not enchat.ignoreModem then modemTransmit(enchat.port, enchat.port, outmsg) end
@@ -1388,9 +1389,9 @@ local main = function()
 	
 end
 
-local handleReceiveMessage = function(user, message)
+local handleReceiveMessage = function(user, message, animType)
 	local isAtBottom = (scroll == maxScroll)
-	logadd(nil,nil) --readability
+	logadd(nil,nil,animType) --readability
 	logadd(user, message)
 	os.queueEvent("render_enchat")
 end
@@ -1422,7 +1423,7 @@ local handleEvents = function()
 						if #msg.name <= 32 then
 							userCryList[msg.name] = true
 							if (type(msg.message) == "string") then
-								handleReceiveMessage(msg.name, tostring(msg.message))
+								handleReceiveMessage(msg.name, tostring(msg.message), msg.animType)
 							end
 							if (msg.cry == true) then
 								cryOut(yourName, false)
