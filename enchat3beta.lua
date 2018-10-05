@@ -846,7 +846,7 @@ local genRenderLog = function()
 			prebuff = textToBlit(table.concat({log[a].prefix,"&r~r",log[a].name,"&r~r",log[a].suffix,"&r~r",log[a].message}))
 		end
 		if (log[a].frame == 0) and (canvas and enchatSettings.doNotif) then
-			if not (log.name == "" and log.message == "") then
+			if not (log[a].name == "" and log[a].message == "") then
 				notif.newNotification(prebuff[1],prebuff[2],prebuff[3],notif.time * 4)
 			end
 		end
@@ -937,19 +937,22 @@ local makeRandomString = function(length)
 	return output
 end
 
-local enchatSend = function(name, message, doLog, animType, maxFrame, crying)
+local enchatSend = function(name, message, doLog, animType, maxFrame, crying, recipient)
 	if doLog then
 		logadd(name, message, animType, maxFrame)
 	end
+	local messageID = makeRandomString(256)
 	local outmsg = encrite({
 		name = name,
 		message = message,
 		version = enchat.version,
 		animType = animType,
 		maxFrame = maxFrame,
-		messageID = makeRandomString(256),
+		messageID = messageID,
+		recipient = recipient,
 		cry = crying
 	})
+	IDlog[messageID] = true
 	if not enchat.ignoreModem then modemTransmit(enchat.port, enchat.port, outmsg) end
 	if skynet and enchatSettings.useSkynet then
 		skynet.send(enchat.skynetPort, outmsg)
@@ -1099,6 +1102,25 @@ commands.asay = function(_argument)
 		end
 	end
 end
+commands.msg = function(_argument)
+	local sPoint = (_argument or ""):find(" ")
+	if not sPoint then
+		logadd("*",commandInit.."msg <recipient> <message>")
+	else
+		local recipient = _argument:sub(1,sPoint-1)
+                local message = _argument:sub(sPoint+1)
+		if not message then
+			logadd("*","You got half of the arguments down pat, at least.")
+		else
+			if textToBlit(message,true):gsub(" ","") ~= "" then
+				logadd("*","That message is no good.")
+			else
+				enchatSend(yourName, message, false, nil, nil, false, recipient)
+				logadd("*","to '"..recipient.."': "..message)
+			end
+		end
+	end
+end
 commands.palette = function(_argument)
 	local argument = _argument or ""
 	if argument:gsub("%s","") == "" then
@@ -1107,7 +1129,7 @@ commands.palette = function(_argument)
 			buff = buff..k..", "
 		end
 		buff = buff:sub(1,-3)
-		logadd("*","/palette "..buff.." <colorcode>")
+		logadd("*",commandInit.."palette "..buff.." <colorcode>")
 	else
 		argument = explode(" ",argument)
 		if #argument == 1 then
@@ -1277,6 +1299,7 @@ commands.help = function(cmdname)
 			ping = "Pong. *sigh*",
 			shrug = "Sends out a shrugging emoticon.",
 			set = "Changes config options during the current session. Lists all options, if without argument.",
+			msg = "Sends a message that is only logged by a specific user.",
 			help = "Shows every command, or describes a specific command.",
 		}
 		cmdname = cmdname:gsub(" ","")
@@ -1304,6 +1327,8 @@ commandAliases = {
 	nickname = commands.nick,
 	channel = commands.key,
 	palate = commands.palette,
+	tell = commands.msg,
+	whisper = commands.msg,
 	["?"] = commands.help,
 	porn = function() 	logadd("*","Yeah, no.") end,
 	whoareyou = function() 	logadd("*", "I'm Enchat. But surely, you know this?") end,
@@ -1438,7 +1463,7 @@ local handleEvents = function()
 							if msg.messageID and (not IDlog[msg.messageID]) then
 								userCryList[msg.name] = true
 								IDlog[msg.messageID] = true
-								if (type(msg.message) == "string") then
+								if (type(msg.message) == "string") and ((not msg.recipient) or (msg.recipient == yourName or msg.recipient == textToBlit(yourName,true))) then
 									handleReceiveMessage(msg.name, tostring(msg.message), msg.animType, msg.maxFrame)
 								end
 								if (msg.cry == true) then
