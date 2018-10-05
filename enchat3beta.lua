@@ -846,7 +846,9 @@ local genRenderLog = function()
 			prebuff = textToBlit(table.concat({log[a].prefix,"&r~r",log[a].name,"&r~r",log[a].suffix,"&r~r",log[a].message}))
 		end
 		if (log[a].frame == 0) and (canvas and enchatSettings.doNotif) then
-			notif.newNotification(prebuff[1],prebuff[2],prebuff[3],notif.time * 4)
+			if not (log.name == "" and log.message == "") then
+				notif.newNotification(prebuff[1],prebuff[2],prebuff[3],notif.time * 4)
+			end
 		end
 		if log[a].maxFrame == true then
 			log[a].maxFrame = math.floor(math.min(#prebuff[1], scr_x) / enchatSettings.animDiv)
