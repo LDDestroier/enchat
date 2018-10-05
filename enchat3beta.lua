@@ -1559,12 +1559,13 @@ if not res then
 	term.setTextColor(colors.white)
 	term.setBackgroundColor(colors.gray)
 	cwrite("There was an error.",2)
-	cfwrite("Report this to &3@LDDestroier#2901&r on Discord,",3)
-	cwrite("if you feel like it.",4)
-	term.setCursorPos(1,6)
+	cfwrite("Report this to &3@LDDestroier#2901&r",3)
+	cwrite("on Discord,",4)
+	cwrite("if you feel like it.",5)
+	term.setCursorPos(1,7)
 	printError(outcome)
 	term.setTextColor(colors.lightGray)
-	cwrite("I'll probably fix it, maybe.",9)
+	cwrite("I'll probably fix it, maybe.",10)
 end
 
 term.setCursorPos(1,scr_y)
