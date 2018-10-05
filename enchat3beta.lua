@@ -44,11 +44,11 @@ local palette = {
 }
 
 UIconf = {
-	promptY = scr_y - 1,	--Y position of read prompt
-	chevron = ">",			--symbol before read prompt
-	chatlogTop = 1,			--top of where chatlog is written to screen
-	title = "",				--overwritten every render, don't bother here
-	doTitle = false,		--whether or not to draw UIconf.title at the top of the screen
+	promptY = 1,		--Y position of read prompt, relative to bottom of screen
+	chevron = ">",		--symbol before read prompt
+	chatlogTop = 1,		--where chatlog is written to screen, relative to top of screen
+	title = "",		--overwritten every render, don't bother here
+	doTitle = false,	--whether or not to draw UIconf.title at the top of the screen
 	nameDecolor = false,	--if true, sets all names to palette.chevron color
 }
 
@@ -883,7 +883,7 @@ local renderChat = function(doScrollBackUp)
 	genRenderLog(log)
 	local ry
 	term.setBackgroundColor(palette.bg)
-	for y = UIconf.chatlogTop, UIconf.promptY - 1 do
+	for y = UIconf.chatlogTop, (scr_y-UIconf.promptY) - 1 do
 		ry = (y + scroll - (UIconf.chatlogTop - 1))
 		term.setCursorPos(1,y)
 		term.clearLine()
@@ -891,7 +891,7 @@ local renderChat = function(doScrollBackUp)
 			term.blit(unpack(renderlog[ry]))
 		end
 	end
-	if UIconf.promptY ~= scr_y then
+	if UIconf.promptY ~= 0 then
 		term.setCursorPos(1,scr_y)
 		term.setTextColor(palette.scrollMeter)
 		term.clearLine()
@@ -1108,7 +1108,7 @@ commands.palette = function(_argument)
 					title = colors.lightGray
 				}
 				UIconf = {
-					promptY = scr_y - 1,
+					promptY = 1,
 					chevron = ">",
 					chatlogTop = 1,
 					title = "",
@@ -1130,7 +1130,7 @@ commands.palette = function(_argument)
 					title = colors.lightGray
 				}
 				UIconf = {
-					promptY = scr_y - 1,
+					promptY = 1,
 					chevron = ">",
 					chatlogTop = 1,
 					title = "",
@@ -1152,7 +1152,7 @@ commands.palette = function(_argument)
 					title = colors.yellow
 				}
 				UIconf = {
-					promptY = scr_y,
+					promptY = 0,
 					chevron = ": ",
 					chatlogTop = 2,
 					title = "",
@@ -1355,7 +1355,7 @@ local main = function()
 	
 	while true do
 		
-		term.setCursorPos(1, UIconf.promptY)
+		term.setCursorPos(1, scr_y-UIconf.promptY)
 		term.setBackgroundColor(palette.promptbg)
 		term.clearLine()
 		term.setTextColor(palette.chevron)
@@ -1363,7 +1363,7 @@ local main = function()
 		term.setTextColor(palette.prompttxt)
 		
 		local input = read(nil,mHistory) --replace later with fancier input
-		if UIconf.promptY == scr_y then
+		if UIconf.promptY == 0 then
 			term.scroll(1)
 		end
 		if textToBlit(input,true):gsub(" ","") ~= "" then --people who send blank messages in chat programs deserve to die
