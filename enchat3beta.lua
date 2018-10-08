@@ -6,7 +6,6 @@
 This is a beta release. You fool!
 To do:
 	+ add a colored read prompt, somehow
-	+ add /picto for image sending
 --]]
 
 local scr_x, scr_y = term.getSize()
@@ -116,6 +115,8 @@ end
 local setEncKey = function(newKey)
 	encKey = newKey
 end
+
+pauseRendering = false
 
 local toblit = {
 	[0] = " ",
@@ -654,6 +655,113 @@ local cfwrite = function(text, y)
 	fwrite(text)
 end
 
+local pictochat = function(xsize, ysize)
+    local output = {{},{},{}}
+    for y = 1, ysize do
+        output[1][y] = {}
+        output[2][y] = {}
+        output[3][y] = {}
+        for x = 1, xsize do
+            output[1][y][x] = " "
+            output[2][y][x] = " "
+            output[3][y][x] = " "
+        end
+    end
+    
+    term.setBackgroundColor(colors.gray)
+    term.setTextColor(colors.black)
+    for y = 1, scr_y do
+        term.setCursorPos(1,y)
+        term.write(("/"):rep(scr_x))
+    end
+	cwrite(" [ENTER] to finish. ",scr_y)
+    
+    local cx, cy = math.floor(scr_x/2)-(xsize/2), math.floor(scr_y/2)-(ysize/2)
+    
+    local allCols = "0123456789abcdef"
+    local tPos, bPos = 16, 1
+    local char, text, back = " ", allCols:sub(tPos,tPos), allCols:sub(bPos,bPos)
+    
+    local render = function()
+        term.setTextColor(colors.white)
+        term.setBackgroundColor(colors.black)
+        local mx, my
+        for y = 1, ysize do
+            for x = 1, xsize do
+                mx, my = x+cx+-1, y+cy+-1
+                term.setCursorPos(mx,my)
+                term.blit(output[1][y][x], output[2][y][x], output[3][y][x])
+            end
+        end
+        term.setCursorPos((scr_x/2)-5,ysize+cy+1)
+		term.write("Char = '")
+        term.blit(char, text, back)
+		term.write("'")
+    end
+    local evt, butt, mx, my
+    local isShiftDown = false
+    
+    render()
+    
+    while true do
+        evt = {os.pullEvent()}
+        if evt[1] == "mouse_click" or evt[1] == "mouse_drag" then
+            butt, mx, my = evt[2], evt[3]-cx+1, evt[4]-cy+1
+            if mx >= 1 and mx <= xsize and my >= 1 and my <= ysize then
+                if butt == 1 then
+                    output[1][my][mx] = char
+                    output[2][my][mx] = text
+                    output[3][my][mx] = back
+                elseif butt == 2 then
+                    output[1][my][mx] = " "
+                    output[2][my][mx] = " "
+                    output[3][my][mx] = " "
+                end
+                render()
+            end
+        elseif evt[1] == "mouse_scroll" then
+            local oldTpos, oldBpos = tPos, bPos
+            if isShiftDown then
+                tPos = math.max(1, math.min(16, tPos + evt[2]))
+            else
+                bPos = math.max(1, math.min(16, bPos + evt[2]))
+            end
+            text, back = allCols:sub(tPos,tPos), allCols:sub(bPos,bPos)
+            if oldTpos ~= tPos or oldBpos ~= bPos then
+                render()
+            end
+        elseif evt[1] == "key" then
+            if evt[2] == keys.enter then
+				local top, bottom, left, right = 1, ysize, 1, xsize
+                for y = 1, ysize do
+                    output[1][y] = table.concat(output[1][y])
+                    output[2][y] = table.concat(output[2][y])
+                    output[3][y] = table.concat(output[3][y])
+					if output[1][y]:gsub(" ","") == "" and output[3][y]:gsub(" ","") == "" then
+						if top == y then
+							top = top + 1
+						elseif bottom == ysize then
+							bottom = y-1
+						end
+					end
+                end
+                return output
+            elseif evt[2] == keys.leftShift then
+                isShiftDown = true
+            end
+        elseif evt[1] == "key_up" then
+            if evt[2] == keys.leftShift then
+                isShiftDown = false
+            end
+        elseif evt[1] == "char" then
+			if char ~= evt[2] then
+				char = evt[2]
+				render()
+			end
+		end
+    end
+end
+
 local notif = {}
 notif.alpha = 248
 notif.height = 10
@@ -922,12 +1030,32 @@ local logadd = function(name, message, animType, maxFrame)
 	log[#log + 1] = {
 		prefix = name and "<" or "",
 		suffix = name and "> " or "",
-		name = name and name or "",
+		name = name or "",
 		message = message or "",
 		frame = 0,
 		maxFrame = maxFrame or true,
 		animType = animType
 	}
+end
+
+local logaddTable = function(name, message, animType, maxFrame)
+	if type(message) == "table" and type(name) == "string" then
+		if #message > 0 then
+			local isGood = true
+			for l = 1, #message do
+				if type(message[l]) ~= "string" then
+					isGood = false
+					break
+				end
+			end
+			if isGood then
+				logadd(name,message[1],animType,maxFrame)
+				for l = 2, #message do
+					logadd(nil,message[l],animType,maxFrame)
+				end
+			end
+		end
+	end
 end
 
 local makeRandomString = function(length)
@@ -940,7 +1068,11 @@ end
 
 local enchatSend = function(name, message, doLog, animType, maxFrame, crying, recipient)
 	if doLog then
-		logadd(name, message, animType, maxFrame)
+		if type(message) == "string" then
+			logadd(name, message, animType, maxFrame)
+		else
+			logaddTable(name, message, animType, maxFrame)
+		end
 	end
 	local messageID = makeRandomString(64)
 	local outmsg = encrite({
@@ -1012,6 +1144,19 @@ commands.update = function()
 	else
 		logadd("*", res)
 	end	
+end
+commands.picto = function(message)
+	pauseRendering = true
+	local image = pictochat(26,11)
+	local output = message and {message} or {""}
+	for y = 1, #image[1] do
+		output[#output+1] = ""
+		for x = 1, #image[1][1] do
+			output[#output] = table.concat({output[#output],"&",image[2][y]:sub(x,x),"~",image[3][y]:sub(x,x),image[1][y]:sub(x,x)})
+		end
+	end
+	pauseRendering = false
+	enchatSend(yourName,output,true)
 end
 commands.list = function()
 	userCryList = {}
@@ -1430,7 +1575,6 @@ local main = function()
 end
 
 local handleReceiveMessage = function(user, message, animType, maxFrame)
-	local isAtBottom = (scroll == maxScroll)
 	logadd(nil,nil) --readability
 	logadd(user, message,animations[animType] and animType or nil,(type(maxFrame) == "number") and maxFrame or nil)
 	os.queueEvent("render_enchat")
@@ -1464,8 +1608,12 @@ local handleEvents = function()
 							if msg.messageID and (not IDlog[msg.messageID]) then
 								userCryList[msg.name] = true
 								IDlog[msg.messageID] = true
-								if (type(msg.message) == "string") and ((not msg.recipient) or (msg.recipient == yourName or msg.recipient == textToBlit(yourName,true))) then
-									handleReceiveMessage(msg.name, tostring(msg.message), msg.animType, msg.maxFrame)
+								if ((not msg.recipient) or (msg.recipient == yourName or msg.recipient == textToBlit(yourName,true))) then
+									if type(msg.message) == "string" then
+										handleReceiveMessage(msg.name, tostring(msg.message), msg.animType, msg.maxFrame)
+									elseif type(msg.message) == "table" then
+										logaddTable(msg.name, msg.message)
+									end
 								end
 								if (msg.cry == true) then
 									cryOut(yourName, false)
@@ -1508,7 +1656,9 @@ end
 local keepRedrawing = function()
 	while true do
 		sleep(enchatSettings.redrawDelay)
-		os.queueEvent("render_enchat")
+		if not pauseRendering then
+			os.queueEvent("render_enchat")
+		end
 	end
 end
 
