@@ -120,30 +120,6 @@ end
 
 pauseRendering = false
 
-local toblit = {
-	[0] = " ",
-	[1] = "0",
-	[2] = "1",
-	[4] = "2",
-	[8] = "3",
-	[16] = "4",
-	[32] = "5",
-	[64] = "6",
-	[128] = "7",
-	[256] = "8",
-	[512] = "9",
-	[1024] = "a",
-	[2048] = "b",
-	[4096] = "c",
-	[8192] = "d",
-	[16384] = "e",
-	[32768] = "f"
-}
-local tocolors = {}
-for k,v in pairs(toblit) do
-	tocolors[v] = k
-end
-
 local colors_strnames = { --primarily for use when coloring palette
 	["white"] = colors.white,
 	["pearl"] = colors.white,
@@ -220,6 +196,30 @@ local colors_strnames = { --primarily for use when coloring palette
 	["onyx"] = colors.black,
 	["#191919"] = colors.black,
 }
+
+local toblit = {
+	[0] = " ",
+	[1] = "0",
+	[2] = "1",
+	[4] = "2",
+	[8] = "3",
+	[16] = "4",
+	[32] = "5",
+	[64] = "6",
+	[128] = "7",
+	[256] = "8",
+	[512] = "9",
+	[1024] = "a",
+	[2048] = "b",
+	[4096] = "c",
+	[8192] = "d",
+	[16384] = "e",
+	[32768] = "f"
+}
+local tocolors = {}
+for k,v in pairs(toblit) do
+	tocolors[v] = k
+end
 
 local codeNames = {
 	["r"] = "reset",	-- Sets either the text (&) or background (~) colors to their original color.
@@ -318,29 +318,42 @@ textToBlit = function(_str,onlyString,initTxt,initBg,_checkPos) --returns output
 		bgcolorout = bgcolorout..bg --(doFormatting and bg or origBG)
 	end
 	local checkMod = 0
+	local modifyCheck = function()
+		if p < checkPos then
+			checkMod = checkMod - 2
+		end
+		if p == checkPos then
+			checkMod = checkMod - 1
+		end
+	end
 	while p <= #str do
 		if str:sub(p,p) == txcode then
 			if tocolors[str:sub(p+1,p+1)] and doFormatting then
 				txcol = str:sub(p+1,p+1)
 				usedformats.txcol = true
 				p = p + 1
+				modifyCheck()
 			elseif codeNames[str:sub(p+1,p+1)] then
 				if str:sub(p+1,p+1) == "r" and doFormatting then
 					txcol = origTX
 					isKrazy = false
 					p = p + 1
+					modifyCheck()
 				elseif str:sub(p+1,p+1) == "{" and doFormatting then
 					doFormatting = false
 					p = p + 1
+					modifyCheck()
 				elseif str:sub(p+1,p+1) == "}" and not doFormatting then
 					doFormatting = true
 					p = p + 1
+					modifyCheck()
 				elseif str:sub(p+1,p+1) == "k" and doFormatting then
 					if enchatSettings.doKrazy then
 						isKrazy = true
 						usedformats.krazy = true
 					end
 					p = p + 1
+					modifyCheck()
 				else
 					moveOn(txcol,bgcol)
 				end
@@ -353,12 +366,15 @@ textToBlit = function(_str,onlyString,initTxt,initBg,_checkPos) --returns output
 				bgcol = str:sub(p+1,p+1)
 				usedformats.bgcol = true
 				p = p + 1
+				modifyCheck()
 			elseif codeNames[str:sub(p+1,p+1)] and (str:sub(p+1,p+1) == "r") and doFormatting then
 				bgcol = origBG
 				p = p + 1
+				modifyCheck()
 			elseif str:sub(p+1,p+1) == "k" and doFormatting then
 				isKrazy = false
 				p = p + 1
+				modifyCheck()
 			else
 				moveOn(txcol,bgcol)
 			end
@@ -369,9 +385,73 @@ textToBlit = function(_str,onlyString,initTxt,initBg,_checkPos) --returns output
 		end
 	end
 	if onlyString then
-		return output
+		return output, checkMod
 	else
-		return {output, txcolorout, bgcolorout}
+		return {output, txcolorout, bgcolorout}, checkMod
+	end
+end
+
+local colorRead = function(maxLength, _history)
+	local output = ""
+	local history = {}
+	for a = 1, #_history do
+		history[a] = _history[a]
+	end
+	history[#history+1] = ""
+	local hPos = #history
+	local cx, cy = term.getCursorPos()
+	local x = 1
+	local evt, key, bout, xmod
+	term.setCursorBlink(true)
+	while true do
+		term.setCursorPos(cx,cy)
+		bout, xmod = textToBlit(output,false,nil,nil,x)
+		term.blit(unpack(bout))
+		term.write((" "):rep(scr_x-cx))
+		term.setCursorPos(cx+x+-1+xmod,cy)
+		evt = {os.pullEvent()}
+		if evt[1] == "char" or evt[1] == "paste" then
+			output = (output:sub(1,x-1)..evt[2]..output:sub(x)):sub(1,maxLength or -1)
+			x = math.min(x + #evt[2], #output+1)
+		elseif evt[1] == "key" then
+			key = evt[2]
+			if key == keys.left then
+				x = math.max(x - 1, 1)
+			elseif key == keys.right then
+				x = math.min(x + 1, #output+1)
+			elseif key == keys.backspace then
+				if x > 1 then
+					output = output:sub(1,x-2)..output:sub(x)
+					x = x - 1
+				end
+			elseif key == keys.delete then
+				if x < #output+1 then
+					output = output:sub(1,x-1)..output:sub(x+1)
+				end
+			elseif key == keys.enter then
+				term.setCursorBlink(false)
+				return output
+			elseif key == keys.home then
+				x = 1
+			elseif key == keys["end"] then
+				x = #output+1
+			elseif key == keys.up then
+				if history[hPos-1] then
+					hPos = hPos - 1
+					output = history[hPos]
+					x = #output+1
+				end
+			elseif key == keys.down then
+				if history[hPos+1] then
+					hPos = hPos + 1
+					output = history[hPos]
+					x = #output+1
+				end
+			end
+		end
+		if hPos > 1 then
+			history[hPos] = output
+		end
 	end
 end
 
@@ -432,7 +512,7 @@ local prettyCenterWrite = function(text, y)
 	return lines
 end
 
-local prettyPrompt = function(prompt, y, replchar, history)
+local prettyPrompt = function(prompt, y, replchar, doColor)
 	local cy, cx = term.getCursorPos()
 	term.setBackgroundColor(colors.gray)
 	term.setTextColor(colors.white)
@@ -440,7 +520,12 @@ local prettyPrompt = function(prompt, y, replchar, history)
 	term.setCursorPos(1, y + yadj)
 	term.setBackgroundColor(colors.lightGray)
 	term.clearLine()
-	local output = read(replchar, history) --will eventually add fancy colored read function
+	local output
+	if doColor then
+		output = read(replchar)
+	else
+		output = colorRead()
+	end
 	return output
 end
 
@@ -455,10 +540,10 @@ if not (yourName and encKey) then
 end
 
 if not yourName then
-	yourName = prettyPrompt("Enter your name.", currentY)
+	yourName = prettyPrompt("Enter your name.", currentY, nil, true)
 	if not checkValidName(yourName) then
 		while true do
-			yourName = prettyPrompt("That name isn't valid. Enter another.", currentY)
+			yourName = prettyPrompt("That name isn't valid. Enter another.", currentY, nil, true)
 			if checkValidName(yourName) then
 				break
 			end
@@ -1180,9 +1265,9 @@ commands.update = function()
 end
 commands.picto = function(filename)
 	local image, output, res
+	local isEmpty = true
 	if filename then
 		output, res = getPictureFile(filename)
-		--error(textutils.serialize(output))
 		if not output then
 			logadd("*",res)
 			return
@@ -1198,11 +1283,13 @@ commands.picto = function(filename)
 			output[#output+1] = ""
 			for x = 1, #image[1][1] do
 				output[#output] = table.concat({output[#output],"&",image[2][y]:sub(x,x),"~",image[3][y]:sub(x,x),image[1][y]:sub(x,x)})
+				isEmpty = isEmpty and (image[1][y]:sub(x,x) == " " and image[3][y]:sub(x,x) == " ")
 			end
 		end
 	end
-	
-	enchatSend(yourName,output,true,"slideFromLeft")
+	if not isEmpty then
+		enchatSend(yourName,output,true,"slideFromLeft")
+	end
 end
 commands.list = function()
 	userCryList = {}
@@ -1595,7 +1682,7 @@ local main = function()
 		term.write(UIconf.chevron)
 		term.setTextColor(palette.prompttxt)
 		
-		local input = read(nil,mHistory) --replace later with fancier input
+		local input = colorRead(nil, mHistory)
 		if UIconf.promptY == 0 then
 			term.scroll(1)
 		end
