@@ -1117,16 +1117,15 @@ local getPictureFile = function(path) --ONLY NFP or NFT
 		local file = fs.open(path,"r")
 		local content = file.readAll()
 		file.close()
-		if content:lower():gsub("[0123456789abcdef\30\31]","") ~= "" then
-			return false, "Invalid image."
-		end
-		local output
-		if file:find("\31") and file:find("\30") then
-			output = explode("\n",content:gsub("\31","&"):gsub("\30","~"))
+		if content:find("\31") and content:find("\30") then
+			return explode("\n",content:gsub("\31","&"):gsub("\30","~"),nil,false)
 		else
-			output = explode("\n",content:gsub(".","~."))
+			if content:lower():gsub("[0123456789abcdef\n ]","") ~= "" then
+				return false, "Invalid image."
+			else
+				return explode("\n",content:gsub("[^\n]","~%1 "),nil,false)
+			end
 		end
-		return output
 	end
 end
 
@@ -1179,10 +1178,10 @@ commands.update = function()
 	end	
 end
 commands.picto = function(filename)
-	pauseRendering = true
 	local image, output, res
 	if filename then
 		output, res = getPictureFile(filename)
+		--error(textutils.serialize(output))
 		if not output then
 			logadd("*",res)
 			return
@@ -1190,17 +1189,18 @@ commands.picto = function(filename)
 			table.insert(output,1,"")
 		end
 	else
+		output = {""}
+		pauseRendering = true
+		local image = pictochat(26,11)
+		pauseRendering = false
 		for y = 1, #image[1] do
 			output[#output+1] = ""
 			for x = 1, #image[1][1] do
 				output[#output] = table.concat({output[#output],"&",image[2][y]:sub(x,x),"~",image[3][y]:sub(x,x),image[1][y]:sub(x,x)})
 			end
 		end
-		pictochat(26,11)
-		output = {""}
 	end
 	
-	pauseRendering = false
 	enchatSend(yourName,output,true,"slideFromLeft")
 end
 commands.list = function()
