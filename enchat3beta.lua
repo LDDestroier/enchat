@@ -1110,6 +1110,25 @@ local cryOut = function(name, crying)
 	enchatSend(name, nil, false, nil, nil, crying)
 end
 
+local getPictureFile = function(path) --ONLY NFP or NFT
+	if not fs.exists(path) then
+		return false, "No such image."
+	else
+		local file = fs.open(path,"r")
+		local content = file.readAll()
+		file.close()
+		if content:lower():gsub("[0123456789abcdef\30\31]","") ~= "" then
+			return false, "Invalid image."
+		end
+		local output
+		if file:find("\31") and file:find("\30") then
+			output = explode("\n",content:gsub("\31","&"):gsub("\30","~"))
+		else
+			output = explode("\n",content:gsub(".","~."))
+		end
+		return output
+	end
+end
 
 local getTableLength = function(tbl)
 	local output = 0
@@ -1159,18 +1178,30 @@ commands.update = function()
 		logadd("*", res)
 	end	
 end
-commands.picto = function(message)
+commands.picto = function(filename)
 	pauseRendering = true
-	local image = pictochat(26,11)
-	local output = message and {message} or {""}
-	for y = 1, #image[1] do
-		output[#output+1] = ""
-		for x = 1, #image[1][1] do
-			output[#output] = table.concat({output[#output],"&",image[2][y]:sub(x,x),"~",image[3][y]:sub(x,x),image[1][y]:sub(x,x)})
+	local image, output, res
+	if filename then
+		output, res = getPictureFile(filename)
+		if not output then
+			logadd("*",res)
+			return
+		else
+			table.insert(output,1,"")
 		end
+	else
+		for y = 1, #image[1] do
+			output[#output+1] = ""
+			for x = 1, #image[1][1] do
+				output[#output] = table.concat({output[#output],"&",image[2][y]:sub(x,x),"~",image[3][y]:sub(x,x),image[1][y]:sub(x,x)})
+			end
+		end
+		pictochat(26,11)
+		output = {""}
 	end
+	
 	pauseRendering = false
-	enchatSend(yourName,output,true)
+	enchatSend(yourName,output,true,"slideFromLeft")
 end
 commands.list = function()
 	userCryList = {}
@@ -1460,6 +1491,7 @@ commands.help = function(cmdname)
 			shrug = "Sends out a shrugging emoticon.",
 			set = "Changes config options during the current session. Lists all options, if without argument.",
 			msg = "Sends a message that is only logged by a specific user.",
+			picto = "Opens up a quick image editor, and sends the image out. Use the scroll wheel to change color, and hold left shift to change text color.",
 			help = "Shows every command, or describes a specific command.",
 		}
 		cmdname = cmdname:gsub(" ","")
