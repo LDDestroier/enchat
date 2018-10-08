@@ -522,9 +522,9 @@ local prettyPrompt = function(prompt, y, replchar, doColor)
 	term.clearLine()
 	local output
 	if doColor then
-		output = read(replchar)
-	else
 		output = colorRead()
+	else
+		output = read(replchar)
 	end
 	return output
 end
