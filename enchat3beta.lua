@@ -31,7 +31,8 @@ local enchatSettings = {	--DEFAULT settings.
 	doNotif = true,		--whether or not to use oveerlay glasses for notifications, if possible
 	doKrazy = true,		--whether or not to add &k obfuscation
 	useSkynet = true,	--whether or not to use gollark's Skynet in addition to modem calls
-	extraNewline = true	--adds an extra newline after every message since setting to true
+	extraNewline = true,	--adds an extra newline after every message since setting to true
+	acceptPictoChat = true	--whether or not to allow tablular enchat input, which is what /picto uses
 }
 
 local palette = {
@@ -1491,7 +1492,7 @@ commands.help = function(cmdname)
 			shrug = "Sends out a shrugging emoticon.",
 			set = "Changes config options during the current session. Lists all options, if without argument.",
 			msg = "Sends a message that is only logged by a specific user.",
-			picto = "Opens up a quick image editor, and sends the image out. Use the scroll wheel to change color, and hold left shift to change text color.",
+			picto = "Opens an image maker and sends the result. Use the scroll wheel to change color, and hold left shift to change text color. If argument given, will look for an image at the given path and use that instead.",
 			help = "Shows every command, or describes a specific command.",
 		}
 		cmdname = cmdname:gsub(" ","")
@@ -1661,7 +1662,7 @@ local handleEvents = function()
 								if ((not msg.recipient) or (msg.recipient == yourName or msg.recipient == textToBlit(yourName,true))) then
 									if type(msg.message) == "string" then
 										handleReceiveMessage(msg.name, tostring(msg.message), msg.animType, msg.maxFrame)
-									elseif type(msg.message) == "table" then
+									elseif type(msg.message) == "table" and enchatSettings.acceptPictoChat then
 										logaddTable(msg.name, msg.message)
 										if enchatSettings.extraNewline then
 											logadd(nil,nil)
