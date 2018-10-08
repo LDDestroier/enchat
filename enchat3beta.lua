@@ -30,7 +30,8 @@ local enchatSettings = {	--DEFAULT settings.
 	pageKeySpeed = 4,	--how far PageUP or PageDOWN should scroll
 	doNotif = true,		--whether or not to use oveerlay glasses for notifications, if possible
 	doKrazy = true,		--whether or not to add &k obfuscation
-	useSkynet = true	--whether or not to use gollark's Skynet in addition to modem calls
+	useSkynet = true,	--whether or not to use gollark's Skynet in addition to modem calls
+	extraNewline = true	--adds an extra newline after every message since setting to true
 }
 
 local palette = {
@@ -1031,7 +1032,7 @@ local logadd = function(name, message, animType, maxFrame)
 		prefix = name and "<" or "",
 		suffix = name and "> " or "",
 		name = name or "",
-		message = message or "",
+		message = message or " ",
 		frame = 0,
 		maxFrame = maxFrame or true,
 		animType = animType
@@ -1559,7 +1560,9 @@ local main = function()
 					return "exit"
 				end
 			else
-				logadd(nil,nil) --readability
+				if enchatSettings.extraNewline then
+					logadd(nil,nil) --readability
+				end
 				enchatSend(yourName, input, true)
 			end
 			if mHistory[#mHistory] ~= input then
@@ -1575,7 +1578,9 @@ local main = function()
 end
 
 local handleReceiveMessage = function(user, message, animType, maxFrame)
-	logadd(nil,nil) --readability
+	if enchatSettings.extraNewline then
+		logadd(nil,nil) --readability
+	end
 	logadd(user, message,animations[animType] and animType or nil,(type(maxFrame) == "number") and maxFrame or nil)
 	os.queueEvent("render_enchat")
 end
@@ -1613,6 +1618,9 @@ local handleEvents = function()
 										handleReceiveMessage(msg.name, tostring(msg.message), msg.animType, msg.maxFrame)
 									elseif type(msg.message) == "table" then
 										logaddTable(msg.name, msg.message)
+										if enchatSettings.extraNewline then
+											logadd(nil,nil)
+										end
 									end
 								end
 								if (msg.cry == true) then
