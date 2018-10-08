@@ -1726,6 +1726,7 @@ local handleNotifications = function()
 end
 
 loadSettings()
+saveSettings()
 
 getModem()
 
