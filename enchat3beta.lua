@@ -657,110 +657,123 @@ local cfwrite = function(text, y)
 end
 
 local pictochat = function(xsize, ysize)
-    local output = {{},{},{}}
-    for y = 1, ysize do
-        output[1][y] = {}
-        output[2][y] = {}
-        output[3][y] = {}
-        for x = 1, xsize do
-            output[1][y][x] = " "
-            output[2][y][x] = " "
-            output[3][y][x] = " "
-        end
-    end
-    
-    term.setBackgroundColor(colors.gray)
-    term.setTextColor(colors.black)
-    for y = 1, scr_y do
-        term.setCursorPos(1,y)
-        term.write(("/"):rep(scr_x))
-    end
+	local output = {{},{},{}}
+	for y = 1, ysize do
+		output[1][y] = {}
+		output[2][y] = {}
+		output[3][y] = {}
+		for x = 1, xsize do
+			output[1][y][x] = " "
+			output[2][y][x] = " "
+			output[3][y][x] = " "
+		end
+	end
+
+	term.setBackgroundColor(colors.gray)
+	term.setTextColor(colors.black)
+	for y = 1, scr_y do
+		term.setCursorPos(1,y)
+		term.write(("/"):rep(scr_x))
+	end
 	cwrite(" [ENTER] to finish. ",scr_y)
-    
-    local cx, cy = math.floor((scr_x/2)-(xsize/2)), math.floor((scr_y/2)-(ysize/2))
-    
-    local allCols = "0123456789abcdef"
-    local tPos, bPos = 16, 1
-    local char, text, back = " ", allCols:sub(tPos,tPos), allCols:sub(bPos,bPos)
-    
-    local render = function()
-        term.setTextColor(colors.white)
-        term.setBackgroundColor(colors.black)
-        local mx, my
-        for y = 1, ysize do
-            for x = 1, xsize do
-                mx, my = x+cx+-1, y+cy+-1
-                term.setCursorPos(mx,my)
-                term.blit(output[1][y][x], output[2][y][x], output[3][y][x])
-            end
-        end
-        term.setCursorPos((scr_x/2)-5,ysize+cy+1)
+
+	local cx, cy = math.floor((scr_x/2)-(xsize/2)), math.floor((scr_y/2)-(ysize/2))
+
+	local allCols = "0123456789abcdef"
+	local tPos, bPos = 16, 1
+	local char, text, back = " ", allCols:sub(tPos,tPos), allCols:sub(bPos,bPos)
+
+	local render = function()
+		term.setTextColor(colors.white)
+		term.setBackgroundColor(colors.black)
+		local mx, my
+		for y = 1, ysize do
+			for x = 1, xsize do
+				mx, my = x+cx+-1, y+cy+-1
+				term.setCursorPos(mx,my)
+				term.blit(output[1][y][x], output[2][y][x], output[3][y][x])
+			end
+		end
+		term.setCursorPos((scr_x/2)-5,ysize+cy+1)
 		term.write("Char = '")
-        term.blit(char, text, back)
+		term.blit(char, text, back)
 		term.write("'")
-    end
-    local evt, butt, mx, my
-    local isShiftDown = false
-    
-    render()
-    
-    while true do
-        evt = {os.pullEvent()}
-        if evt[1] == "mouse_click" or evt[1] == "mouse_drag" then
-            butt, mx, my = evt[2], evt[3]-cx+1, evt[4]-cy+1
-            if mx >= 1 and mx <= xsize and my >= 1 and my <= ysize then
-                if butt == 1 then
-                    output[1][my][mx] = char
-                    output[2][my][mx] = text
-                    output[3][my][mx] = back
-                elseif butt == 2 then
-                    output[1][my][mx] = " "
-                    output[2][my][mx] = " "
-                    output[3][my][mx] = " "
-                end
-                render()
-            end
-        elseif evt[1] == "mouse_scroll" then
-            local oldTpos, oldBpos = tPos, bPos
-            if isShiftDown then
-                tPos = math.max(1, math.min(16, tPos + evt[2]))
-            else
-                bPos = math.max(1, math.min(16, bPos + evt[2]))
-            end
-            text, back = allCols:sub(tPos,tPos), allCols:sub(bPos,bPos)
-            if oldTpos ~= tPos or oldBpos ~= bPos then
-                render()
-            end
-        elseif evt[1] == "key" then
-            if evt[2] == keys.enter then
-				local top, bottom, left, right = 1, ysize, 1, xsize
-                for y = 1, ysize do
-                    output[1][y] = table.concat(output[1][y])
-                    output[2][y] = table.concat(output[2][y])
-                    output[3][y] = table.concat(output[3][y])
-					if output[1][y]:gsub(" ","") == "" and output[3][y]:gsub(" ","") == "" then
-						if top == y then
-							top = top + 1
-						elseif bottom == ysize then
-							bottom = y-1
+	end
+	local evt, butt, mx, my
+	local isShiftDown = false
+
+	render()
+
+	while true do
+		evt = {os.pullEvent()}
+		if evt[1] == "mouse_click" or evt[1] == "mouse_drag" then
+			butt, mx, my = evt[2], evt[3]-cx+1, evt[4]-cy+1
+			if mx >= 1 and mx <= xsize and my >= 1 and my <= ysize then
+				if butt == 1 then
+					output[1][my][mx] = char
+					output[2][my][mx] = text
+					output[3][my][mx] = back
+				elseif butt == 2 then
+					output[1][my][mx] = " "
+					output[2][my][mx] = " "
+					output[3][my][mx] = " "
+				end
+				render()
+			end
+		elseif evt[1] == "mouse_scroll" then
+			local oldTpos, oldBpos = tPos, bPos
+			if isShiftDown then
+				tPos = math.max(1, math.min(16, tPos + evt[2]))
+			else
+				bPos = math.max(1, math.min(16, bPos + evt[2]))
+			end
+			text, back = allCols:sub(tPos,tPos), allCols:sub(bPos,bPos)
+			if oldTpos ~= tPos or oldBpos ~= bPos then
+				render()
+			end
+		elseif evt[1] == "key" then
+			if evt[2] == keys.enter then
+				for y = 1, ysize do
+					output[1][y] = table.concat(output[1][y])
+					output[2][y] = table.concat(output[2][y])
+					output[3][y] = table.concat(output[3][y])
+				end
+				local croppedOutput = {}
+				local touched = false
+				local crY = 0
+				for a = 1, ysize do
+					if output[1][1] == (" "):rep(xsize) and output[3][1] == (" "):rep(xsize) then
+						table.remove(output[1],1)
+						table.remove(output[2],1)
+						table.remove(output[3],1)
+					else
+						for y = #output[1], 1, -1 do
+							if output[1][y] == (" "):rep(xsize) and output[3][y] == (" "):rep(xsize) then
+								table.remove(output[1],y)
+								table.remove(output[2],y)
+								table.remove(output[3],y)
+							else
+								break
+							end
 						end
+						break
 					end
-                end
-                return output
-            elseif evt[2] == keys.leftShift then
-                isShiftDown = true
-            end
-        elseif evt[1] == "key_up" then
-            if evt[2] == keys.leftShift then
-                isShiftDown = false
-            end
-        elseif evt[1] == "char" then
+				end
+				return output
+			elseif evt[2] == keys.leftShift then
+				isShiftDown = true
+			end
+		elseif evt[1] == "key_up" then
+			if evt[2] == keys.leftShift then
+				isShiftDown = false
+			end
+		elseif evt[1] == "char" then
 			if char ~= evt[2] then
 				char = evt[2]
 				render()
 			end
 		end
-    end
+	end
 end
 
 local notif = {}
