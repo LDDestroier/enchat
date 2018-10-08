@@ -393,7 +393,7 @@ end
 
 local colorRead = function(maxLength, _history)
 	local output = ""
-	local history = {}
+	local history, _history = {}, _history or {}
 	for a = 1, #_history do
 		history[a] = _history[a]
 	end
