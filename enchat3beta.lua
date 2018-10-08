@@ -5,7 +5,8 @@
 
 This is a beta release. You fool!
 To do:
-	+ find and eradicate all bugs
+	+ add a colored read prompt, somehow
+	+ add /picto for image sending
 --]]
 
 local scr_x, scr_y = term.getSize()
