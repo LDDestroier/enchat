@@ -1804,14 +1804,14 @@ local handleEvents = function()
 					end
 				end
 			end
-		elseif evt[1] == "mouse_scroll" then
+		elseif evt[1] == "mouse_scroll" and (not pauseRendering) then
 			local dist = evt[2]
 			oldScroll = scroll
 			adjScroll(enchatSettings.reverseScroll and -dist or dist)
 			if scroll ~= oldScroll then
 				dab(renderChat)
 			end
-		elseif evt[1] == "key" then
+		elseif evt[1] == "key" and (not pauseRendering) then
 			local key = evt[2]
 			keysDown[key] = true
 			oldScroll = scroll
@@ -1826,7 +1826,7 @@ local handleEvents = function()
 		elseif evt[1] == "key_up" then
 			local key = evt[2]
 			keysDown[key] = nil
-		elseif (evt[1] == "render_enchat") then
+		elseif (evt[1] == "render_enchat") and (not pauseRendering) then
 			dab(renderChat)
 		elseif evt[1] == "terminate" then
 			return "exit"
