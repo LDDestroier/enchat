@@ -577,6 +577,9 @@ local bottomMessage = function(text)
 	term.write(text)
 end
 
+loadSettings()
+saveSettings()
+
 term.setBackgroundColor(colors.black)
 term.clear()
 
@@ -608,25 +611,28 @@ end
 
 -- SKYNET API START (thanks gollark) --
 
-local skynet = true
-apipath = fs.combine(enchat.dataDir,"/api/skynet")
-if not fs.exists(apipath) then
-	bottomMessage("Skynet API not found! Downloading...")
-	local prog = http.get("https://raw.githubusercontent.com/osmarks/skynet/master/client.lua")
-	if prog then
-		local file = fs.open(apipath,"w")
-		file.write(prog.readAll())
-		file.close()
-	else
-		bottomMessage("Failed to download Skynet. Ignoring.")
-		skynet = nil
+local skynet
+if enchatSettings.useSkynet then
+	skynet = true
+	apipath = fs.combine(enchat.dataDir,"/api/skynet")
+	if not fs.exists(apipath) then
+		bottomMessage("Skynet API not found! Downloading...")
+		local prog = http.get("https://raw.githubusercontent.com/osmarks/skynet/master/client.lua")
+		if prog then
+			local file = fs.open(apipath,"w")
+			file.write(prog.readAll())
+			file.close()
+		else
+			bottomMessage("Failed to download Skynet. Ignoring.")
+			skynet = nil
+		end
 	end
-end
-if skynet then
-	skynet = dofile(apipath) --require my left asshole
-	if encKey then
-		bottomMessage("Connecting to Skynet...")
-		skynet.open(enchat.skynetPort)
+	if skynet then
+		skynet = dofile(apipath) --require my left asshole
+		if encKey then
+			bottomMessage("Connecting to Skynet...")
+			skynet.open(enchat.skynetPort)
+		end
 	end
 end
 
@@ -1833,9 +1839,6 @@ local handleNotifications = function()
 		end
 	end
 end
-
-loadSettings()
-saveSettings()
 
 getModem()
 
