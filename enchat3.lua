@@ -1285,7 +1285,7 @@ commands.update = function()
 end
 commands.picto = function(filename)
 	local image, output, res
-	local isEmpty = true
+	local isEmpty
 	if filename then
 		output, res = getPictureFile(filename)
 		if not output then
@@ -1295,6 +1295,7 @@ commands.picto = function(filename)
 			table.insert(output,1,"")
 		end
 	else
+		isEmpty = true
 		output = {""}
 		pauseRendering = true
 		local image = pictochat(26,11)
