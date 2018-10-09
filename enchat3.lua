@@ -1303,7 +1303,7 @@ commands.picto = function(filename)
 		for y = 1, #image[1] do
 			output[#output+1] = ""
 			for x = 1, #image[1][1] do
-				output[#output] = table.concat({output[#output],"&",image[2][y]:sub(x,x),"~",image[3][y]:sub(x,x),image[1][y]:sub(x,x)})
+				output[#output] = table.concat({output[#output],"&",image[2][y]:sub(x,x),"~",image[3][y]:sub(x,x),image[1][y]:sub(x,x)}):sub(1,scr_x)
 				isEmpty = isEmpty and (image[1][y]:sub(x,x) == " " and image[3][y]:sub(x,x) == " ")
 			end
 		end
