@@ -1216,7 +1216,7 @@ local cryOut = function(name, crying)
 	enchatSend(name, nil, false, nil, nil, crying)
 end
 
-local getPictureFile = function(path, limitToWidth) --ONLY NFP or NFT
+local getPictureFile = function(path) --ONLY NFP or NFT
 	if not fs.exists(path) then
 		return false, "No such image."
 	else
@@ -1231,11 +1231,6 @@ local getPictureFile = function(path, limitToWidth) --ONLY NFP or NFT
 				return false, "Invalid image."
 			else
 				output = explode("\n",content:gsub("[^\n]","~%1 "),nil,false)
-			end
-		end
-		if limitToWidth then
-			for y = 1, #output do
-				output[y] = output[y]:sub(1,scr_x)
 			end
 		end
 		return output
@@ -1294,7 +1289,7 @@ commands.picto = function(filename)
 	local image, output, res
 	local isEmpty
 	if filename then
-		output, res = getPictureFile(filename,true)
+		output, res = getPictureFile(filename)
 		if not output then
 			logadd("*",res)
 			return
