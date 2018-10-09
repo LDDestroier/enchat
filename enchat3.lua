@@ -1772,7 +1772,7 @@ local handleEvents = function()
 								if ((not msg.recipient) or (msg.recipient == yourName or msg.recipient == textToBlit(yourName,true))) then
 									if type(msg.message) == "string" then
 										handleReceiveMessage(msg.name, tostring(msg.message), msg.animType, msg.maxFrame)
-									elseif type(msg.message) == "table" and enchatSettings.acceptPictoChat then
+									elseif type(msg.message) == "table" and enchatSettings.acceptPictoChat and #msg.message <= 64 then
 										logaddTable(msg.name, msg.message)
 										if enchatSettings.extraNewline then
 											logadd(nil,nil)
