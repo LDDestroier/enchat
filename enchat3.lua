@@ -1216,22 +1216,29 @@ local cryOut = function(name, crying)
 	enchatSend(name, nil, false, nil, nil, crying)
 end
 
-local getPictureFile = function(path) --ONLY NFP or NFT
+local getPictureFile = function(path, limitToWidth) --ONLY NFP or NFT
 	if not fs.exists(path) then
 		return false, "No such image."
 	else
 		local file = fs.open(path,"r")
 		local content = file.readAll()
 		file.close()
+		local output
 		if content:find("\31") and content:find("\30") then
-			return explode("\n",content:gsub("\31","&"):gsub("\30","~"),nil,false)
+			output = explode("\n",content:gsub("\31","&"):gsub("\30","~"),nil,false)
 		else
 			if content:lower():gsub("[0123456789abcdef\n ]","") ~= "" then
 				return false, "Invalid image."
 			else
-				return explode("\n",content:gsub("[^\n]","~%1 "),nil,false)
+				output = explode("\n",content:gsub("[^\n]","~%1 "),nil,false)
 			end
 		end
+		if limitToWidth then
+			for y = 1, #output do
+				output[y] = output[y]:sub(1,scr_x)
+			end
+		end
+		return output
 	end
 end
 
@@ -1287,7 +1294,7 @@ commands.picto = function(filename)
 	local image, output, res
 	local isEmpty
 	if filename then
-		output, res = getPictureFile(filename)
+		output, res = getPictureFile(filename,true)
 		if not output then
 			logadd("*",res)
 			return
@@ -1303,7 +1310,7 @@ commands.picto = function(filename)
 		for y = 1, #image[1] do
 			output[#output+1] = ""
 			for x = 1, #image[1][1] do
-				output[#output] = table.concat({output[#output],"&",image[2][y]:sub(x,x),"~",image[3][y]:sub(x,x),image[1][y]:sub(x,x)}):sub(1,scr_x)
+				output[#output] = table.concat({output[#output],"&",image[2][y]:sub(x,x),"~",image[3][y]:sub(x,x),image[1][y]:sub(x,x)})
 				isEmpty = isEmpty and (image[1][y]:sub(x,x) == " " and image[3][y]:sub(x,x) == " ")
 			end
 		end
