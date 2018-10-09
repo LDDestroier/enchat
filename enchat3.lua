@@ -116,7 +116,7 @@ local setEncKey = function(newKey)
 	encKey = newKey
 end
 
-pauseRendering = false
+local pauseRendering = true
 
 local colors_strnames = { --primarily for use when coloring palette
 	["white"] = colors.white,
@@ -612,9 +612,9 @@ end
 -- SKYNET API START (thanks gollark) --
 
 local skynet
-if enchatSettings.useSkynet then
+local downloadSkynet = function()
 	skynet = true
-	apipath = fs.combine(enchat.dataDir,"/api/skynet")
+	local apipath = fs.combine(enchat.dataDir,"/api/skynet")
 	if not fs.exists(apipath) then
 		bottomMessage("Skynet API not found! Downloading...")
 		local prog = http.get("https://raw.githubusercontent.com/osmarks/skynet/master/client.lua")
@@ -634,6 +634,10 @@ if enchatSettings.useSkynet then
 			skynet.open(enchat.skynetPort)
 		end
 	end
+end
+
+if enchatSettings.useSkynet then
+	downloadSkynet()
 end
 
 -- SKYNET API STOP (thanks again) --
@@ -1590,6 +1594,11 @@ commands.set = function(_argument)
 			logadd("*","No such setting.")
 		end
 	end
+	if enchatSettings.useSkynet and (not skynet) then
+		pauseRendering = true
+		downloadSkynet()
+		pauseRendering = false
+	end
 end
 commands.help = function(cmdname)
 	if cmdname then
@@ -1854,6 +1863,8 @@ local funky = {
 if skynet then
 	funky[#funky+1] = skynet.listen
 end
+
+pauseRendering = false
 
 local res, outcome = pcall(function()
 	return parallel.waitForAny(unpack(funky))
