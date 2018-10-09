@@ -1198,7 +1198,6 @@ local enchatSend = function(name, message, doLog, animType, maxFrame, crying, re
 	local outmsg = encrite({
 		name = name,
 		message = message,
-		version = enchat.version,
 		animType = animType,
 		maxFrame = maxFrame,
 		messageID = messageID,
