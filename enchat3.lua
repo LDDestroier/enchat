@@ -857,6 +857,17 @@ local pictochat = function(xsize, ysize)
 				return output
 			elseif evt[2] == keys.leftShift then
 				isShiftDown = true
+			elseif evt[2] == keys.left or evt[2] == keys.right then
+				local oldTpos, oldBpos = tPos, bPos
+				if isShiftDown then
+					tPos = math.max(1, math.min(16, tPos + (evt[2] == keys.right and 1 or -1)))
+				else
+					bPos = math.max(1, math.min(16, bPos + (evt[2] == keys.right and 1 or -1)))
+				end
+				text, back = allCols:sub(tPos,tPos), allCols:sub(bPos,bPos)
+				if oldTpos ~= tPos or oldBpos ~= bPos then
+					render()
+				end
 			end
 		elseif evt[1] == "key_up" then
 			if evt[2] == keys.leftShift then
