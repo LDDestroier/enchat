@@ -1596,6 +1596,7 @@ commands.set = function(_argument)
 	end
 	if enchatSettings.useSkynet and (not skynet) then
 		pauseRendering = true
+		term.setBackgroundColor(colors.black)
 		downloadSkynet()
 		pauseRendering = false
 	end
