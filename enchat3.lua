@@ -399,14 +399,18 @@ local colorRead = function(maxLength, _history)
 	local hPos = #history
 	local cx, cy = term.getCursorPos()
 	local x = 1
-	local evt, key, bout, xmod
+	local xscroll = 1
+	local evt, key, bout, xmod, timtam
 	term.setCursorBlink(true)
 	while true do
 		term.setCursorPos(cx,cy)
 		bout, xmod = textToBlit(output,false,nil,nil,x)
+		for a = 1, #bout do
+			bout[a] = bout[a]:sub(xscroll,xscroll+scr_x-cx)
+		end
 		term.blit(unpack(bout))
 		term.write((" "):rep(scr_x-cx))
-		term.setCursorPos(cx+x+-1+xmod,cy)
+		term.setCursorPos(cx+x+xmod-xscroll,cy)
 		evt = {os.pullEvent()}
 		if evt[1] == "char" or evt[1] == "paste" then
 			output = (output:sub(1,x-1)..evt[2]..output:sub(x)):sub(1,maxLength or -1)
@@ -449,6 +453,13 @@ local colorRead = function(maxLength, _history)
 		end
 		if hPos > 1 then
 			history[hPos] = output
+		end
+		if x+cx-xscroll+xmod > scr_x then
+			xscroll = x-(scr_x-cx)+xmod
+		elseif x-xscroll+xmod < 0 then
+			repeat
+				xscroll = xscroll - 1
+			until x-xscroll-xmod >= 0
 		end
 	end
 end
