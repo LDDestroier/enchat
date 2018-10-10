@@ -412,6 +412,7 @@ local colorRead = function(maxLength, _history)
 	local x = 1
 	local xscroll = 1
 	local evt, key, bout, xmod, timtam
+	local ctrlDown = false
 	termsetCursorBlink(true)
 	while true do
 		termsetCursorPos(cx,cy)
@@ -428,18 +429,24 @@ local colorRead = function(maxLength, _history)
 			x = mathmin(x + #evt[2], #output+1)
 		elseif evt[1] == "key" then
 			key = evt[2]
-			if key == keys.left then
+			if key == keys.leftCtrl then
+				ctrlDown = true
+			elseif key == keys.left then
 				x = mathmax(x - 1, 1)
 			elseif key == keys.right then
 				x = mathmin(x + 1, #output+1)
 			elseif key == keys.backspace then
 				if x > 1 then
-					output = output:sub(1,x-2)..output:sub(x)
-					x = x - 1
+					repeat
+						output = output:sub(1,x-2)..output:sub(x)
+						x = x - 1
+					until output:sub(x,x) == " " or (not ctrlDown)
 				end
 			elseif key == keys.delete then
 				if x < #output+1 then
-					output = output:sub(1,x-1)..output:sub(x+1)
+					repeat
+						output = output:sub(1,x-1)..output:sub(x+1)
+					until output:sub(x,x) == " " or (not ctrlDown)
 				end
 			elseif key == keys.enter then
 				termsetCursorBlink(false)
@@ -460,6 +467,10 @@ local colorRead = function(maxLength, _history)
 					output = history[hPos]
 					x = #output+1
 				end
+			end
+		elseif evt[1] == "key_up" then
+			if evt[2] == keys.leftCtrl then
+				ctrlDown = false
 			end
 		end
 		if hPos > 1 then
@@ -1609,7 +1620,6 @@ commands.set = function(_argument)
 		for k,v in pairs(enchatSettings) do
 			logadd(nil,"&4'"..k.."'&r = "..contextualQuote(v,custColorize(v)..tostring(v).."&r"))
 		end
-		logadd(nil,nil)
 	else
 		if enchatSettings[arguments[1]] ~= nil then
 			if #arguments >= 2 then
@@ -1640,11 +1650,13 @@ commands.set = function(_argument)
 		downloadSkynet()
 		pauseRendering = false
 	end
+	logadd(nil,nil)
 end
 commands.help = function(cmdname)
 	if cmdname then
 		local helpList = {
-			exit = "Exits Enchat and returns to loader (usually shell)",
+			exit = "Exits Enchat and returns to loader (most likely CraftOS)",
+			about = "Tells you a bit about this here Enchat.",
 			me = "Sends a message in the format of \"* yourName message\"",
 			colors = "Lists all the colors you can use.",
 			update = "Updates and overwrites Enchat, then exits if successful.",
