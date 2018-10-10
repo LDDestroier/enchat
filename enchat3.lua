@@ -10,7 +10,7 @@ local scr_x, scr_y = term.getSize()
 
 enchat = {
 	version = 3.0,
-	isBeta = true,
+	isBeta = false,
 	port = 11000,
 	skynetPort = "enchat3-default",
 	url = "https://github.com/LDDestroier/enchat/raw/master/enchat3.lua",
