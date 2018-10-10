@@ -52,9 +52,21 @@ UIconf = {
 	nameDecolor = false,	--if true, sets all names to palette.chevron color
 }
 
+--Attempt to get some slight optimization through localizing basic functions.
+local mathmax, mathmin = math.max, math.min
+local termblit, termwrite = term.blit, term.write
+local termsetCursorPos, termgetCursorPos = term.setCursorPos, term.getCursorPos
+local termsetTextColor, termsetBackgroundColor = term.setTextColor, term.setBackgroundColor
+local termgetTextColor, termgetBackgroundColor = term.getTextColor, term.getBackgroundColor
+local termclear, termclearLine = term.clear, term.clearLine
+local tableinsert, tableremove = table.insert, table.remove
+local textutilsserialize, textutilsunserialize = textutils.serialize, textutils.unserialize
+local unpack = unpack
+--This better do something.
+
 local saveSettings = function()
 	local file = fs.open(fs.combine(enchat.dataDir,"settings"),"w")
-	file.write(textutils.serialize({
+	file.write(textutilsserialize({
 		enchatSettings = enchatSettings,
 		palette = palette,
 		UIconf = UIconf
@@ -70,7 +82,7 @@ local loadSettings = function()
 	local file = fs.open(fs.combine(enchat.dataDir,"settings"),"r")
 	contents = file.readAll()
 	file.close()
-	local newSettings = textutils.unserialize(contents)
+	local newSettings = textutilsunserialize(contents)
 	if newSettings then
 		for k,v in pairs(newSettings.enchatSettings) do
 			enchatSettings[k] = v
@@ -87,8 +99,8 @@ local loadSettings = function()
 end
 
 local initcolors = {
-	bg = term.getBackgroundColor(),
-	txt = term.getTextColor()
+	bg = termgetBackgroundColor(),
+	txt = termgetTextColor()
 }
 
 local tArg = {...}
@@ -275,16 +287,15 @@ local explode = function(div,str,replstr,includeDiv)
 	if (div=='') then return false end
 	local pos,arr = 0,{}
 	for st,sp in function() return string.find(str,div,pos,false) end do
-		table.insert(arr,string.sub(replstr or str,pos,st-1+(includeDiv and #div or 0)))
+		tableinsert(arr,string.sub(replstr or str,pos,st-1+(includeDiv and #div or 0)))
 		pos = sp + 1
 	end
-	table.insert(arr,string.sub(replstr or str,pos))
+	tableinsert(arr,string.sub(replstr or str,pos))
 	return arr
 end
 
-local moveOn
-textToBlit = function(_str,onlyString,initTxt,initBg,_checkPos) --returns output for term.blit, or blitWrap, with formatting codes for color selection. Modified for use specifically with Enchat.
-	checkPos = _checkPos or -1
+local textToBlit = function(_str,onlyString,initTxt,initBg,_checkPos) --returns output for term.blit, or blitWrap, with formatting codes for color selection. Modified for use specifically with Enchat.
+	local checkPos = _checkPos or -1
 	if (not _str) then
 		if onlyString then
 			return ""
@@ -299,10 +310,10 @@ textToBlit = function(_str,onlyString,initTxt,initBg,_checkPos) --returns output
 	local isKrazy = false
 	local doFormatting = true
 	local usedformats = {}
-	local txcol,bgcol = initTxt or toblit[term.getTextColor()], initBg or toblit[term.getBackgroundColor()]
-	local origTX,origBG = initTxt or toblit[term.getTextColor()], initBg or toblit[term.getBackgroundColor()]
+	local txcol,bgcol = initTxt or toblit[termgetTextColor()], initBg or toblit[termgetBackgroundColor()]
+	local origTX,origBG = initTxt or toblit[termgetTextColor()], initBg or toblit[termgetBackgroundColor()]
 	local cx,cy
-	moveOn = function(tx,bg)
+	local moveOn = function(tx,bg)
 		if isKrazy and (str:sub(p,p) ~= " ") and doFormatting then
 			if kraziez[str:sub(p,p)] then
 				output = output..kraziez[str:sub(p,p)][math.random(1,#kraziez[str:sub(p,p)])]
@@ -397,30 +408,30 @@ local colorRead = function(maxLength, _history)
 	end
 	history[#history+1] = ""
 	local hPos = #history
-	local cx, cy = term.getCursorPos()
+	local cx, cy = termgetCursorPos()
 	local x = 1
 	local xscroll = 1
 	local evt, key, bout, xmod, timtam
 	term.setCursorBlink(true)
 	while true do
-		term.setCursorPos(cx,cy)
+		termsetCursorPos(cx,cy)
 		bout, xmod = textToBlit(output,false,nil,nil,x)
 		for a = 1, #bout do
 			bout[a] = bout[a]:sub(xscroll,xscroll+scr_x-cx)
 		end
-		term.blit(unpack(bout))
-		term.write((" "):rep(scr_x-cx))
-		term.setCursorPos(cx+x+xmod-xscroll,cy)
+		termblit(unpack(bout))
+		termwrite((" "):rep(scr_x-cx))
+		termsetCursorPos(cx+x+xmod-xscroll,cy)
 		evt = {os.pullEvent()}
 		if evt[1] == "char" or evt[1] == "paste" then
 			output = (output:sub(1,x-1)..evt[2]..output:sub(x)):sub(1,maxLength or -1)
-			x = math.min(x + #evt[2], #output+1)
+			x = mathmin(x + #evt[2], #output+1)
 		elseif evt[1] == "key" then
 			key = evt[2]
 			if key == keys.left then
-				x = math.max(x - 1, 1)
+				x = mathmax(x - 1, 1)
 			elseif key == keys.right then
-				x = math.min(x + 1, #output+1)
+				x = mathmin(x + 1, #output+1)
 			elseif key == keys.backspace then
 				if x > 1 then
 					output = output:sub(1,x-2)..output:sub(x)
@@ -479,29 +490,29 @@ if tArg[1] == "update" then
 end
 
 local prettyClearScreen = function(start, stop)
-	term.setTextColor(colors.lightGray)
-	term.setBackgroundColor(colors.gray)
+	termsetTextColor(colors.lightGray)
+	termsetBackgroundColor(colors.gray)
 	if _VERSION then
 		for y = start or 1, stop or scr_y do
-			term.setCursorPos(1,y)
+			termsetCursorPos(1,y)
 			if y == (start or 1) then
-				term.write(("\135"):rep(scr_x))
+				termwrite(("\135"):rep(scr_x))
 			elseif y == (stop or scr_y) then
-				term.setTextColor(colors.gray)
-				term.setBackgroundColor(colors.lightGray)
-				term.write(("\135"):rep(scr_x))
+				termsetTextColor(colors.gray)
+				termsetBackgroundColor(colors.lightGray)
+				termwrite(("\135"):rep(scr_x))
 			else
-				term.clearLine()
+				termclearLine()
 			end
 		end
 	else
-		term.clear()
+		termclear()
 	end
 end
 
 local cwrite = function(text, y)
-	local cx, cy = term.getCursorPos()
-	term.setCursorPos((scr_x/2) - math.ceil(#text/2), y or cy)
+	local cx, cy = termgetCursorPos()
+	termsetCursorPos((scr_x/2) - math.ceil(#text/2), y or cy)
 	return write(text)
 end
 
@@ -522,13 +533,13 @@ local prettyCenterWrite = function(text, y)
 end
 
 local prettyPrompt = function(prompt, y, replchar, doColor)
-	local cy, cx = term.getCursorPos()
-	term.setBackgroundColor(colors.gray)
-	term.setTextColor(colors.white)
+	local cy, cx = termgetCursorPos()
+	termsetBackgroundColor(colors.gray)
+	termsetTextColor(colors.white)
 	local yadj = 1 + prettyCenterWrite(prompt, y or cy)
-	term.setCursorPos(1, y + yadj)
-	term.setBackgroundColor(colors.lightGray)
-	term.clearLine()
+	termsetCursorPos(1, y + yadj)
+	termsetBackgroundColor(colors.lightGray)
+	termclearLine()
 	local output
 	if doColor then
 		output = colorRead()
@@ -571,17 +582,17 @@ local oldePullEvent = os.pullEvent
 os.pullEvent = os.pullEventRaw
 
 local bottomMessage = function(text)
-	term.setCursorPos(1,scr_y)
-	term.setTextColor(colors.gray)
-	term.clearLine()
-	term.write(text)
+	termsetCursorPos(1,scr_y)
+	termsetTextColor(colors.gray)
+	termclearLine()
+	termwrite(text)
 end
 
 loadSettings()
 saveSettings()
 
-term.setBackgroundColor(colors.black)
-term.clear()
+termsetBackgroundColor(colors.black)
+termclear()
 
 -- AES API START (thank you SquidDev) --
 
@@ -591,7 +602,7 @@ if (not fs.exists(apipath)) then
 	local prog = http.get("http://pastebin.com/raw/9E5UHiqv")
 	if not prog then
 		bottomMessage("Failed to download AES. Abort.")
-		term.setCursorPos(1,1)
+		termsetCursorPos(1,1)
 		return
 	end
 	local file = fs.open(apipath,"w")
@@ -602,7 +613,7 @@ if not aes then
 	local res = os.loadAPI(apipath)
 	if not res then
 		bottomMessage("Failed to load AES. Abort.")
-		term.setCursorPos(1,1)
+		termsetCursorPos(1,1)
 		return
 	end
 end
@@ -679,21 +690,21 @@ end
 
 local encrite = function(input) --standardized encryption function
 	if not input then return input end
-	return aes.encrypt(encKey, textutils.serialize(input))
+	return aes.encrypt(encKey, textutilsserialize(input))
 end
 
 local decrite = function(input)
 	if not input then return input end
-	return textutils.unserialize(aes.decrypt(encKey, input) or "")
+	return textutilsunserialize(aes.decrypt(encKey, input) or "")
 end
 
 local dab = function(func, ...) --"no and back", not...never mind
-	local x, y = term.getCursorPos()
-	local b, t = term.getBackgroundColor(), term.getTextColor()
+	local x, y = termgetCursorPos()
+	local b, t = termgetBackgroundColor(), termgetTextColor()
 	local output = {func(...)}
-	term.setCursorPos(x,y)
-	term.setTextColor(t)
-	term.setBackgroundColor(b)
+	termsetCursorPos(x,y)
+	termsetTextColor(t)
+	termsetBackgroundColor(b)
 	return unpack(output)
 end
 
@@ -721,27 +732,26 @@ local blitWrap = function(char, text, back, noWrite)
 	local tWords = splitStrTbl(explode(" ",char,text,true), scr_x)
 	local bWords = splitStrTbl(explode(" ",char,back,true), scr_x)
 	
-	local ox,oy = term.getCursorPos()
+	local ox,oy = termgetCursorPos()
 	local cx,cy,ty = ox,oy,1
-	local scr_x, scr_y = term.getSize()
 	local output = {}
 	local length = 0
 	local maxLength = 0
 	for a = 1, #cWords do
 		length = length + #cWords[a]
-		maxLength = math.max(maxLength, length)
+		maxLength = mathmax(maxLength, length)
 		if ((cx + #cWords[a]) > scr_x) then
 			cx = 1
 			length = 0
 			if (cy == scr_y) then
 				term.scroll(1)
 			end
-			cy = math.min(cy+1, scr_y)
+			cy = mathmin(cy+1, scr_y)
 			ty = ty + 1
 		end
 		if not noWrite then
-			term.setCursorPos(cx,cy)
-			term.blit(cWords[a],tWords[a],bWords[a])
+			termsetCursorPos(cx,cy)
+			termblit(cWords[a],tWords[a],bWords[a])
 		end
 		cx = cx + #cWords[a]
 		output[ty] = output[ty] or {"","",""}
@@ -753,12 +763,12 @@ local blitWrap = function(char, text, back, noWrite)
 end
 
 local fwrite = function(text)
-	term.blit(unpack(textToBlit(text)))
+	termblit(unpack(textToBlit(text)))
 end
 
 local cfwrite = function(text, y)
-	local cx, cy = term.getCursorPos()
-	term.setCursorPos((scr_x/2) - math.ceil(#textToBlit(text,true)/2), y or cy)
+	local cx, cy = termgetCursorPos()
+	termsetCursorPos((scr_x/2) - math.ceil(#textToBlit(text,true)/2), y or cy)
 	fwrite(text)
 end
 
@@ -775,11 +785,11 @@ local pictochat = function(xsize, ysize)
 		end
 	end
 
-	term.setBackgroundColor(colors.gray)
-	term.setTextColor(colors.black)
+	termsetBackgroundColor(colors.gray)
+	termsetTextColor(colors.black)
 	for y = 1, scr_y do
-		term.setCursorPos(1,y)
-		term.write(("/"):rep(scr_x))
+		termsetCursorPos(1,y)
+		termwrite(("/"):rep(scr_x))
 	end
 	cwrite(" [ENTER] to finish. ",scr_y)
 
@@ -790,20 +800,20 @@ local pictochat = function(xsize, ysize)
 	local char, text, back = " ", allCols:sub(tPos,tPos), allCols:sub(bPos,bPos)
 
 	local render = function()
-		term.setTextColor(colors.white)
-		term.setBackgroundColor(colors.black)
+		termsetTextColor(colors.white)
+		termsetBackgroundColor(colors.black)
 		local mx, my
 		for y = 1, ysize do
 			for x = 1, xsize do
 				mx, my = x+cx+-1, y+cy+-1
-				term.setCursorPos(mx,my)
-				term.blit(output[1][y][x], output[2][y][x], output[3][y][x])
+				termsetCursorPos(mx,my)
+				termblit(output[1][y][x], output[2][y][x], output[3][y][x])
 			end
 		end
-		term.setCursorPos((scr_x/2)-5,ysize+cy+1)
-		term.write("Char = '")
-		term.blit(char, text, back)
-		term.write("'")
+		termsetCursorPos((scr_x/2)-5,ysize+cy+1)
+		termwrite("Char = '")
+		termblit(char, text, back)
+		termwrite("'")
 	end
 	local evt, butt, mx, my
 	local isShiftDown = false
@@ -829,9 +839,9 @@ local pictochat = function(xsize, ysize)
 		elseif evt[1] == "mouse_scroll" then
 			local oldTpos, oldBpos = tPos, bPos
 			if isShiftDown then
-				tPos = math.max(1, math.min(16, tPos + evt[2]))
+				tPos = mathmax(1, mathmin(16, tPos + evt[2]))
 			else
-				bPos = math.max(1, math.min(16, bPos + evt[2]))
+				bPos = mathmax(1, mathmin(16, bPos + evt[2]))
 			end
 			text, back = allCols:sub(tPos,tPos), allCols:sub(bPos,bPos)
 			if oldTpos ~= tPos or oldBpos ~= bPos then
@@ -849,15 +859,15 @@ local pictochat = function(xsize, ysize)
 				local crY = 0
 				for a = 1, ysize do
 					if output[1][1] == (" "):rep(xsize) and output[3][1] == (" "):rep(xsize) then
-						table.remove(output[1],1)
-						table.remove(output[2],1)
-						table.remove(output[3],1)
+						tableremove(output[1],1)
+						tableremove(output[2],1)
+						tableremove(output[3],1)
 					else
 						for y = #output[1], 1, -1 do
 							if output[1][y] == (" "):rep(xsize) and output[3][y] == (" "):rep(xsize) then
-								table.remove(output[1],y)
-								table.remove(output[2],y)
-								table.remove(output[3],y)
+								tableremove(output[1],y)
+								tableremove(output[2],y)
+								tableremove(output[3],y)
 							else
 								break
 							end
@@ -871,9 +881,9 @@ local pictochat = function(xsize, ysize)
 			elseif evt[2] == keys.left or evt[2] == keys.right then
 				local oldTpos, oldBpos = tPos, bPos
 				if isShiftDown then
-					tPos = math.max(1, math.min(16, tPos + (evt[2] == keys.right and 1 or -1)))
+					tPos = mathmax(1, mathmin(16, tPos + (evt[2] == keys.right and 1 or -1)))
 				else
-					bPos = math.max(1, math.min(16, bPos + (evt[2] == keys.right and 1 or -1)))
+					bPos = mathmax(1, mathmin(16, bPos + (evt[2] == keys.right and 1 or -1)))
 				end
 				text, back = allCols:sub(tPos,tPos), allCols:sub(bPos,bPos)
 				if oldTpos ~= tPos or oldBpos ~= bPos then
@@ -960,7 +970,7 @@ if interface then
 			canvas.clear()
 			local xadj, charadj, wordadj, t, r
 			local x, y, words, txtwords, bgwords = 0, 0
-			for n = math.min(#nList,16), 1, -1 do
+			for n = mathmin(#nList,16), 1, -1 do
 				xadj, charadj = 0, 0
 				y = y + 1
 				x = 0
@@ -1004,12 +1014,12 @@ if interface then
 					else
 						if nList[n][5] > 0 then
 							while true do
-								nList[n][5] = math.max(nList[n][5] - 0.2, 0)
+								nList[n][5] = mathmax(nList[n][5] - 0.2, 0)
 								notif.displayNotifications(false)
 								if nList[n][5] == 0 then break else sleep(0.05) end
 							end
 						end
-						table.remove(nList,n)
+						tableremove(nList,n)
 					end
 				end
 			end
@@ -1033,7 +1043,7 @@ local animations = {
 		}
 		return {
 			char,
-			toblit[fadeList[math.max(1,math.ceil((frame/maxFrame)*#fadeList))]]:rep(#text),
+			toblit[fadeList[mathmax(1,math.ceil((frame/maxFrame)*#fadeList))]]:rep(#text),
 			back
 		}
 	end,
@@ -1070,10 +1080,10 @@ local genRenderLog = function()
 	local buff, prebuff, maxLength
 	local scrollToBottom = scroll == maxScroll
 	renderlog = {}
-	term.setTextColor(palette.txt)
-	term.setBackgroundColor(palette.bg)
+	termsetTextColor(palette.txt)
+	termsetBackgroundColor(palette.bg)
 	for a = 1, #log do
-		term.setCursorPos(1,1)
+		termsetCursorPos(1,1)
 		if UIconf.nameDecolor then
 			local dcName = textToBlit(table.concat({log[a].prefix,log[a].name,log[a].suffix}), true)
 			local dcMessage = textToBlit(log[a].message)
@@ -1091,9 +1101,9 @@ local genRenderLog = function()
 			end
 		end
 		if log[a].maxFrame == true then
-			log[a].maxFrame = math.floor(math.min(#prebuff[1], scr_x) / enchatSettings.animDiv)
+			log[a].maxFrame = math.floor(mathmin(#prebuff[1], scr_x) / enchatSettings.animDiv)
 		end
-		buff, maxLength = blitWrap(unpack(prebuff))
+		buff, maxLength = blitWrap(prebuff[1], prebuff[2], prebuff[3], true)
 		--repeat every line in multiline entries
 		for l = 1, #buff do
 			--holy shit, two animations at once
@@ -1109,7 +1119,7 @@ local genRenderLog = function()
 			log[a].frame = -1
 		end
 	end
-	maxScroll = math.max(0, #renderlog - (scr_y - 2))
+	maxScroll = mathmax(0, #renderlog - (scr_y - 2))
 	if scrollToBottom then
 		scroll = maxScroll
 	end
@@ -1125,33 +1135,33 @@ local renderChat = function(doScrollBackUp)
 	tsv(false)
 	genRenderLog(log)
 	local ry
-	term.setBackgroundColor(palette.bg)
+	termsetBackgroundColor(palette.bg)
 	for y = UIconf.chatlogTop, (scr_y-UIconf.promptY) - 1 do
 		ry = (y + scroll - (UIconf.chatlogTop - 1))
-		term.setCursorPos(1,y)
-		term.clearLine()
+		termsetCursorPos(1,y)
+		termclearLine()
 		if renderlog[ry] then
-			term.blit(unpack(renderlog[ry]))
+			termblit(unpack(renderlog[ry]))
 		end
 	end
 	if UIconf.promptY ~= 0 then
-		term.setCursorPos(1,scr_y)
-		term.setTextColor(palette.scrollMeter)
-		term.clearLine()
-		term.write(scroll.." / "..maxScroll.."  ")
+		termsetCursorPos(1,scr_y)
+		termsetTextColor(palette.scrollMeter)
+		termclearLine()
+		termwrite(scroll.." / "..maxScroll.."  ")
 	end
 	
 	UIconf.title = yourName.." on "..encKey
 	
 	if UIconf.doTitle then
-		term.setTextColor(palette.chevron)
+		termsetTextColor(palette.chevron)
 		if UIconf.nameDecolor then
 			cwrite((" "):rep(scr_x)..textToBlit(UIconf.title, true)..(" "):rep(scr_x), 1)
 		else
 			local blTitle = textToBlit(UIconf.title)
-			term.setCursorPos((scr_x/2) - math.ceil(#blTitle[1]/2), 1)
-			term.clearLine()
-			term.blit(unpack(blTitle))
+			termsetCursorPos((scr_x/2) - math.ceil(#blTitle[1]/2), 1)
+			termclearLine()
+			termblit(unpack(blTitle))
 		end
 	end
 	tsv(true)
@@ -1285,10 +1295,10 @@ commands.update = function()
 	local res, message = updateEnchat()
 	if res then
 		enchatSend("*",yourName.."&r~r has updated and exited.")
-		term.setBackgroundColor(colors.black)
-		term.setTextColor(colors.white)
-		term.clear()
-		term.setCursorPos(1,1)
+		termsetBackgroundColor(colors.black)
+		termsetTextColor(colors.white)
+		termclear()
+		termsetCursorPos(1,1)
 		print(message)
 		return "exit"
 	else
@@ -1304,7 +1314,7 @@ commands.picto = function(filename)
 			logadd("*",res)
 			return
 		else
-			table.insert(output,1,"")
+			tableinsert(output,1,"")
 		end
 	else
 		isEmpty = true
@@ -1463,8 +1473,8 @@ commands.palette = function(_argument)
 					doTitle = false,
 					nameDecolor = false,
 				}
-				term.setBackgroundColor(palette.bg)
-				term.clear()
+				termsetBackgroundColor(palette.bg)
+				termclear()
 				logadd("*","You cleansed your palette.")
 				saveSettings()
 			elseif argument[1]:gsub("%s",""):lower() == "enchat2" then
@@ -1485,8 +1495,8 @@ commands.palette = function(_argument)
 					doTitle = false,
 					nameDecolor = false,
 				}
-				term.setBackgroundColor(palette.bg)
-				term.clear()
+				termsetBackgroundColor(palette.bg)
+				termclear()
 				logadd("*","Switched to the old Enchat2 palette.")
 				saveSettings()
 			elseif argument[1]:gsub("%s",""):lower() == "chat.lua" then
@@ -1507,8 +1517,8 @@ commands.palette = function(_argument)
 					doTitle = true,
 					nameDecolor = true,
 				}
-				term.setBackgroundColor(palette.bg)
-				term.clear()
+				termsetBackgroundColor(palette.bg)
+				termclear()
 				logadd("*","Switched to /rom/programs/rednet/chat.lua palette.")
 				saveSettings()
 			else
@@ -1578,18 +1588,18 @@ commands.set = function(_argument)
 				local newval = table.concat(arguments," ",2)
 				if tonumber(newval) then
 					newval = tonumber(newval)
-				elseif textutils.unserialize(newval) ~= nil then
-					newval = textutils.unserialize(newval)
+				elseif textutilsunserialize(newval) ~= nil then
+					newval = textutilsunserialize(newval)
 				end
 				if type(enchatSettings[arguments[1]]) == type(newval) then
 					enchatSettings[arguments[1]] = newval
-					logadd("*","Set '&4"..arguments[1].."&r' to &{"..contextualQuote(newval,textutils.serialize(newval).."&}").." ("..type(newval)..")")
+					logadd("*","Set '&4"..arguments[1].."&r' to &{"..contextualQuote(newval,textutilsserialize(newval).."&}").." ("..type(newval)..")")
 					saveSettings()
 				else
 					logadd("*","Wrong value type (it's "..type(enchatSettings[arguments[1]])..")")
 				end
 			else
-				logadd("*","'"..arguments[1].."' is set to "..contextualQuote(enchatSettings[arguments[1]],custColorize(enchatSettings[arguments[1]])..textutils.serialize(enchatSettings[arguments[1]]).."&r").." ("..type(enchatSettings[arguments[1]])..")")
+				logadd("*","'"..arguments[1].."' is set to "..contextualQuote(enchatSettings[arguments[1]],custColorize(enchatSettings[arguments[1]])..textutilsserialize(enchatSettings[arguments[1]]).."&r").." ("..type(enchatSettings[arguments[1]])..")")
 			end
 		else
 			logadd("*","No such setting.")
@@ -1597,8 +1607,8 @@ commands.set = function(_argument)
 	end
 	if enchatSettings.useSkynet and (not skynet) then
 		pauseRendering = true
-		term.setBackgroundColor(colors.black)
-		term.clear()
+		termsetBackgroundColor(colors.black)
+		termclear()
 		downloadSkynet()
 		pauseRendering = false
 	end
@@ -1708,19 +1718,19 @@ local parseCommand = function(input)
 end
 
 local main = function()
-	term.setBackgroundColor(palette.bg)
-	term.clear()
+	termsetBackgroundColor(palette.bg)
+	termclear()
 	os.queueEvent("render_enchat")
 	local mHistory = {}
 	
 	while true do
 		
-		term.setCursorPos(1, scr_y-UIconf.promptY)
-		term.setBackgroundColor(palette.promptbg)
-		term.clearLine()
-		term.setTextColor(palette.chevron)
-		term.write(UIconf.chevron)
-		term.setTextColor(palette.prompttxt)
+		termsetCursorPos(1, scr_y-UIconf.promptY)
+		termsetBackgroundColor(palette.promptbg)
+		termclearLine()
+		termsetTextColor(palette.chevron)
+		termwrite(UIconf.chevron)
+		termsetTextColor(palette.prompttxt)
 		
 		local input = colorRead(nil, mHistory)
 		if UIconf.promptY == 0 then
@@ -1759,7 +1769,7 @@ local handleReceiveMessage = function(user, message, animType, maxFrame)
 end
 
 local adjScroll = function(distance)
-	scroll = math.min(maxScroll, math.max(0, scroll + distance))
+	scroll = mathmin(maxScroll, mathmax(0, scroll + distance))
 end
 
 local handleEvents = function()
@@ -1888,19 +1898,19 @@ tsv(true) --in case it's false
 
 if not res then
 	prettyClearScreen(1,scr_y-1)
-	term.setTextColor(colors.white)
-	term.setBackgroundColor(colors.gray)
+	termsetTextColor(colors.white)
+	termsetBackgroundColor(colors.gray)
 	cwrite("There was an error.",2)
 	cfwrite("Report this to &3@LDDestroier#2901&r",3)
 	cwrite("on Discord,",4)
 	cwrite("if you feel like it.",5)
-	term.setCursorPos(1,7)
+	termsetCursorPos(1,7)
 	printError(outcome)
-	term.setTextColor(colors.lightGray)
+	termsetTextColor(colors.lightGray)
 	cwrite("I'll probably fix it, maybe.",10)
 end
 
-term.setCursorPos(1,scr_y)
-term.setBackgroundColor(initcolors.bg)
-term.setTextColor(initcolors.txt)
-term.clearLine()
+termsetCursorPos(1,scr_y)
+termsetBackgroundColor(initcolors.bg)
+termsetTextColor(initcolors.txt)
+termclearLine()
