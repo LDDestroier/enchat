@@ -412,7 +412,7 @@ local colorRead = function(maxLength, _history)
 	local x = 1
 	local xscroll = 1
 	local evt, key, bout, xmod, timtam
-	term.setCursorBlink(true)
+	termsetCursorBlink(true)
 	while true do
 		termsetCursorPos(cx,cy)
 		bout, xmod = textToBlit(output,false,nil,nil,x)
@@ -442,7 +442,7 @@ local colorRead = function(maxLength, _history)
 					output = output:sub(1,x-1)..output:sub(x+1)
 				end
 			elseif key == keys.enter then
-				term.setCursorBlink(false)
+				termsetCursorBlink(false)
 				return output
 			elseif key == keys.home then
 				x = 1
