@@ -10,11 +10,11 @@ local scr_x, scr_y = term.getSize()
 
 enchat = {
 	version = 3.0,
-	isBeta = false,
+	isBeta = true,
 	port = 11000,
 	skynetPort = "enchat3-default",
 	url = "https://github.com/LDDestroier/enchat/raw/master/enchat3.lua",
-	betaurl = "https://github.com/LDDestroier/enchat/raw/master/enchat3beta.lua",
+	betaurl = "https://github.com/LDDestroier/enchat/raw/beta/enchat3.lua",
 	ignoreModem = false,
 	dataDir = "/.enchat"
 }
@@ -412,7 +412,8 @@ local colorRead = function(maxLength, _history)
 	local x = 1
 	local xscroll = 1
 	local evt, key, bout, xmod, timtam
-	term.setCursorBlink(true)
+	local ctrlDown = false
+	termsetCursorBlink(true)
 	while true do
 		termsetCursorPos(cx,cy)
 		bout, xmod = textToBlit(output,false,nil,nil,x)
@@ -428,21 +429,27 @@ local colorRead = function(maxLength, _history)
 			x = mathmin(x + #evt[2], #output+1)
 		elseif evt[1] == "key" then
 			key = evt[2]
-			if key == keys.left then
+			if key == keys.leftCtrl then
+				ctrlDown = true
+			elseif key == keys.left then
 				x = mathmax(x - 1, 1)
 			elseif key == keys.right then
 				x = mathmin(x + 1, #output+1)
 			elseif key == keys.backspace then
 				if x > 1 then
-					output = output:sub(1,x-2)..output:sub(x)
-					x = x - 1
+					repeat
+						output = output:sub(1,x-2)..output:sub(x)
+						x = x - 1
+					until output:sub(x-1,x-1) == " " or (not ctrlDown) or (x == 1)
 				end
 			elseif key == keys.delete then
 				if x < #output+1 then
-					output = output:sub(1,x-1)..output:sub(x+1)
+					repeat
+						output = output:sub(1,x-1)..output:sub(x+1)
+					until output:sub(x,x) == " " or (not ctrlDown) or (x == #output+1)
 				end
 			elseif key == keys.enter then
-				term.setCursorBlink(false)
+				termsetCursorBlink(false)
 				return output
 			elseif key == keys.home then
 				x = 1
@@ -460,6 +467,10 @@ local colorRead = function(maxLength, _history)
 					output = history[hPos]
 					x = #output+1
 				end
+			end
+		elseif evt[1] == "key_up" then
+			if evt[2] == keys.leftCtrl then
+				ctrlDown = false
 			end
 		end
 		if hPos > 1 then
@@ -784,7 +795,7 @@ local pictochat = function(xsize, ysize)
 			output[3][y][x] = " "
 		end
 	end
-
+	
 	termsetBackgroundColor(colors.gray)
 	termsetTextColor(colors.black)
 	for y = 1, scr_y do
@@ -792,13 +803,14 @@ local pictochat = function(xsize, ysize)
 		termwrite(("/"):rep(scr_x))
 	end
 	cwrite(" [ENTER] to finish. ",scr_y)
-
+	cwrite("Push a key to change char.",scr_y-1)
+	
 	local cx, cy = math.floor((scr_x/2)-(xsize/2)), math.floor((scr_y/2)-(ysize/2))
-
+	
 	local allCols = "0123456789abcdef"
 	local tPos, bPos = 16, 1
 	local char, text, back = " ", allCols:sub(tPos,tPos), allCols:sub(bPos,bPos)
-
+	
 	local render = function()
 		termsetTextColor(colors.white)
 		termsetBackgroundColor(colors.black)
@@ -1103,7 +1115,11 @@ local genRenderLog = function()
 		if log[a].maxFrame == true then
 			log[a].maxFrame = math.floor(mathmin(#prebuff[1], scr_x) / enchatSettings.animDiv)
 		end
-		buff, maxLength = blitWrap(prebuff[1], prebuff[2], prebuff[3], true)
+		if log[a].ignoreWrap then
+			buff, maxLength = {{prebuff[1]:sub(1,scr_x), prebuff[2]:sub(1,scr_x), prebuff[3]:sub(1,scr_x)}}, mathmin(#prebuff[1], scr_x)
+		else
+			buff, maxLength = blitWrap(prebuff[1], prebuff[2], prebuff[3], true)
+		end
 		--repeat every line in multiline entries
 		for l = 1, #buff do
 			--holy shit, two animations at once
@@ -1169,19 +1185,20 @@ local renderChat = function(doScrollBackUp)
 	tsv(true)
 end
 
-local logadd = function(name, message, animType, maxFrame)
+local logadd = function(name, message, animType, maxFrame, ignoreWrap)
 	log[#log + 1] = {
 		prefix = name and "<" or "",
 		suffix = name and "> " or "",
 		name = name or "",
 		message = message or " ",
+		ignoreWrap = ignoreWrap,
 		frame = 0,
 		maxFrame = maxFrame or true,
 		animType = animType
 	}
 end
 
-local logaddTable = function(name, message, animType, maxFrame)
+local logaddTable = function(name, message, animType, maxFrame, ignoreWrap)
 	if type(message) == "table" and type(name) == "string" then
 		if #message > 0 then
 			local isGood = true
@@ -1192,9 +1209,9 @@ local logaddTable = function(name, message, animType, maxFrame)
 				end
 			end
 			if isGood then
-				logadd(name,message[1],animType,maxFrame)
+				logadd(name,message[1],animType,maxFrame,ignoreWrap)
 				for l = 2, #message do
-					logadd(nil,message[l],animType,maxFrame)
+					logadd(nil,message[l],animType,maxFrame,ignoreWrap)
 				end
 			end
 		end
@@ -1209,7 +1226,7 @@ local makeRandomString = function(length)
 	return output
 end
 
-local enchatSend = function(name, message, doLog, animType, maxFrame, crying, recipient)
+local enchatSend = function(name, message, doLog, animType, maxFrame, crying, recipient, ignoreWrap)
 	if doLog then
 		if type(message) == "string" then
 			logadd(name, message, animType, maxFrame)
@@ -1225,6 +1242,7 @@ local enchatSend = function(name, message, doLog, animType, maxFrame, crying, re
 		maxFrame = maxFrame,
 		messageID = messageID,
 		recipient = recipient,
+		ignoreWrap = ignoreWrap,
 		cry = crying
 	})
 	IDlog[messageID] = true
@@ -1275,8 +1293,12 @@ local commands = {}
 --Separate arguments can be extrapolated with the explode() function.
 commands.about = function()
 	logadd(nil,"Enchat "..enchat.version.." by LDDestroier.")
-	logadd(nil,"'Encrypted, decentralized chat program'")
+	logadd(nil,"'Encrypted, decentralized, &1c&2o&3l&4o&5r&6i&7z&8e&9d&r chat program'")
 	logadd(nil,"Made in 2018, out of gum and procrastination.")
+	logadd(nil,nil)
+	logadd(nil,"AES Lua implementation made by SquidDev.")
+	logadd(nil,"'Skynet' (enables HTTP chat) belongs to gollark (osmarks).")
+	logadd(nil,nil)
 end
 commands.exit = function()
 	enchatSend("*", "'"..yourName.."&r~r' buggered off. (disconnect)")
@@ -1287,11 +1309,13 @@ commands.me = function(msg)
 		enchatSend("&2*", yourName.."~r&2 "..msg, true)
 	else
 		logadd("*",commandInit.."me [message]")
+		logadd(nil,nil)
 	end
 end
 commands.colors = function()
 	logadd("*", "&{Color codes: (use & or ~)&}")
 	logadd(nil, "  &7~11~22~33~44~55~66~7&87~8&78~99~aa~bb~cc~dd~ee~ff")
+	logadd(nil,nil)
 end
 commands.update = function()
 	local res, message = updateEnchat()
@@ -1314,6 +1338,7 @@ commands.picto = function(filename)
 		output, res = getPictureFile(filename)
 		if not output then
 			logadd("*",res)
+			logadd(nil,nil)
 			return
 		else
 			tableinsert(output,1,"")
@@ -1333,7 +1358,7 @@ commands.picto = function(filename)
 		end
 	end
 	if not isEmpty then
-		enchatSend(yourName,output,true,"slideFromLeft")
+		enchatSend(yourName,output,true,"slideFromLeft",nil,nil,nil,true)
 	end
 end
 commands.list = function()
@@ -1355,6 +1380,7 @@ commands.list = function()
 			logadd(nil,"+'"..k.."'")
 		end
 	end
+	logadd(nil,nil)
 end
 commands.nick = function(newName)
 	if newName then
@@ -1375,6 +1401,7 @@ commands.nick = function(newName)
 	else
 		logadd("*",commandInit.."nick [newName]")
 	end
+	logadd(nil,nil)
 end
 commands.whoami = function(now)
 	if now == "now" then
@@ -1382,6 +1409,7 @@ commands.whoami = function(now)
 	else
 		logadd("*","You are '"..yourName.."&r~r'!")
 	end
+	logadd(nil,nil)
 end
 commands.key = function(newKey)
 	if newKey then
@@ -1397,6 +1425,7 @@ commands.key = function(newKey)
 		logadd("*","Key = '"..encKey.."&r~r'")
 		logadd("*","Channel = '"..enchat.port.."'")
 	end
+	logadd(nil,nil)
 end
 commands.shrug = function(more)
 	enchatSend(yourName, "¯\\_(?)_/¯"..(more or ""), true)
@@ -1408,6 +1437,7 @@ commands.asay = function(_argument)
 		for k,v in pairs(animations) do
 			logadd(nil," '"..k.."'")
 		end
+		logadd(nil,nil)
 	else
 		local animType = _argument:sub(1,sPoint-1)
 		local message = _argument:sub(sPoint+1)
@@ -1420,9 +1450,11 @@ commands.asay = function(_argument)
 				enchatSend(yourName, message, true, animType, animFrameMod[animType])
 			else
 				logadd("*","That message is no good.")
+				logadd(nil,nil)
 			end
 		else
 			logadd("*","Invalid animation type.")
+			logadd(nil,nil)
 		end
 	end
 end
@@ -1430,17 +1462,21 @@ commands.msg = function(_argument)
 	local sPoint = (_argument or ""):find(" ")
 	if not sPoint then
 		logadd("*",commandInit.."msg <recipient> <message>")
+		logadd(nil,nil)
 	else
 		local recipient = _argument:sub(1,sPoint-1)
                 local message = _argument:sub(sPoint+1)
 		if not message then
 			logadd("*","You got half of the arguments down pat, at least.")
+			logadd(nil,nil)
 		else
 			if textToBlit(message,true):gsub(" ","") == "" then
 				logadd("*","That message is no good.")
+				logadd(nil,nil)
 			else
 				enchatSend(yourName, message, false, nil, nil, false, recipient)
 				logadd("*","to '"..recipient.."': "..message)
+				logadd(nil,nil)
 			end
 		end
 	end
@@ -1549,6 +1585,7 @@ commands.palette = function(_argument)
 			end
 		end
 	end
+	logadd(nil,nil)
 end
 commands.clear = function()
 	log = {}
@@ -1614,11 +1651,13 @@ commands.set = function(_argument)
 		downloadSkynet()
 		pauseRendering = false
 	end
+	logadd(nil,nil)
 end
 commands.help = function(cmdname)
 	if cmdname then
 		local helpList = {
-			exit = "Exits Enchat and returns to loader (usually shell)",
+			exit = "Exits Enchat and returns to loader (most likely CraftOS)",
+			about = "Tells you a bit about this here Enchat.",
 			me = "Sends a message in the format of \"* yourName message\"",
 			colors = "Lists all the colors you can use.",
 			update = "Updates and overwrites Enchat, then exits if successful.",
@@ -1646,10 +1685,13 @@ commands.help = function(cmdname)
 		end
 	else
 		logadd("*","All commands:")
+		local output = ""
 		for k,v in pairs(commands) do
-			logadd(nil," "..commandInit..k)
+			output = output.." "..commandInit..k..","
 		end
+		logadd(nil, output:sub(1,-2))
 	end
+	logadd(nil,nil)
 end
 commandAliases = {
 	quit = commands.exit,
@@ -1682,6 +1724,7 @@ commandAliases = {
 	shit = function() 	logadd("*","Man, you're telling me!") end,
 	eat = function() 	logadd("*","You're not hungry.") end,
 	what = function() 	logadd("*","What indeed.") end,
+	ldd = function()	logadd(nil,"& that's me") end,
 	OrElseYouWill = function()
 		enchatSend("*", "'"..yourName.."&r~r' buggered off. (disconnect)")
 		error("DIE")
@@ -1800,9 +1843,9 @@ local handleEvents = function()
 								IDlog[msg.messageID] = true
 								if ((not msg.recipient) or (msg.recipient == yourName or msg.recipient == textToBlit(yourName,true))) then
 									if type(msg.message) == "string" then
-										handleReceiveMessage(msg.name, tostring(msg.message), msg.animType, msg.maxFrame)
+										handleReceiveMessage(msg.name, tostring(msg.message), msg.animType, msg.maxFrame, msg.ignoreWrap)
 									elseif type(msg.message) == "table" and enchatSettings.acceptPictoChat and #msg.message <= 64 then
-										logaddTable(msg.name, msg.message)
+										logaddTable(msg.name, msg.message, msg.animType, msg.maxFrame, msg.ignoreWrap)
 										if enchatSettings.extraNewline then
 											logadd(nil,nil)
 										end
@@ -1827,10 +1870,11 @@ local handleEvents = function()
 			local key = evt[2]
 			keysDown[key] = true
 			oldScroll = scroll
+			local pageSize = (scr_y-UIconf.promptY) - UIconf.chatlogTop
 			if key == keys.pageUp then
-				adjScroll(-enchatSettings.pageKeySpeed)
+				adjScroll(-(keysDown[keys.leftCtrl] and pageSize or enchatSettings.pageKeySpeed))
 			elseif key == keys.pageDown then
-				adjScroll(enchatSettings.pageKeySpeed)
+				adjScroll(keysDown[keys.leftCtrl] and pageSize or enchatSettings.pageKeySpeed)
 			end
 			if scroll ~= oldScroll then
 				dab(renderChat)
