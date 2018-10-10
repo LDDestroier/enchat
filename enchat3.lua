@@ -805,7 +805,7 @@ local pictochat = function(xsize, ysize)
 	cwrite(" [ENTER] to finish. ",scr_y)
 
 	local cx, cy = math.floor((scr_x/2)-(xsize/2)), math.floor((scr_y/2)-(ysize/2))
-	cwrite("Push a key to change char",ysize+cy+1)
+	cwrite("Push a key to change char",ysize+cy+2)
 	
 	local allCols = "0123456789abcdef"
 	local tPos, bPos = 16, 1
