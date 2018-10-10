@@ -795,7 +795,7 @@ local pictochat = function(xsize, ysize)
 			output[3][y][x] = " "
 		end
 	end
-
+	
 	termsetBackgroundColor(colors.gray)
 	termsetTextColor(colors.black)
 	for y = 1, scr_y do
@@ -803,14 +803,14 @@ local pictochat = function(xsize, ysize)
 		termwrite(("/"):rep(scr_x))
 	end
 	cwrite(" [ENTER] to finish. ",scr_y)
-
+	cwrite("Push a key to change char.",scr_y-1)
+	
 	local cx, cy = math.floor((scr_x/2)-(xsize/2)), math.floor((scr_y/2)-(ysize/2))
-	cwrite("Push a key to change char",ysize+cy+2)
 	
 	local allCols = "0123456789abcdef"
 	local tPos, bPos = 16, 1
 	local char, text, back = " ", allCols:sub(tPos,tPos), allCols:sub(bPos,bPos)
-
+	
 	local render = function()
 		termsetTextColor(colors.white)
 		termsetBackgroundColor(colors.black)
