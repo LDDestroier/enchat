@@ -1292,30 +1292,36 @@ local commands = {}
 --Commands only have one argument -- a single string.
 --Separate arguments can be extrapolated with the explode() function.
 commands.about = function()
+	if enchatSettings.extraNewline then
+		logadd(nil,nil)
+	end
 	logadd(nil,"Enchat "..enchat.version.." by LDDestroier.")
 	logadd(nil,"'Encrypted, decentralized, &1c&2o&3l&4o&5r&6i&7z&8e&9d&r chat program'")
 	logadd(nil,"Made in 2018, out of gum and procrastination.")
 	logadd(nil,nil)
 	logadd(nil,"AES Lua implementation made by SquidDev.")
 	logadd(nil,"'Skynet' (enables HTTP chat) belongs to gollark (osmarks).")
-	logadd(nil,nil)
 end
 commands.exit = function()
 	enchatSend("*", "'"..yourName.."&r~r' buggered off. (disconnect)")
 	return "exit"
 end
 commands.me = function(msg)
+	if enchatSettings.extraNewline then
+		logadd(nil,nil)
+	end
 	if msg then
 		enchatSend("&2*", yourName.."~r&2 "..msg, true)
 	else
 		logadd("*",commandInit.."me [message]")
-		logadd(nil,nil)
 	end
 end
 commands.colors = function()
+	if enchatSettings.extraNewline then
+		logadd(nil,nil)
+	end
 	logadd("*", "&{Color codes: (use & or ~)&}")
 	logadd(nil, "  &7~11~22~33~44~55~66~7&87~8&78~99~aa~bb~cc~dd~ee~ff")
-	logadd(nil,nil)
 end
 commands.update = function()
 	local res, message = updateEnchat()
@@ -1373,6 +1379,9 @@ commands.list = function()
 			end
 		end
 	end
+	if enchatSettings.extraNewline then
+		logadd(nil,nil)
+	end
 	if getTableLength(userCryList) == 0 then
 		logadd(nil,"Nobody's there.")
 	else
@@ -1380,9 +1389,11 @@ commands.list = function()
 			logadd(nil,"+'"..k.."'")
 		end
 	end
-	logadd(nil,nil)
 end
 commands.nick = function(newName)
+	if enchatSettings.extraNewline then
+		logadd(nil,nil)
+	end
 	if newName then
 		if checkValidName(newName) then
 			if newName == yourName then
@@ -1401,17 +1412,21 @@ commands.nick = function(newName)
 	else
 		logadd("*",commandInit.."nick [newName]")
 	end
-	logadd(nil,nil)
 end
 commands.whoami = function(now)
+	if enchatSettings.extraNewline then
+		logadd(nil,nil)
+	end
 	if now == "now" then
 		logadd("*","You are still '"..yourName.."&r~r'!")
 	else
 		logadd("*","You are '"..yourName.."&r~r'!")
 	end
-	logadd(nil,nil)
 end
 commands.key = function(newKey)
+	if enchatSettings.extraNewline then
+		logadd(nil,nil)
+	end
 	if newKey then
 		if newKey ~= encKey then
 			enchatSend("*", "'"..yourName.."&r~r' buggered off. (keychange)", false)
@@ -1425,19 +1440,23 @@ commands.key = function(newKey)
 		logadd("*","Key = '"..encKey.."&r~r'")
 		logadd("*","Channel = '"..enchat.port.."'")
 	end
-	logadd(nil,nil)
 end
 commands.shrug = function(face)
+	if enchatSettings.extraNewline then
+		logadd(nil,nil)
+	end
 	enchatSend(yourName, "¯\\_"..(face and ("("..face..")") or "\2").."_/¯", true)
 end
 commands.asay = function(_argument)
 	local sPoint = (_argument or ""):find(" ")
+	if enchatSettings.extraNewline then
+		logadd(nil,nil)
+	end
 	if not sPoint then
 		logadd("*","Animation types:")
 		for k,v in pairs(animations) do
 			logadd(nil," '"..k.."'")
 		end
-		logadd(nil,nil)
 	else
 		local animType = _argument:sub(1,sPoint-1)
 		local message = _argument:sub(sPoint+1)
@@ -1450,39 +1469,39 @@ commands.asay = function(_argument)
 				enchatSend(yourName, message, true, animType, animFrameMod[animType])
 			else
 				logadd("*","That message is no good.")
-				logadd(nil,nil)
 			end
 		else
 			logadd("*","Invalid animation type.")
-			logadd(nil,nil)
 		end
 	end
 end
 commands.msg = function(_argument)
 	local sPoint = (_argument or ""):find(" ")
+	if enchatSettings.extraNewline then
+		logadd(nil,nil)
+	end
 	if not sPoint then
 		logadd("*",commandInit.."msg <recipient> <message>")
-		logadd(nil,nil)
 	else
 		local recipient = _argument:sub(1,sPoint-1)
                 local message = _argument:sub(sPoint+1)
 		if not message then
 			logadd("*","You got half of the arguments down pat, at least.")
-			logadd(nil,nil)
 		else
 			if textToBlit(message,true):gsub(" ","") == "" then
 				logadd("*","That message is no good.")
-				logadd(nil,nil)
 			else
 				enchatSend(yourName, message, false, nil, nil, false, recipient)
 				logadd("*","to '"..recipient.."': "..message)
-				logadd(nil,nil)
 			end
 		end
 	end
 end
 commands.palette = function(_argument)
 	local argument = _argument or ""
+	if enchatSettings.extraNewline then
+		logadd(nil,nil)
+	end
 	if argument:gsub("%s","") == "" then
 		local buff = ""
 		for k,v in pairs(palette) do
@@ -1585,16 +1604,21 @@ commands.palette = function(_argument)
 			end
 		end
 	end
-	logadd(nil,nil)
 end
 commands.clear = function()
 	log = {}
 	IDlog = {}
 end
 commands.ping = function(pong)
+	if enchatSettings.extraNewline then
+		logadd(nil,nil)
+	end
 	logadd(nil, pong or "Pong!")
 end
 commands.set = function(_argument)
+	if enchatSettings.extraNewline then
+		logadd(nil,nil)
+	end
 	argument = _argument or ""
 	local collist = {
 		["string"] = function() return "0" end,
@@ -1651,9 +1675,11 @@ commands.set = function(_argument)
 		downloadSkynet()
 		pauseRendering = false
 	end
-	logadd(nil,nil)
 end
 commands.help = function(cmdname)
+	if enchatSettings.extraNewline then
+		logadd(nil,nil)
+	end
 	if cmdname then
 		local helpList = {
 			exit = "Exits Enchat and returns to loader (most likely CraftOS)",
@@ -1691,7 +1717,6 @@ commands.help = function(cmdname)
 		end
 		logadd(nil, output:sub(1,-2))
 	end
-	logadd(nil,nil)
 end
 commandAliases = {
 	quit = commands.exit,
