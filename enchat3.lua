@@ -14,7 +14,7 @@ enchat = {
 	port = 11000,
 	skynetPort = "enchat3-default",
 	url = "https://github.com/LDDestroier/enchat/raw/master/enchat3.lua",
-	betaurl = "https://github.com/LDDestroier/enchat/raw/master/enchat3beta.lua",
+	betaurl = "https://github.com/LDDestroier/enchat/raw/beta/enchat3.lua",
 	ignoreModem = false,
 	dataDir = "/.enchat"
 }
@@ -1615,6 +1615,9 @@ commands.set = function(_argument)
 		pauseRendering = false
 	end
 end
+commands.version = function()
+	--finish him
+end
 commands.help = function(cmdname)
 	if cmdname then
 		local helpList = {
@@ -1646,9 +1649,11 @@ commands.help = function(cmdname)
 		end
 	else
 		logadd("*","All commands:")
+		local output = ""
 		for k,v in pairs(commands) do
-			logadd(nil," "..commandInit..k)
+			output = output.." "..commandInit..k..","
 		end
+		logadd(nil, output:sub(1,-2))
 	end
 end
 commandAliases = {
