@@ -1286,6 +1286,7 @@ commands.about = function()
 	logadd(nil,nil)
 	logadd(nil,"AES Lua implementation made by SquidDev.")
 	logadd(nil,"'Skynet' (enables HTTP chat) belongs to gollark (osmarks).")
+	logadd(nil,nil)
 end
 commands.exit = function()
 	enchatSend("*", "'"..yourName.."&r~r' buggered off. (disconnect)")
@@ -1296,11 +1297,13 @@ commands.me = function(msg)
 		enchatSend("&2*", yourName.."~r&2 "..msg, true)
 	else
 		logadd("*",commandInit.."me [message]")
+		logadd(nil,nil)
 	end
 end
 commands.colors = function()
 	logadd("*", "&{Color codes: (use & or ~)&}")
 	logadd(nil, "  &7~11~22~33~44~55~66~7&87~8&78~99~aa~bb~cc~dd~ee~ff")
+	logadd(nil,nil)
 end
 commands.update = function()
 	local res, message = updateEnchat()
@@ -1323,6 +1326,7 @@ commands.picto = function(filename)
 		output, res = getPictureFile(filename)
 		if not output then
 			logadd("*",res)
+			logadd(nil,nil)
 			return
 		else
 			tableinsert(output,1,"")
@@ -1364,6 +1368,7 @@ commands.list = function()
 			logadd(nil,"+'"..k.."'")
 		end
 	end
+	logadd(nil,nil)
 end
 commands.nick = function(newName)
 	if newName then
@@ -1384,6 +1389,7 @@ commands.nick = function(newName)
 	else
 		logadd("*",commandInit.."nick [newName]")
 	end
+	logadd(nil,nil)
 end
 commands.whoami = function(now)
 	if now == "now" then
@@ -1391,6 +1397,7 @@ commands.whoami = function(now)
 	else
 		logadd("*","You are '"..yourName.."&r~r'!")
 	end
+	logadd(nil,nil)
 end
 commands.key = function(newKey)
 	if newKey then
@@ -1406,6 +1413,7 @@ commands.key = function(newKey)
 		logadd("*","Key = '"..encKey.."&r~r'")
 		logadd("*","Channel = '"..enchat.port.."'")
 	end
+	logadd(nil,nil)
 end
 commands.shrug = function(more)
 	enchatSend(yourName, "¯\\_(?)_/¯"..(more or ""), true)
@@ -1417,6 +1425,7 @@ commands.asay = function(_argument)
 		for k,v in pairs(animations) do
 			logadd(nil," '"..k.."'")
 		end
+		logadd(nil,nil)
 	else
 		local animType = _argument:sub(1,sPoint-1)
 		local message = _argument:sub(sPoint+1)
@@ -1429,9 +1438,11 @@ commands.asay = function(_argument)
 				enchatSend(yourName, message, true, animType, animFrameMod[animType])
 			else
 				logadd("*","That message is no good.")
+				logadd(nil,nil)
 			end
 		else
 			logadd("*","Invalid animation type.")
+			logadd(nil,nil)
 		end
 	end
 end
@@ -1439,17 +1450,21 @@ commands.msg = function(_argument)
 	local sPoint = (_argument or ""):find(" ")
 	if not sPoint then
 		logadd("*",commandInit.."msg <recipient> <message>")
+		logadd(nil,nil)
 	else
 		local recipient = _argument:sub(1,sPoint-1)
                 local message = _argument:sub(sPoint+1)
 		if not message then
 			logadd("*","You got half of the arguments down pat, at least.")
+			logadd(nil,nil)
 		else
 			if textToBlit(message,true):gsub(" ","") == "" then
 				logadd("*","That message is no good.")
+				logadd(nil,nil)
 			else
 				enchatSend(yourName, message, false, nil, nil, false, recipient)
 				logadd("*","to '"..recipient.."': "..message)
+				logadd(nil,nil)
 			end
 		end
 	end
@@ -1558,6 +1573,7 @@ commands.palette = function(_argument)
 			end
 		end
 	end
+	logadd(nil,nil)
 end
 commands.clear = function()
 	log = {}
@@ -1593,6 +1609,7 @@ commands.set = function(_argument)
 		for k,v in pairs(enchatSettings) do
 			logadd(nil,"&4'"..k.."'&r = "..contextualQuote(v,custColorize(v)..tostring(v).."&r"))
 		end
+		logadd(nil,nil)
 	else
 		if enchatSettings[arguments[1]] ~= nil then
 			if #arguments >= 2 then
@@ -1661,6 +1678,7 @@ commands.help = function(cmdname)
 		end
 		logadd(nil, output:sub(1,-2))
 	end
+	logadd(nil,nil)
 end
 commandAliases = {
 	quit = commands.exit,
@@ -1693,6 +1711,7 @@ commandAliases = {
 	shit = function() 	logadd("*","Man, you're telling me!") end,
 	eat = function() 	logadd("*","You're not hungry.") end,
 	what = function() 	logadd("*","What indeed.") end,
+	ldd = function()	logadd(nil,"& that's me") end,
 	OrElseYouWill = function()
 		enchatSend("*", "'"..yourName.."&r~r' buggered off. (disconnect)")
 		error("DIE")
