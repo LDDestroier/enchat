@@ -55,7 +55,7 @@ UIconf = {
 --Attempt to get some slight optimization through localizing basic functions.
 local mathmax, mathmin = math.max, math.min
 local termblit, termwrite = term.blit, term.write
-local termsetCursorPos, termgetCursorPos = term.setCursorPos, term.getCursorPos
+local termsetCursorPos, termgetCursorPos, termsetCursorBlink = term.setCursorPos, term.getCursorPos, term.setCursorBlink
 local termsetTextColor, termsetBackgroundColor = term.setTextColor, term.setBackgroundColor
 local termgetTextColor, termgetBackgroundColor = term.getTextColor, term.getBackgroundColor
 local termclear, termclearLine = term.clear, term.clearLine
@@ -1133,6 +1133,7 @@ end
 
 local renderChat = function(doScrollBackUp)
 	tsv(false)
+	termsetCursorBlink(false)
 	genRenderLog(log)
 	local ry
 	termsetBackgroundColor(palette.bg)
@@ -1164,6 +1165,7 @@ local renderChat = function(doScrollBackUp)
 			termblit(unpack(blTitle))
 		end
 	end
+	termsetCursorBlink(true)
 	tsv(true)
 end
 
