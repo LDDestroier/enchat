@@ -10,7 +10,7 @@ local scr_x, scr_y = term.getSize()
 
 enchat = {
 	version = 3.0,
-	isBeta = false,
+	isBeta = true,
 	port = 11000,
 	skynetPort = "enchat3-default",
 	url = "https://github.com/LDDestroier/enchat/raw/master/enchat3.lua",
@@ -1103,7 +1103,11 @@ local genRenderLog = function()
 		if log[a].maxFrame == true then
 			log[a].maxFrame = math.floor(mathmin(#prebuff[1], scr_x) / enchatSettings.animDiv)
 		end
-		buff, maxLength = blitWrap(prebuff[1], prebuff[2], prebuff[3], true)
+		if log[a].ignoreWrap then
+			buff, maxLength = {{prebuff[1]:sub(1,scr_x), prebuff[2]:sub(1,scr_x), prebuff[3]:sub(1,scr_x)}}, mathmin(#prebuff[1], scr_x)
+		else
+			buff, maxLength = blitWrap(prebuff[1], prebuff[2], prebuff[3], true)
+		end
 		--repeat every line in multiline entries
 		for l = 1, #buff do
 			--holy shit, two animations at once
@@ -1169,19 +1173,20 @@ local renderChat = function(doScrollBackUp)
 	tsv(true)
 end
 
-local logadd = function(name, message, animType, maxFrame)
+local logadd = function(name, message, animType, maxFrame, ignoreWrap)
 	log[#log + 1] = {
 		prefix = name and "<" or "",
 		suffix = name and "> " or "",
 		name = name or "",
 		message = message or " ",
+		ignoreWrap = ignoreWrap,
 		frame = 0,
 		maxFrame = maxFrame or true,
 		animType = animType
 	}
 end
 
-local logaddTable = function(name, message, animType, maxFrame)
+local logaddTable = function(name, message, animType, maxFrame, ignoreWrap)
 	if type(message) == "table" and type(name) == "string" then
 		if #message > 0 then
 			local isGood = true
@@ -1192,9 +1197,9 @@ local logaddTable = function(name, message, animType, maxFrame)
 				end
 			end
 			if isGood then
-				logadd(name,message[1],animType,maxFrame)
+				logadd(name,message[1],animType,maxFrame,ignoreWrap)
 				for l = 2, #message do
-					logadd(nil,message[l],animType,maxFrame)
+					logadd(nil,message[l],animType,maxFrame,ignoreWrap)
 				end
 			end
 		end
@@ -1209,7 +1214,7 @@ local makeRandomString = function(length)
 	return output
 end
 
-local enchatSend = function(name, message, doLog, animType, maxFrame, crying, recipient)
+local enchatSend = function(name, message, doLog, animType, maxFrame, crying, recipient, ignoreWrap)
 	if doLog then
 		if type(message) == "string" then
 			logadd(name, message, animType, maxFrame)
@@ -1225,6 +1230,7 @@ local enchatSend = function(name, message, doLog, animType, maxFrame, crying, re
 		maxFrame = maxFrame,
 		messageID = messageID,
 		recipient = recipient,
+		ignoreWrap = ignoreWrap,
 		cry = crying
 	})
 	IDlog[messageID] = true
@@ -1275,8 +1281,11 @@ local commands = {}
 --Separate arguments can be extrapolated with the explode() function.
 commands.about = function()
 	logadd(nil,"Enchat "..enchat.version.." by LDDestroier.")
-	logadd(nil,"'Encrypted, decentralized chat program'")
+	logadd(nil,"'Encrypted, decentralized, &1c&2o&3l&4o&5r&6i&7z&8e&9d&r chat program'")
 	logadd(nil,"Made in 2018, out of gum and procrastination.")
+	logadd(nil,nil)
+	logadd(nil,"AES Lua implementation made by SquidDev.")
+	logadd(nil,"'Skynet' (enables HTTP chat) belongs to gollark (osmarks).")
 end
 commands.exit = function()
 	enchatSend("*", "'"..yourName.."&r~r' buggered off. (disconnect)")
@@ -1333,7 +1342,7 @@ commands.picto = function(filename)
 		end
 	end
 	if not isEmpty then
-		enchatSend(yourName,output,true,"slideFromLeft")
+		enchatSend(yourName,output,true,"slideFromLeft",nil,nil,nil,true)
 	end
 end
 commands.list = function()
@@ -1615,9 +1624,6 @@ commands.set = function(_argument)
 		pauseRendering = false
 	end
 end
-commands.version = function()
-	--finish him
-end
 commands.help = function(cmdname)
 	if cmdname then
 		local helpList = {
@@ -1805,9 +1811,9 @@ local handleEvents = function()
 								IDlog[msg.messageID] = true
 								if ((not msg.recipient) or (msg.recipient == yourName or msg.recipient == textToBlit(yourName,true))) then
 									if type(msg.message) == "string" then
-										handleReceiveMessage(msg.name, tostring(msg.message), msg.animType, msg.maxFrame)
+										handleReceiveMessage(msg.name, tostring(msg.message), msg.animType, msg.maxFrame, msg.ignoreWrap)
 									elseif type(msg.message) == "table" and enchatSettings.acceptPictoChat and #msg.message <= 64 then
-										logaddTable(msg.name, msg.message)
+										logaddTable(msg.name, msg.message, msg.animType, msg.maxFrame, msg.ignoreWrap)
 										if enchatSettings.extraNewline then
 											logadd(nil,nil)
 										end
