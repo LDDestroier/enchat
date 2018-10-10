@@ -440,13 +440,13 @@ local colorRead = function(maxLength, _history)
 					repeat
 						output = output:sub(1,x-2)..output:sub(x)
 						x = x - 1
-					until output:sub(x,x) == " " or (not ctrlDown)
+					until output:sub(x,x) == " " or (not ctrlDown) or (x == 1)
 				end
 			elseif key == keys.delete then
 				if x < #output+1 then
 					repeat
 						output = output:sub(1,x-1)..output:sub(x+1)
-					until output:sub(x,x) == " " or (not ctrlDown)
+					until output:sub(x,x) == " " or (not ctrlDown) or (x == #output+1)
 				end
 			elseif key == keys.enter then
 				termsetCursorBlink(false)
