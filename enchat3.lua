@@ -1428,7 +1428,7 @@ commands.key = function(newKey)
 	logadd(nil,nil)
 end
 commands.shrug = function(face)
-	enchatSend(yourName, "¯\\_("..face or "\2"..")_/¯", true)
+	enchatSend(yourName, "¯\\_("..(face or "\2")..")_/¯", true)
 end
 commands.asay = function(_argument)
 	local sPoint = (_argument or ""):find(" ")
