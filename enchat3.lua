@@ -1869,7 +1869,7 @@ local handleEvents = function()
 			local key = evt[2]
 			keysDown[key] = true
 			oldScroll = scroll
-			local pageSize = UIconf.chatlogTop - (scr_y-UIconf.promptY)
+			local pageSize = (scr_y-UIconf.promptY) - UIconf.chatlogTop
 			if key == keys.pageUp then
 				adjScroll(-(keysDown[keys.leftCtrl] and pageSize or enchatSettings.pageKeySpeed))
 			elseif key == keys.pageDown then
