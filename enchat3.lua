@@ -440,7 +440,7 @@ local colorRead = function(maxLength, _history)
 					repeat
 						output = output:sub(1,x-2)..output:sub(x)
 						x = x - 1
-					until output:sub(x,x) == " " or (not ctrlDown) or (x == 1)
+					until output:sub(x-1,x-1) == " " or (not ctrlDown) or (x == 1)
 				end
 			elseif key == keys.delete then
 				if x < #output+1 then
@@ -1869,10 +1869,11 @@ local handleEvents = function()
 			local key = evt[2]
 			keysDown[key] = true
 			oldScroll = scroll
+			local pageSize = UIconf.chatlogTop - (scr_y-UIconf.promptY)
 			if key == keys.pageUp then
-				adjScroll(-enchatSettings.pageKeySpeed)
+				adjScroll(-(keysDown[keys.leftCtrl] and pageSize or enchatSettings.pageKeySpeed))
 			elseif key == keys.pageDown then
-				adjScroll(enchatSettings.pageKeySpeed)
+				adjScroll(keysDown[keys.leftCtrl] and pageSize or enchatSettings.pageKeySpeed)
 			end
 			if scroll ~= oldScroll then
 				dab(renderChat)
