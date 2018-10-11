@@ -1229,9 +1229,9 @@ end
 local enchatSend = function(name, message, doLog, animType, maxFrame, crying, recipient, ignoreWrap)
 	if doLog then
 		if type(message) == "string" then
-			logadd(name, message, animType, maxFrame)
+			logadd(name, message, animType, maxFrame, ignoreWrap)
 		else
-			logaddTable(name, message, animType, maxFrame)
+			logaddTable(name, message, animType, maxFrame, ignoreWrap)
 		end
 	end
 	local messageID = makeRandomString(64)
