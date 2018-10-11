@@ -19,40 +19,40 @@ enchat = {
 	dataDir = "/.enchat"
 }
 
-local enchatSettings = {	--DEFAULT settings.
-	animDiv = 4,		--divisor of text animation speed (scrolling from left)
-	doAnimate = true,	--whether or not to animate text moving from left side of screen
-	reverseScroll = false,	--whether or not to make scrolling up really scroll down
-	redrawDelay = 0.1,	--delay between redrawing
-	useSetVisible = true,	--whether or not to use term.current().setVisible(), which has performance and flickering improvements
-	pageKeySpeed = 4,	--how far PageUP or PageDOWN should scroll
-	doNotif = true,		--whether or not to use oveerlay glasses for notifications, if possible
-	doKrazy = true,		--whether or not to add &k obfuscation
-	useSkynet = false,	--whether or not to use gollark's Skynet in addition to modem calls
-	extraNewline = true,	--adds an extra newline after every message since setting to true
-	acceptPictoChat = true	--whether or not to allow tablular enchat input, which is what /picto uses
+local enchatSettings = {	-- DEFAULT settings.
+	animDiv = 4,		-- divisor of text animation speed (scrolling from left)
+	doAnimate = true,	-- whether or not to animate text moving from left side of screen
+	reverseScroll = false,	-- whether or not to make scrolling up really scroll down
+	redrawDelay = 0.1,	-- delay between redrawing
+	useSetVisible = true,	-- whether or not to use term.current().setVisible(), which has performance and flickering improvements
+	pageKeySpeed = 4,	-- how far PageUP or PageDOWN should scroll
+	doNotif = true,		-- whether or not to use oveerlay glasses for notifications, if possible
+	doKrazy = true,		-- whether or not to add &k obfuscation
+	useSkynet = false,	-- whether or not to use gollark's Skynet in addition to modem calls
+	extraNewline = true,	-- adds an extra newline after every message since setting to true
+	acceptPictoChat = true	-- whether or not to allow tablular enchat input, which is what /picto uses
 }
 
 local palette = {
-	bg = colors.black,		--background color
-	txt = colors.white,		--text color (should contrast with bg)
-	promptbg = colors.gray,		--chat prompt background
-	prompttxt = colors.white,	--chat prompt text
-	scrollMeter = colors.lightGray,	--scroll indicator
-	chevron = colors.black,		--color of ">" left of text prompt
-	title = colors.lightGray	--color of title, if available
+	bg = colors.black,		-- background color
+	txt = colors.white,		-- text color (should contrast with bg)
+	promptbg = colors.gray,		-- chat prompt background
+	prompttxt = colors.white,	-- chat prompt text
+	scrollMeter = colors.lightGray,	-- scroll indicator
+	chevron = colors.black,		-- color of ">" left of text prompt
+	title = colors.lightGray	-- color of title, if available
 }
 
 UIconf = {
-	promptY = 1,		--Y position of read prompt, relative to bottom of screen
-	chevron = ">",		--symbol before read prompt
-	chatlogTop = 1,		--where chatlog is written to screen, relative to top of screen
-	title = "",		--overwritten every render, don't bother here
-	doTitle = false,	--whether or not to draw UIconf.title at the top of the screen
-	nameDecolor = false,	--if true, sets all names to palette.chevron color
+	promptY = 1,		-- Y position of read prompt, relative to bottom of screen
+	chevron = ">",		-- symbol before read prompt
+	chatlogTop = 1,		-- where chatlog is written to screen, relative to top of screen
+	title = "",		-- overwritten every render, don't bother here
+	doTitle = false,	-- whether or not to draw UIconf.title at the top of the screen
+	nameDecolor = false,	-- if true, sets all names to palette.chevron color
 }
 
---Attempt to get some slight optimization through localizing basic functions.
+-- Attempt to get some slight optimization through localizing basic functions.
 local mathmax, mathmin = math.max, math.min
 local termblit, termwrite = term.blit, term.write
 local termsetCursorPos, termgetCursorPos, termsetCursorBlink = term.setCursorPos, term.getCursorPos, term.setCursorBlink
@@ -62,10 +62,10 @@ local termclear, termclearLine = term.clear, term.clearLine
 local tableinsert, tableremove = table.insert, table.remove
 local textutilsserialize, textutilsunserialize = textutils.serialize, textutils.unserialize
 local unpack = unpack
---This better do something.
+-- This better do something.
 
 local saveSettings = function()
-	local file = fs.open(fs.combine(enchat.dataDir,"settings"),"w")
+	local file = fs.open(fs.combine(enchat.dataDir, "settings"), "w")
 	file.write(textutilsserialize({
 		enchatSettings = enchatSettings,
 		palette = palette,
@@ -76,10 +76,10 @@ end
 
 local loadSettings = function()
 	local contents
-	if not fs.exists(fs.combine(enchat.dataDir,"settings")) then
+	if not fs.exists(fs.combine(enchat.dataDir, "settings")) then
 		saveSettings()
 	end
-	local file = fs.open(fs.combine(enchat.dataDir,"settings"),"r")
+	local file = fs.open(fs.combine(enchat.dataDir, "settings"), "r")
 	contents = file.readAll()
 	file.close()
 	local newSettings = textutilsunserialize(contents)
@@ -105,10 +105,8 @@ local initcolors = {
 
 local tArg = {...}
 
-local yourName, encKey
-
-yourName = tArg[1]
-encKey = tArg[2]
+local yourName = tArg[1]
+local encKey = tArg[2]
 
 local updateEnchat = function(doBeta)
 	local pPath = shell.getRunningProgram()
@@ -130,7 +128,8 @@ end
 
 local pauseRendering = true
 
-local colors_strnames = { --primarily for use when coloring palette
+-- primarily for use when coloring palette
+local colors_strnames = {
 	["white"] = colors.white,
 	["pearl"] = colors.white,
 	["aryan"] = colors.white,
@@ -232,10 +231,10 @@ for k,v in pairs(toblit) do
 end
 
 local codeNames = {
-	["r"] = "reset",	-- Sets either the text (&) or background (~) colors to their original color.
-	["{"] = "stopFormatting",	--Toggles formatting text off
-	["}"] = "startFormatting",	--Toggles formatting text on
-	["k"] = "krazy"	--Makes the font krazy!
+	["r"] = "reset",		-- Sets either the text (&) or background (~) colors to their original color.
+	["{"] = "stopFormatting",	-- Toggles formatting text off
+	["}"] = "startFormatting",	-- Toggles formatting text on
+	["k"] = "krazy"			-- Makes the font kuh-razy!
 }
 
 local kraziez = {
@@ -271,6 +270,7 @@ for k,v in pairs(kraziez) do
 		kraziez[kraziez[k][a]] = v
 	end
 end
+-- check if using older CC version, omit special characters if it's too old
 if tonumber(_CC_VERSION or 0) >= 1.76 then
 	for a = 1, 255 do
 		if (a ~= 32) and (a ~= 13) and (a ~= 10) then
@@ -283,24 +283,26 @@ else
 	end
 end
 
-local explode = function(div,str,replstr,includeDiv)
-	if (div=='') then return false end
-	local pos,arr = 0,{}
-	for st,sp in function() return string.find(str,div,pos,false) end do
-		tableinsert(arr,string.sub(replstr or str,pos,st-1+(includeDiv and #div or 0)))
+local explode = function(div, str, replstr, includeDiv)
+	if (div == '') then
+		return false
+	end
+	local pos, arr = 0, {}
+	for st, sp in function() return string.find(str, div, pos, false) end do
+		tableinsert(arr, string.sub(replstr or str, pos, st - 1 + (includeDiv and #div or 0)))
 		pos = sp + 1
 	end
-	tableinsert(arr,string.sub(replstr or str,pos))
+	tableinsert(arr, string.sub(replstr or str, pos))
 	return arr
 end
 
-local textToBlit = function(_str,onlyString,initTxt,initBg,_checkPos) --returns output for term.blit, or blitWrap, with formatting codes for color selection. Modified for use specifically with Enchat.
+local textToBlit = function(_str, onlyString, initTxt, initBg, _checkPos) -- returns output for term.blit (or blitWrap) with formatting codes for color selection. Modified for use specifically with Enchat.
 	local checkPos = _checkPos or -1
 	if (not _str) then
 		if onlyString then
 			return ""
 		else
-			return "","",""
+			return "", "", ""
 		end
 	end
 	local str = tostring(_str)
@@ -310,21 +312,21 @@ local textToBlit = function(_str,onlyString,initTxt,initBg,_checkPos) --returns 
 	local isKrazy = false
 	local doFormatting = true
 	local usedformats = {}
-	local txcol,bgcol = initTxt or toblit[termgetTextColor()], initBg or toblit[termgetBackgroundColor()]
-	local origTX,origBG = initTxt or toblit[termgetTextColor()], initBg or toblit[termgetBackgroundColor()]
+	local txcol, bgcol = initTxt or toblit[termgetTextColor()], initBg or toblit[termgetBackgroundColor()]
+	local origTX, origBG = initTxt or toblit[termgetTextColor()], initBg or toblit[termgetBackgroundColor()]
 	local cx,cy
-	local moveOn = function(tx,bg)
-		if isKrazy and (str:sub(p,p) ~= " ") and doFormatting then
-			if kraziez[str:sub(p,p)] then
-				output = output..kraziez[str:sub(p,p)][math.random(1,#kraziez[str:sub(p,p)])]
+	local moveOn = function(tx, bg)
+		if isKrazy and (str:sub(p, p) ~= " ") and doFormatting then
+			if kraziez[str:sub(p, p)] then
+				output = output..kraziez[str:sub(p,p)][math.random(1, #kraziez[str:sub(p,p)])]
 			else
-				output = output..kraziez.all[math.random(1,#kraziez.all)]
+				output = output..kraziez.all[math.random(1, #kraziez.all)]
 			end
 		else
 			output = output..str:sub(p,p)
 		end
-		txcolorout = txcolorout..tx --(doFormatting and tx or origTX)
-		bgcolorout = bgcolorout..bg --(doFormatting and bg or origBG)
+		txcolorout = txcolorout..tx
+		bgcolorout = bgcolorout..bg
 	end
 	local checkMod = 0
 	local modifyCheck = function()
@@ -409,23 +411,22 @@ local colorRead = function(maxLength, _history)
 	history[#history+1] = ""
 	local hPos = #history
 	local cx, cy = termgetCursorPos()
-	local x = 1
-	local xscroll = 1
-	local evt, key, bout, xmod, timtam
+	local x, xscroll = 1, 1
 	local ctrlDown = false
 	termsetCursorBlink(true)
+	local evt, key, bout, xmod, timtam
 	while true do
-		termsetCursorPos(cx,cy)
-		bout, xmod = textToBlit(output,false,nil,nil,x)
+		termsetCursorPos(cx, cy)
+		bout, xmod = textToBlit(output, false, nil, nil, x)
 		for a = 1, #bout do
-			bout[a] = bout[a]:sub(xscroll,xscroll+scr_x-cx)
+			bout[a] = bout[a]:sub(xscroll, xscroll + scr_x - cx)
 		end
 		termblit(unpack(bout))
-		termwrite((" "):rep(scr_x-cx))
-		termsetCursorPos(cx+x+xmod-xscroll,cy)
+		termwrite((" "):rep(scr_x - cx))
+		termsetCursorPos(cx + x + xmod - xscroll, cy)
 		evt = {os.pullEvent()}
 		if evt[1] == "char" or evt[1] == "paste" then
-			output = (output:sub(1,x-1)..evt[2]..output:sub(x)):sub(1,maxLength or -1)
+			output = (output:sub(1, x-1)..evt[2]..output:sub(x)):sub(1, maxLength or -1)
 			x = mathmin(x + #evt[2], #output+1)
 		elseif evt[1] == "key" then
 			key = evt[2]
@@ -560,7 +561,7 @@ local prettyPrompt = function(prompt, y, replchar, doColor)
 	return output
 end
 
-if not checkValidName(yourName) then --not so fast, evildoers
+if not checkValidName(yourName) then -- not so fast, evildoers
 	yourName = nil
 end
 
@@ -588,7 +589,7 @@ if not encKey then
 	currentY = currentY + 3
 end
 
---prevent terminating. It is reversed upon exit.
+-- prevent terminating. It is reversed upon exit.
 local oldePullEvent = os.pullEvent
 os.pullEvent = os.pullEventRaw
 
@@ -651,7 +652,7 @@ local downloadSkynet = function()
 	end
 	if skynet then
 		_G.skynet_json_path = fs.combine(enchat.dataDir,"/api/json")
-		skynet = dofile(apipath) --require my left asshole
+		skynet = dofile(apipath) -- require my left asshole
 		if encKey then
 			bottomMessage("Connecting to Skynet...")
 			skynet.open(enchat.skynetPort)
@@ -665,9 +666,9 @@ end
 
 -- SKYNET API STOP (thanks again) --
 
-local log = {} --Records all sorts of data on text.
-local renderlog = {} --Only records straight terminal output. Generated from 'log'
-local IDlog = {} --Really only used with skynet, will prevent duplicate messages.
+local log = {} 		-- Records all sorts of data on text.
+local renderlog = {} 	-- Only records straight terminal output. Generated from 'log'
+local IDlog = {} 	-- Really only used with skynet, will prevent duplicate messages.
 
 local scroll = 0
 local maxScroll = 0
@@ -699,17 +700,17 @@ local modemTransmit = function(freq, repfreq, message)
 	end
 end
 
-local encrite = function(input) --standardized encryption function
+local encrite = function(input) -- standardized encryption function
 	if not input then return input end
 	return aes.encrypt(encKey, textutilsserialize(input))
 end
 
-local decrite = function(input)
+local decrite = function(input) -- redundant comments cause tuberculosis
 	if not input then return input end
 	return textutilsunserialize(aes.decrypt(encKey, input) or "")
 end
 
-local dab = function(func, ...) --"no and back", not...never mind
+local dab = function(func, ...) -- "do and back", not...never mind
 	local x, y = termgetCursorPos()
 	local b, t = termgetBackgroundColor(), termgetTextColor()
 	local output = {func(...)}
@@ -738,7 +739,7 @@ local splitStrTbl = function(tbl, maxLength)
 	return output
 end
 
-local blitWrap = function(char, text, back, noWrite)
+local blitWrap = function(char, text, back, noWrite) -- where ALL of the onscreen wrapping is done
 	local cWords = splitStrTbl(explode(" ",char,nil, true), scr_x)
 	local tWords = splitStrTbl(explode(" ",char,text,true), scr_x)
 	local bWords = splitStrTbl(explode(" ",char,back,true), scr_x)
@@ -946,7 +947,7 @@ if interface then
 	if interface.canvas then
 		canvas = interface.canvas()
 		notif.newNotification = function(char, text, back, time)
-			nList[#nList+1] = {char,text,back,time,1} --last one is alpha multiplier
+			nList[#nList+1] = {char,text,back,time,1} -- the last one is the alpha multiplier
 		end
 		notif.displayNotifications = function(doCountDown)
 			local adjList = {
@@ -1120,9 +1121,9 @@ local genRenderLog = function()
 		else
 			buff, maxLength = blitWrap(prebuff[1], prebuff[2], prebuff[3], true)
 		end
-		--repeat every line in multiline entries
+		-- repeat every line in multiline entries
 		for l = 1, #buff do
-			--holy shit, two animations at once
+			-- holy shit, two animations, lookit mr. roxas over here
 			if log[a].animType then
 				renderlog[#renderlog + 1] = inAnimate(log[a].animType, buff[l], log[a].frame, log[a].maxFrame, maxLength)
 			else
@@ -1256,7 +1257,7 @@ local cryOut = function(name, crying)
 	enchatSend(name, nil, false, nil, nil, crying)
 end
 
-local getPictureFile = function(path) --ONLY NFP or NFT
+local getPictureFile = function(path) -- ONLY NFP or NFT, fuck BLT
 	if not fs.exists(path) then
 		return false, "No such image."
 	else
@@ -1289,8 +1290,8 @@ local userCryList = {}
 
 local commandInit = "/"
 local commands = {}
---Commands only have one argument -- a single string.
---Separate arguments can be extrapolated with the explode() function.
+-- Commands only have one argument, being a single string.
+-- Separate arguments can be extrapolated with the explode() function.
 commands.about = function()
 	if enchatSettings.extraNewline then
 		logadd(nil,nil)
@@ -1628,7 +1629,7 @@ commands.set = function(_argument)
 		["function"] = function() return "c" end,
 		["nil"] = function() return "8" end,
 		["thread"] = function() return "d" end,
-		["userdata"] = function() return "c" end, --ha
+		["userdata"] = function() return "c" end, -- ha
 	}
 	local custColorize = function(input)
 		return "&"..collist[type(input)](input)
@@ -1806,7 +1807,7 @@ local main = function()
 		if UIconf.promptY == 0 then
 			term.scroll(1)
 		end
-		if textToBlit(input,true):gsub(" ","") ~= "" then --people who send blank messages in chat programs deserve to die
+		if textToBlit(input,true):gsub(" ","") ~= "" then -- people who send blank messages in chat programs deserve to die
 			if checkIfCommand(input) then
 				local res = parseCommand(input)
 				if res == "exit" then
@@ -1814,7 +1815,7 @@ local main = function()
 				end
 			else
 				if enchatSettings.extraNewline then
-					logadd(nil,nil) --readability
+					logadd(nil,nil) -- readability is key
 				end
 				enchatSend(yourName, input, true)
 			end
@@ -1832,7 +1833,7 @@ end
 
 local handleReceiveMessage = function(user, message, animType, maxFrame)
 	if enchatSettings.extraNewline then
-		logadd(nil,nil) --readability
+		logadd(nil,nil) -- readability is still key
 	end
 	logadd(user, message,animations[animType] and animType or nil,(type(maxFrame) == "number") and maxFrame or nil)
 	os.queueEvent("render_enchat")
@@ -1965,7 +1966,7 @@ if canvas then
 	canvas.clear()
 end
 
-tsv(true) --in case it's false
+tsv(true) -- in case it's false, y'know
 
 if not res then
 	prettyClearScreen(1,scr_y-1)
