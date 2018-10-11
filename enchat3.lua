@@ -1116,7 +1116,7 @@ local genRenderLog = function()
 			log[a].maxFrame = math.floor(mathmin(#prebuff[1], scr_x) / enchatSettings.animDiv)
 		end
 		if log[a].ignoreWrap then
-			buff, maxLength = {{prebuff[1]:sub(1,scr_x), prebuff[2]:sub(1,scr_x), prebuff[3]:sub(1,scr_x)}}, mathmin(#prebuff[1], scr_x)
+			buff, maxLength = {prebuff}, mathmin(#prebuff[1], scr_x)
 		else
 			buff, maxLength = blitWrap(prebuff[1], prebuff[2], prebuff[3], true)
 		end
