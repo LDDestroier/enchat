@@ -1859,8 +1859,8 @@ local handleEvents = function()
 			else
 				freq, msg = evt[2], evt[3]
 			end
-			msg = decrite(msg)
 			if (freq == enchat.port) or (freq == enchat.skynetPort) then
+				msg = decrite(msg)
 				if type(msg) == "table" then
 					if (type(msg.name) == "string") then
 						if #msg.name <= 32 then
