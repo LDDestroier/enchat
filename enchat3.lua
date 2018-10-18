@@ -660,9 +660,9 @@ local downloadSkynet = function()
 	end
 end
 
-if enchatSettings.useSkynet then
+--if enchatSettings.useSkynet then
 	downloadSkynet()
-end
+--end
 
 -- SKYNET API STOP (thanks again) --
 
