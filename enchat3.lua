@@ -651,7 +651,7 @@ local downloadSkynet = function()
 		end
 	end
 	if skynet then
-		_G.skynet_json_path = fs.combine(enchat.dataDir,"/api/json")
+		_G.skynet_CBOR_path = fs.combine(enchat.dataDir,"/api/cbor")
 		skynet = dofile(apipath) -- require my left asshole
 		if encKey then
 			bottomMessage("Connecting to Skynet...")
