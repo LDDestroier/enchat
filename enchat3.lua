@@ -775,13 +775,14 @@ local blitWrap = function(char, text, back, noWrite) -- where ALL of the onscree
 end
 
 local fwrite = function(text)
-	termblit(unpack(textToBlit(text)))
+	local b = textToBlit(text)
+	return termblit(unpack(b))
 end
 
 local cfwrite = function(text, y)
 	local cx, cy = termgetCursorPos()
 	termsetCursorPos((scr_x/2) - math.ceil(#textToBlit(text,true)/2), y or cy)
-	fwrite(text)
+	return fwrite(text)
 end
 
 local pictochat = function(xsize, ysize)
