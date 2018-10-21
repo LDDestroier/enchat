@@ -640,7 +640,7 @@ local downloadSkynet = function()
 	local apipath = fs.combine(enchat.dataDir,"/api/skynet")
 	if not fs.exists(apipath) then
 		bottomMessage("Skynet API not found! Downloading...")
-		local prog = http.get("https://raw.githubusercontent.com/osmarks/skynet/master/client.lua")
+		local prog = http.get("https://raw.githubusercontent.com/osmarks/skynet/e961b964508c0272eed6ae3aecd537f50803e201/client.lua")
 		if prog then
 			local file = fs.open(apipath,"w")
 			file.write(prog.readAll())
@@ -651,7 +651,7 @@ local downloadSkynet = function()
 		end
 	end
 	if skynet then
-		_G.skynet_CBOR_path = fs.combine(enchat.dataDir,"/api/cbor")
+		_G.skynet_json_path = fs.combine(enchat.dataDir,"/api/json")
 		skynet = dofile(apipath) -- require my left asshole
 		if encKey then
 			bottomMessage("Connecting to Skynet...")
