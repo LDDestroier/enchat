@@ -655,14 +655,16 @@ local downloadSkynet = function()
 		skynet = dofile(apipath) -- require my left asshole
 		if encKey then
 			bottomMessage("Connecting to Skynet...")
-			skynet.open(enchat.skynetPort)
+			local success, msg = pcall(skynet.open, enchat.skynetPort)
+			if not success then
+				bottomMessage("Failed to connect to skynet. ("..(msg or "?")..")")
+				skynet = nil
+			end
 		end
 	end
 end
 
---if enchatSettings.useSkynet then
-	downloadSkynet()
---end
+downloadSkynet()
 
 -- SKYNET API STOP (thanks again) --
 
@@ -1947,7 +1949,18 @@ local funky = {
 }
 
 if skynet then
-	funky[#funky+1] = skynet.listen
+	funky[#funky+1] = function()
+		while true do
+			if skynet then
+				pcall(skynet.listen)
+				local success, msg = pcall(skynet.open, enchat.skynetPort)
+                        	if not success then
+                        		skynet = nil
+				end
+			end
+			sleep(5)
+		end
+	end
 end
 
 pauseRendering = false
