@@ -398,7 +398,7 @@ local textToBlit = function(_str, onlyString, initTxt, initBg, _checkPos) -- ret
 	if onlyString then
 		return output, checkMod
 	else
-		return {output, txcolorout, bgcolorout}, checkMod
+		return {output, txcolorout:gsub(" ",origTX), bgcolorout:gsub(" ",origBG)}, checkMod
 	end
 end
 
