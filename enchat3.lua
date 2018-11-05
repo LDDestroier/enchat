@@ -325,8 +325,8 @@ local textToBlit = function(_str, onlyString, initTxt, initBg, _checkPos) -- ret
 		else
 			output = output..str:sub(p,p)
 		end
-		txcolorout = txcolorout..tx
-		bgcolorout = bgcolorout..bg
+		txcolorout = txcolorout..(tx == " " and origTX or tx)
+		bgcolorout = bgcolorout..(bg == " " and origBG or bg)
 	end
 	local checkMod = 0
 	local modifyCheck = function()
@@ -1096,20 +1096,18 @@ local genRenderLog = function()
 	local buff, prebuff, maxLength
 	local scrollToBottom = scroll == maxScroll
 	renderlog = {}
-	termsetTextColor(palette.txt)
-	termsetBackgroundColor(palette.bg)
 	for a = 1, #log do
 		termsetCursorPos(1,1)
 		if UIconf.nameDecolor then
-			local dcName = textToBlit(table.concat({log[a].prefix,log[a].name,log[a].suffix}), true)
-			local dcMessage = textToBlit(log[a].message)
+			local dcName = textToBlit(table.concat({log[a].prefix,log[a].name,log[a].suffix}), true, toblit[palette.txt], toblit[palette.bg])
+			local dcMessage = textToBlit(log[a].message, false, toblit[palette.txt], toblit[palette.bg])
 			prebuff = {
 				dcName..dcMessage[1],
 				toblit[palette.chevron]:rep(#dcName)..dcMessage[2],
 				toblit[palette.bg]:rep(#dcName)..dcMessage[3]
 			}
 		else
-			prebuff = textToBlit(table.concat({log[a].prefix,"&r~r",log[a].name,"&r~r",log[a].suffix,"&r~r",log[a].message}))
+			prebuff = textToBlit(table.concat({log[a].prefix,"&r~r",log[a].name,"&r~r",log[a].suffix,"&r~r",log[a].message}), false, toblit[palette.txt], toblit[palette.bg])
 		end
 		if (log[a].frame == 0) and (canvas and enchatSettings.doNotif) then
 			if not (log[a].name == "" and log[a].message == " ") then
