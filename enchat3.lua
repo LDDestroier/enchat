@@ -1101,7 +1101,7 @@ local genRenderLog = function()
 	for a = 1, #log do
 		termsetCursorPos(1,1)
 		if UIconf.nameDecolor then
-			local dcName = textToBlit(table.concat({log[a].prefix,log[a].name,log[a].suffix}), true)
+			local dcName = textToBlit(table.concat({log[a].prefix,log[a].name,log[a].suffix}), true, palette.txt, palette.bg)
 			local dcMessage = textToBlit(log[a].message)
 			prebuff = {
 				dcName..dcMessage[1],
@@ -1109,7 +1109,7 @@ local genRenderLog = function()
 				toblit[palette.bg]:rep(#dcName)..dcMessage[3]
 			}
 		else
-			prebuff = textToBlit(table.concat({log[a].prefix,"&r~r",log[a].name,"&r~r",log[a].suffix,"&r~r",log[a].message}))
+			prebuff = textToBlit(table.concat({log[a].prefix,"&r~r",log[a].name,"&r~r",log[a].suffix,"&r~r",log[a].message}), false, palette.txt, palette.bg)
 		end
 		if (log[a].frame == 0) and (canvas and enchatSettings.doNotif) then
 			if not (log[a].name == "" and log[a].message == " ") then
