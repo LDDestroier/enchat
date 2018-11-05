@@ -325,8 +325,8 @@ local textToBlit = function(_str, onlyString, initTxt, initBg, _checkPos) -- ret
 		else
 			output = output..str:sub(p,p)
 		end
-		txcolorout = txcolorout..tx
-		bgcolorout = bgcolorout..bg
+		txcolorout = txcolorout..(tx == " " and origTX or tx)
+		bgcolorout = bgcolorout..(bg == " " and origBG or bg)
 	end
 	local checkMod = 0
 	local modifyCheck = function()
@@ -398,7 +398,7 @@ local textToBlit = function(_str, onlyString, initTxt, initBg, _checkPos) -- ret
 	if onlyString then
 		return output, checkMod
 	else
-		return {output, txcolorout:gsub(" ",origTX), bgcolorout:gsub(" ",origBG)}, checkMod
+		return {output, txcolorout, bgcolorout}, checkMod
 	end
 end
 
