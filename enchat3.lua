@@ -1704,6 +1704,7 @@ commands.help = function(cmdname)
 			set = "Changes config options during the current session. Lists all options, if without argument.",
 			msg = "Sends a message that is only logged by a specific user.",
 			picto = "Opens an image maker and sends the result. Use the scroll wheel to change color, and hold left shift to change text color. If argument given, will look for an image at the given path and use that instead.",
+			tron = "Starts up a game of TRON.",
 			help = "Shows every command, or describes a specific command.",
 		}
 		cmdname = cmdname:gsub(" ","")
