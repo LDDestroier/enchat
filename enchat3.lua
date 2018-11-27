@@ -23,7 +23,7 @@ local enchatSettings = {	-- DEFAULT settings.
 	animDiv = 4,		-- divisor of text animation speed (scrolling from left)
 	doAnimate = true,	-- whether or not to animate text moving from left side of screen
 	reverseScroll = false,	-- whether or not to make scrolling up really scroll down
-	redrawDelay = 0.1,	-- delay between redrawing
+	redrawDelay = 0.25,	-- delay between redrawing
 	useSetVisible = true,	-- whether or not to use term.current().setVisible(), which has performance and flickering improvements
 	pageKeySpeed = 8,	-- how far PageUP or PageDOWN should scroll
 	doNotif = true,		-- whether or not to use oveerlay glasses for notifications, if possible
@@ -734,7 +734,7 @@ local blitWrap = function(char, text, back, noWrite) -- where ALL of the onscree
 	local cWords = splitStrTbl(explode(" ",char,nil, true), scr_x)
 	local tWords = splitStrTbl(explode(" ",char,text,true), scr_x)
 	local bWords = splitStrTbl(explode(" ",char,back,true), scr_x)
-	
+
 	local ox,oy = termgetCursorPos()
 	local cx,cy,ty = ox,oy,1
 	local output = {}
@@ -788,7 +788,7 @@ local pictochat = function(xsize, ysize)
 			output[3][y][x] = " "
 		end
 	end
-	
+
 	termsetBackgroundColor(colors.gray)
 	termsetTextColor(colors.black)
 	for y = 1, scr_y do
@@ -797,13 +797,13 @@ local pictochat = function(xsize, ysize)
 	end
 	cwrite(" [ENTER] to finish. ",scr_y)
 	cwrite("Push a key to change char.",scr_y-1)
-	
+
 	local cx, cy = math.floor((scr_x/2)-(xsize/2)), math.floor((scr_y/2)-(ysize/2))
-	
+
 	local allCols = "0123456789abcdef"
 	local tPos, bPos = 16, 1
 	local char, text, back = " ", allCols:sub(tPos,tPos), allCols:sub(bPos,bPos)
-	
+
 	local render = function()
 		termsetTextColor(colors.white)
 		termsetBackgroundColor(colors.black)
@@ -1160,9 +1160,9 @@ local renderChat = function(doScrollBackUp)
 		termclearLine()
 		termwrite(scroll.." / "..maxScroll.."  ")
 	end
-	
+
 	UIconf.title = yourName.." on "..encKey
-	
+
 	if UIconf.doTitle then
 		termsetTextColor(palette.chevron)
 		if UIconf.nameDecolor then
@@ -1309,6 +1309,20 @@ commands.me = function(msg)
 		logadd("*",commandInit.."me [message]")
 	end
 end
+commands.tron = function()
+  local url = "https://raw.githubusercontent.com/LDDestroier/CC/master/tron.lua"
+  local prog, contents = http.get(url)
+  if prog then
+    enchatSend("*", yourName .. "&r~r has started a game of TRON.")
+    contents = prog.readAll()
+    pauseRendering = true
+    prog = load(contents, nil, nil, _ENV)(enchatSettings.useSkynet and "skynet", "quick", yourName)
+  else
+    logadd("*","Could not download TRON.")
+  end
+  pauseRendering = false
+  doRender = true
+end
 commands.colors = function()
 	if enchatSettings.extraNewline then
 		logadd(nil,nil)
@@ -1328,7 +1342,7 @@ commands.update = function()
 		return "exit"
 	else
 		logadd("*", res)
-	end	
+	end
 end
 commands.picto = function(filename)
 	local image, output, res
@@ -1767,7 +1781,7 @@ local parseCommand = function(input)
 		cmdName = input:sub(#commandInit+1)
 		cmdArgs = nil
 	end
-	
+
 	local res
 	local CMD = commands[cmdName] or commandAliases[cmdName]
 	if CMD then
@@ -1785,16 +1799,16 @@ local main = function()
 	termclear()
 	os.queueEvent("render_enchat")
 	local mHistory = {}
-	
+
 	while true do
-		
+
 		termsetCursorPos(1, scr_y-UIconf.promptY)
 		termsetBackgroundColor(palette.promptbg)
 		termclearLine()
 		termsetTextColor(palette.chevron)
 		termwrite(UIconf.chevron)
 		termsetTextColor(palette.prompttxt)
-		
+
 		local input = colorRead(nil, mHistory)
 		if UIconf.promptY == 0 then
 			term.scroll(1)
@@ -1818,9 +1832,9 @@ local main = function()
 			logadd(nil,nil)
 		end
 		os.queueEvent("render_enchat")
-		
+
 	end
-	
+
 end
 
 local handleReceiveMessage = function(user, message, animType, maxFrame)
@@ -1954,7 +1968,9 @@ end
 
 pauseRendering = false
 
-local res, outcome = pcall(function() return parallel.waitForAny(unpack(funky)) end)
+local res, outcome = pcall(function()
+	return parallel.waitForAny(unpack(funky))
+end)
 
 os.pullEvent = oldePullEvent
 if skynet then
