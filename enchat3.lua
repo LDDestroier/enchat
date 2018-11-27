@@ -53,14 +53,15 @@ UIconf = {
 }
 
 -- Attempt to get some slight optimization through localizing basic functions.
-local mathmax, mathmin = math.max, math.min
+local mathmax, mathmin, mathrandom = math.max, math.min, math.random
 local termblit, termwrite = term.blit, term.write
 local termsetCursorPos, termgetCursorPos, termsetCursorBlink = term.setCursorPos, term.getCursorPos, term.setCursorBlink
 local termsetTextColor, termsetBackgroundColor = term.setTextColor, term.setBackgroundColor
 local termgetTextColor, termgetBackgroundColor = term.getTextColor, term.getBackgroundColor
 local termclear, termclearLine = term.clear, term.clearLine
-local tableinsert, tableremove = table.insert, table.remove
+local tableinsert, tableremove, tableconcat = table.insert, table.remove, table.concat
 local textutilsserialize, textutilsunserialize = textutils.serialize, textutils.unserialize
+local stringsub, stringgsub, stringrep = string.sub, string.gsub, string.rep
 local unpack = unpack
 -- This better do something.
 
@@ -295,110 +296,97 @@ local explode = function(div, str, replstr, includeDiv)
 	tableinsert(arr, string.sub(replstr or str, pos))
 	return arr
 end
+local parseKrazy = function(c)
+	if kraziez[c] then
+		return kraziez[c][mathrandom(1, #kraziez[c])]
+	else
+		return kraziez.all[mathrandom(1, #kraziez.all)]
+	end
+end
 
-local textToBlit = function(_str, onlyString, initTxt, initBg, _checkPos) -- returns output for term.blit (or blitWrap) with formatting codes for color selection. Modified for use specifically with Enchat.
-	local checkPos = _checkPos or -1
-	if (not _str) then
-		if onlyString then
-			return ""
-		else
-			return "", "", ""
-		end
-	end
-	local str = tostring(_str)
-	local p = 1
-	local output, txcolorout, bgcolorout = "", "", ""
-	local txcode, bgcode = "&", "~"
-	local isKrazy = false
-	local doFormatting = true
-	local usedformats = {}
-	local txcol, bgcol = initTxt or toblit[termgetTextColor()], initBg or toblit[termgetBackgroundColor()]
-	local origTX, origBG = initTxt or toblit[termgetTextColor()], initBg or toblit[termgetBackgroundColor()]
-	local cx,cy
-	local moveOn = function(tx, bg)
-		if isKrazy and (str:sub(p, p) ~= " ") and doFormatting then
-			if kraziez[str:sub(p, p)] then
-				output = output..kraziez[str:sub(p,p)][math.random(1, #kraziez[str:sub(p,p)])]
-			else
-				output = output..kraziez.all[math.random(1, #kraziez.all)]
-			end
-		else
-			output = output..str:sub(p,p)
-		end
-		txcolorout = txcolorout..(tx == " " and origTX or tx)
-		bgcolorout = bgcolorout..(bg == " " and origBG or bg)
-	end
-	local checkMod = 0
-	local modifyCheck = function()
-		if p < checkPos then
-			checkMod = checkMod - 2
-		end
-		if p == checkPos then
-			checkMod = checkMod - 1
-		end
-	end
-	while p <= #str do
-		if str:sub(p,p) == txcode then
-			if tocolors[str:sub(p+1,p+1)] and doFormatting then
-				txcol = str:sub(p+1,p+1)
-				usedformats.txcol = true
-				p = p + 1
-				modifyCheck()
-			elseif codeNames[str:sub(p+1,p+1)] then
-				if str:sub(p+1,p+1) == "r" and doFormatting then
-					txcol = origTX
-					isKrazy = false
-					p = p + 1
-					modifyCheck()
-				elseif str:sub(p+1,p+1) == "{" and doFormatting then
-					doFormatting = false
-					p = p + 1
-					modifyCheck()
-				elseif str:sub(p+1,p+1) == "}" and not doFormatting then
-					doFormatting = true
-					p = p + 1
-					modifyCheck()
-				elseif str:sub(p+1,p+1) == "k" and doFormatting then
-					if enchatSettings.doKrazy then
-						isKrazy = true
-						usedformats.krazy = true
-					end
-					p = p + 1
-					modifyCheck()
-				else
-					moveOn(txcol,bgcol)
+local textToBlit = function(input, onlyString, initText, initBack, checkPos)
+	if not input then return end
+	checkPos = checkPos or -1
+	initText, initBack = initText or toblit[term.getTextColor()], initBack or toblit[term.getBackgroundColor()]
+	tcode, bcode = "&", "~"
+	local cpos, cx = 0, 0
+	local skip, ignore, krazy, ex = nil, false, false, nil
+	local text, back, nex = initText, initBack, nil
+	local charOut, textOut, backOut = {}, {}, {}
+	local codes = {
+		["r"] = function(prev)
+			if not ignore then
+				if prev == tcode then
+					text = initText
+				elseif prev == bcode then
+					back = initBack
 				end
+				krazy = false
 			else
-				moveOn(txcol,bgcol)
+				return prev .. "r"
 			end
-			p = p + 1
-		elseif str:sub(p,p) == bgcode then
-			if tocolors[str:sub(p+1,p+1)] and doFormatting then
-				bgcol = str:sub(p+1,p+1)
-				usedformats.bgcol = true
-				p = p + 1
-				modifyCheck()
-			elseif codeNames[str:sub(p+1,p+1)] and (str:sub(p+1,p+1) == "r") and doFormatting then
-				bgcol = origBG
-				p = p + 1
-				modifyCheck()
-			elseif str:sub(p+1,p+1) == "k" and doFormatting then
-				isKrazy = false
-				p = p + 1
-				modifyCheck()
+		end,
+		["{"] = function(prev)
+			if not ignore then
+				ignore = true
 			else
-				moveOn(txcol,bgcol)
+				return prev .. "{"
 			end
-			p = p + 1
+		end,
+		["}"] = function(prev)
+			if ignore then
+				ignore = false
+			else
+				return prev .. "}"
+			end
+		end,
+		["k"] = function(prev)
+			if not ignore then
+				krazy = not krazy
+			else
+				return prev .. "k"
+			end
+		end
+	}
+	local sx, str = 0
+	for cx = 1, #input do
+		str = stringsub(input,cx,cx)
+		if skip then
+			if tocolors[str] then
+				if skip == tcode then
+					text = str
+					if sx < checkPos then
+						cpos = cpos - 2
+					end
+				elseif skip == bcode then
+					back = str
+					if sx < checkPos then
+						cpos = cpos - 2
+					end
+				end
+			elseif codes[str] then
+				ex = codes[str](skip) or ""
+				sx = sx + #ex
+				if sx < checkPos then
+					cpos = cpos - #ex
+				end
+			end
+			skip = nil
 		else
-			moveOn(txcol,bgcol)
-			p = p + 1
+			if (str == tcode or str == bcode) and (codes[stringsub(input, 1+cx, 1+cx)] or tocolors[stringsub(input,1+cx,1+cx)]) then
+				skip = str
+			else
+				sx = sx + 1
+				charOut[sx] = krazy and parseKrazy(str) or str
+				textOut[sx] = text
+				backOut[sx] = back
+			end
 		end
 	end
 	if onlyString then
-		return output, checkMod
+		return tableconcat(charOut), (checkPos > -1) and cpos or nil
 	else
-		return {output, txcolorout, bgcolorout}, checkMod
+		return {tableconcat(charOut), tableconcat(textOut), tableconcat(backOut)}, (checkPos > -1) and cpos or nil
 	end
 end
 
@@ -484,6 +472,7 @@ local colorRead = function(maxLength, _history)
 				xscroll = xscroll - 1
 			until x-xscroll-xmod >= 0
 		end
+		xscroll = math.max(1, xscroll)
 	end
 end
 
@@ -1107,7 +1096,9 @@ local genRenderLog = function()
 				toblit[palette.bg]:rep(#dcName)..dcMessage[3]
 			}
 		else
-			prebuff = textToBlit(table.concat({log[a].prefix,"&r~r",log[a].name,"&r~r",log[a].suffix,"&r~r",log[a].message}), false, toblit[palette.txt], toblit[palette.bg])
+			prebuff = textToBlit(table.concat(
+				{log[a].prefix, "&r~r", log[a].name, "&r~r", log[a].suffix, "&r~r", log[a].message}
+			), false, toblit[palette.txt], toblit[palette.bg])
 		end
 		if (log[a].frame == 0) and (canvas and enchatSettings.doNotif) then
 			if not (log[a].name == "" and log[a].message == " ") then
@@ -1963,9 +1954,7 @@ end
 
 pauseRendering = false
 
-local res, outcome = pcall(function()
-	return parallel.waitForAny(unpack(funky))
-end)
+local res, outcome = pcall(function() return parallel.waitForAny(unpack(funky)) end)
 
 os.pullEvent = oldePullEvent
 if skynet then
