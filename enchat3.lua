@@ -323,28 +323,28 @@ local textToBlit = function(input, onlyString, initText, initBack, checkPos)
 				end
 				krazy = false
 			else
-				return prev .. "r"
+				return 0
 			end
 		end,
 		["{"] = function(prev)
 			if not ignore then
 				ignore = true
 			else
-				return prev .. "{"
+				return 0
 			end
 		end,
 		["}"] = function(prev)
 			if ignore then
 				ignore = false
 			else
-				return prev .. "}"
+				return 0
 			end
 		end,
 		["k"] = function(prev)
 			if not ignore then
 				krazy = not krazy
 			else
-				return prev .. "k"
+				return 0
 			end
 		end
 	}
@@ -352,7 +352,7 @@ local textToBlit = function(input, onlyString, initText, initBack, checkPos)
 	for cx = 1, #input do
 		str = stringsub(input,cx,cx)
 		if skip then
-			if tocolors[str] then
+			if tocolors[str] and not ignore then
 				if skip == tcode then
 					text = str
 					if sx < checkPos then
@@ -364,13 +364,18 @@ local textToBlit = function(input, onlyString, initText, initBack, checkPos)
 						cpos = cpos - 2
 					end
 				end
-			elseif codes[str] then
-				ex = codes[str](skip) or ""
-				sx = sx + #ex
-				if sx < checkPos then
-					cpos = cpos - #ex
-				end
-			end
+			elseif codes[str] and (not ignore or str == "}") then
+				ex = codes[str](skip) or 0
+				sx = sx + ex
+    			if sx < checkPos then
+    				cpos = cpos - ex - 2
+                end
+			else
+                sx = sx + 1
+                charOut[sx] = krazy and parseKrazy(prev..str) or (skip..str)
+                textOut[sx] = stringrep(text,2)
+                backOut[sx] = stringrep(back,2)
+            end
 			skip = nil
 		else
 			if (str == tcode or str == bcode) and (codes[stringsub(input, 1+cx, 1+cx)] or tocolors[stringsub(input,1+cx,1+cx)]) then
@@ -550,6 +555,17 @@ local prettyPrompt = function(prompt, y, replchar, doColor)
 	return output
 end
 
+local fwrite = function(text)
+	local b = textToBlit(text)
+	return termblit(unpack(b))
+end
+
+local cfwrite = function(text, y)
+	local cx, cy = termgetCursorPos()
+	termsetCursorPos((scr_x/2) - math.ceil(#textToBlit(text,true)/2), y or cy)
+	return fwrite(text)
+end
+
 if not checkValidName(yourName) then -- not so fast, evildoers
 	yourName = nil
 end
@@ -561,6 +577,8 @@ if not (yourName and encKey) then
 end
 
 if not yourName then
+    cfwrite("&8~7Text = &, Background = ~", scr_y-2)
+    cfwrite("&7~00~11~22~33~44~55~66&8~77&7~88~99~aa~bb~cc~dd~ee~ff", scr_y-1)
 	yourName = prettyPrompt("Enter your name.", currentY, nil, true)
 	if not checkValidName(yourName) then
 		while true do
@@ -765,17 +783,6 @@ local blitWrap = function(char, text, back, noWrite) -- where ALL of the onscree
 	return output, maxLength
 end
 
-local fwrite = function(text)
-	local b = textToBlit(text)
-	return termblit(unpack(b))
-end
-
-local cfwrite = function(text, y)
-	local cx, cy = termgetCursorPos()
-	termsetCursorPos((scr_x/2) - math.ceil(#textToBlit(text,true)/2), y or cy)
-	return fwrite(text)
-end
-
 local pictochat = function(xsize, ysize)
 	local output = {{},{},{}}
 	for y = 1, ysize do
@@ -792,11 +799,11 @@ local pictochat = function(xsize, ysize)
 	termsetBackgroundColor(colors.gray)
 	termsetTextColor(colors.black)
 	for y = 1, scr_y do
-		termsetCursorPos(1,y)
+		termsetCursorPos(1, y)
 		termwrite(("/"):rep(scr_x))
 	end
-	cwrite(" [ENTER] to finish. ",scr_y)
-	cwrite("Push a key to change char.",scr_y-1)
+	cwrite(" [ENTER] to finish. ", scr_y)
+	cwrite("Push a key to change char.", scr_y-1)
 
 	local cx, cy = math.floor((scr_x/2)-(xsize/2)), math.floor((scr_y/2)-(ysize/2))
 
@@ -1097,7 +1104,7 @@ local genRenderLog = function()
 			}
 		else
 			prebuff = textToBlit(table.concat(
-				{log[a].prefix, "&r~r", log[a].name, "&r~r", log[a].suffix, "&r~r", log[a].message}
+				{log[a].prefix, "&}&r~r", log[a].name, "&}&r~r", log[a].suffix, "&}&r~r", log[a].message}
 			), false, toblit[palette.txt], toblit[palette.bg])
 		end
 		if (log[a].frame == 0) and (canvas and enchatSettings.doNotif) then
@@ -1296,7 +1303,7 @@ commands.about = function()
 	logadd(nil,"'Skynet' (enables HTTP chat) belongs to gollark (osmarks).")
 end
 commands.exit = function()
-	enchatSend("*", "'"..yourName.."&r~r' buggered off. (disconnect)")
+	enchatSend("*", "'"..yourName.."&}&r~r' buggered off. (disconnect)")
 	return "exit"
 end
 commands.me = function(msg)
@@ -1313,7 +1320,7 @@ commands.tron = function()
   local url = "https://raw.githubusercontent.com/LDDestroier/CC/master/tron.lua"
   local prog, contents = http.get(url)
   if prog then
-    enchatSend("*", yourName .. "&r~r has started a game of TRON.")
+    enchatSend("*", yourName .. "&}&r~r has started a game of TRON.")
     contents = prog.readAll()
     pauseRendering = true
     prog = load(contents, nil, nil, _ENV)(enchatSettings.useSkynet and "skynet", "quick", yourName)
@@ -1333,7 +1340,7 @@ end
 commands.update = function()
 	local res, message = updateEnchat()
 	if res then
-		enchatSend("*",yourName.."&r~r has updated and exited.")
+		enchatSend("*",yourName.."&}&r~r has updated and exited.")
 		termsetBackgroundColor(colors.black)
 		termsetTextColor(colors.white)
 		termclear()
@@ -1406,7 +1413,7 @@ commands.nick = function(newName)
 			if newName == yourName then
 				logadd("*","But you're already called that!")
 			else
-				enchatSend("*","'"..yourName.."&r~r' is now known as '"..newName.."&r~r'.", true)
+				enchatSend("*","'"..yourName.."&}&r~r' is now known as '"..newName.."&}&r~r'.", true)
 				yourName = newName
 			end
 		else
@@ -1425,9 +1432,9 @@ commands.whoami = function(now)
 		logadd(nil,nil)
 	end
 	if now == "now" then
-		logadd("*","You are still '"..yourName.."&r~r'!")
+		logadd("*","You are still '"..yourName.."&}&r~r'!")
 	else
-		logadd("*","You are '"..yourName.."&r~r'!")
+		logadd("*","You are '"..yourName.."&}&r~r'!")
 	end
 end
 commands.key = function(newKey)
@@ -1436,15 +1443,15 @@ commands.key = function(newKey)
 	end
 	if newKey then
 		if newKey ~= encKey then
-			enchatSend("*", "'"..yourName.."&r~r' buggered off. (keychange)", false)
+			enchatSend("*", "'"..yourName.."&}&r~r' buggered off. (keychange)", false)
 			setEncKey(newKey)
-			logadd("*", "Key changed to '"..encKey.."&r~r'.")
-			enchatSend("*", "'"..yourName.."&r~r' has moseyed on over.", false)
+			logadd("*", "Key changed to '"..encKey.."&}&r~r'.")
+			enchatSend("*", "'"..yourName.."&}&r~r' has moseyed on over.", false)
 		else
 			logadd("*", "That's already the key, though.")
 		end
 	else
-		logadd("*","Key = '"..encKey.."&r~r'")
+		logadd("*","Key = '"..encKey.."&}&r~r'")
 		logadd("*","Channel = '"..enchat.port.."'")
 	end
 end
@@ -1759,7 +1766,7 @@ commandAliases = {
 	what = function() 	logadd("*","What indeed.") end,
 	ldd = function()	logadd(nil,"& that's me") end,
 	OrElseYouWill = function()
-		enchatSend("*", "'"..yourName.."&r~r' buggered off. (disconnect)")
+		enchatSend("*", "'"..yourName.."&}&r~r' buggered off. (disconnect)")
 		error("DIE")
 	end
 }
@@ -1943,7 +1950,7 @@ end
 
 getModem()
 
-enchatSend("*", "'"..yourName.."&r~r' has moseyed on over.", true)
+enchatSend("*", "'"..yourName.."&}&r~r' has moseyed on over.", true)
 
 local funky = {
 	main,
