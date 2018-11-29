@@ -19,28 +19,28 @@ enchat = {
 	dataDir = "/.enchat"
 }
 
-local enchatSettings = {	-- DEFAULT settings.
-	animDiv = 4,		-- divisor of text animation speed (scrolling from left)
-	doAnimate = true,	-- whether or not to animate text moving from left side of screen
-	reverseScroll = false,	-- whether or not to make scrolling up really scroll down
-	redrawDelay = 0.1,	-- delay between redrawing
-	useSetVisible = true,	-- whether or not to use term.current().setVisible(), which has performance and flickering improvements
-	pageKeySpeed = 8,	-- how far PageUP or PageDOWN should scroll
-	doNotif = true,		-- whether or not to use oveerlay glasses for notifications, if possible
-	doKrazy = true,		-- whether or not to add &k obfuscation
-	useSkynet = false,	-- whether or not to use gollark's Skynet in addition to modem calls
-	extraNewline = true,	-- adds an extra newline after every message since setting to true
-	acceptPictoChat = true	-- whether or not to allow tablular enchat input, which is what /picto uses
+local enchatSettings = {   -- DEFAULT settings.
+	animDiv = 4,           -- divisor of text animation speed (scrolling from left)
+	doAnimate = true,      -- whether or not to animate text moving from left side of screen
+	reverseScroll = false, -- whether or not to make scrolling up really scroll down
+	redrawDelay = 0.1,     -- delay between redrawing
+	useSetVisible = true,  -- whether or not to use term.current().setVisible(), which has performance and flickering improvements
+	pageKeySpeed = 8,      -- how far PageUP or PageDOWN should scroll
+	doNotif = true,        -- whether or not to use oveerlay glasses for notifications, if possible
+	doKrazy = true,        -- whether or not to add &k obfuscation
+	useSkynet = false,     -- whether or not to use gollark's Skynet in addition to modem calls
+	extraNewline = true,   -- adds an extra newline after every message since setting to true
+	acceptPictoChat = true -- whether or not to allow tablular enchat input, which is what /picto uses
 }
 
 local palette = {
-	bg = colors.black,		-- background color
-	txt = colors.white,		-- text color (should contrast with bg)
-	promptbg = colors.gray,		-- chat prompt background
-	prompttxt = colors.white,	-- chat prompt text
+	bg = colors.black,         -- background color
+	txt = colors.white,        -- text color (should contrast with bg)
+	promptbg = colors.gray,    -- chat prompt background
+	prompttxt = colors.white,  -- chat prompt text
 	scrollMeter = colors.lightGray,	-- scroll indicator
-	chevron = colors.black,		-- color of ">" left of text prompt
-	title = colors.lightGray	-- color of title, if available
+	chevron = colors.black,    -- color of ">" left of text prompt
+	title = colors.lightGray   -- color of title, if available
 }
 
 UIconf = {
@@ -614,67 +614,48 @@ saveSettings()
 termsetBackgroundColor(colors.black)
 termclear()
 
--- AES API START (thank you SquidDev) --
-
-local apipath = fs.combine(enchat.dataDir,"/api/aes")
-if (not fs.exists(apipath)) then
-	bottomMessage("AES API not found! Downloading...")
-	local prog = http.get("http://pastebin.com/raw/9E5UHiqv")
-	if not prog then
-		bottomMessage("Failed to download AES. Abort.")
+local getAPI = function(apiname, apipath, apiurl, doDoFile)
+	apipath = fs.combine(fs.combine(enchat.dataDir,"api"), apipath)
+	if (not fs.exists(apipath)) then
+		bottomMessage(apiname .. " API not found! Downloading...")
+		local prog = http.get(apiurl)
+		if not prog then
+			bottomMessage("Failed to download " .. apiname .. " API. Abort.")
+			termsetCursorPos(1,1)
+			return
+		end
+		local file = fs.open(apipath,"w")
+		file.write(prog.readAll())
+		file.close()
+	end
+	if doDoFile then
+		return dofile(apipath)
+	else
+		os.loadAPI(apipath)
+	end
+	if not _ENV[fs.getName(apipath)] then
+		bottomMessage("Failed to load " .. apiname .. " API. Abort.")
 		termsetCursorPos(1,1)
 		return
-	end
-	local file = fs.open(apipath,"w")
-	file.write(prog.readAll())
-	file.close()
-end
-if not aes then
-	local res = os.loadAPI(apipath)
-	if not res then
-		bottomMessage("Failed to load AES. Abort.")
-		termsetCursorPos(1,1)
-		return
+	else
+		return _ENV[fs.getName(apipath)]
 	end
 end
 
--- AES API STOP (thanks again) --
+local skynet, aes, bigfont
+_G.skynet_CBOR_path = fs.combine(enchat.dataDir,"/api/cbor")
+aes = getAPI("AES", "aes", "http://pastebin.com/raw/9E5UHiqv", false)
+skynet = getAPI("Skynet", "skynet", "https://raw.githubusercontent.com/osmarks/skynet/master/client.lua", true)
+bigfont = getAPI("BigFont", "bigfont", "https://pastebin.com/raw/3LfWxRWh", false)
 
--- SKYNET API START (thanks gollark) --
-
-local skynet
-local downloadSkynet = function()
-	skynet = true
-	local apipath = fs.combine(enchat.dataDir,"/api/skynet")
-	if not fs.exists(apipath) then
-		bottomMessage("Skynet API not found! Downloading...")
-		local prog = http.get("https://raw.githubusercontent.com/osmarks/skynet/master/client.lua")
-		if prog then
-			local file = fs.open(apipath,"w")
-			file.write(prog.readAll())
-			file.close()
-		else
-			bottomMessage("Failed to download Skynet. Ignoring.")
-			skynet = nil
-		end
-	end
-	if skynet then
-		_G.skynet_CBOR_path = fs.combine(enchat.dataDir,"/api/cbor")
-		skynet = dofile(apipath) -- require my left asshole
-		if encKey then
-			bottomMessage("Connecting to Skynet...")
-			local success, msg = pcall(skynet.open, enchat.skynetPort)
-			if not success then
-				bottomMessage("Failed to connect to skynet. ("..(msg or "?")..")")
-				skynet = nil
-			end
-		end
+if encKey then
+	bottomMessage("Connecting to Skynet...")
+	local success, msg = pcall(skynet.open, enchat.skynetPort)
+	if not success then
+		bottomMessage("Failed to connect to skynet. ("..(msg or "?")..")")
+		skynet = nil
 	end
 end
-
-downloadSkynet()
-
--- SKYNET API STOP (thanks again) --
 
 local log = {} 			-- Records all sorts of data on text.
 local renderlog = {} 	-- Only records straight terminal output. Generated from 'log'
@@ -1511,6 +1492,60 @@ commands.asay = function(_argument)
 		end
 	end
 end
+commands.big = function(_argument)
+	local sPoint = (_argument or ""):find(" ")
+	if enchatSettings.extraNewline then
+		logadd(nil,nil)
+	end
+	if not sPoint then
+		logadd("*",commandInit .. "big <size> <text>")
+	else
+		local fontSize = tonumber(_argument:sub(1,sPoint-1))
+		local message = _argument:sub(sPoint+1)
+		if not fontSize then
+			logadd("*","Size must be number between 1 and 3.")
+		elseif fontSize < 0 or fontSize > 3 then
+			logadd("*","Size must be number between 1 and 3.")
+		else
+			fontSize = math.floor(.5+fontSize)
+			local tOutput
+			if fontSize > 0 then
+				message = textToBlit(message, false, "0", "f")
+				local output = {{},{},{}}
+				local x, y = 1, 1
+				local char
+				for i = 1, #message[1] do
+					char = bigfont.makeBlittleText(
+						fontSize,
+						stringsub(message[1],i,i),
+						stringsub(message[2],i,i),
+						stringsub(message[3],i,i)
+					)
+					x = x + char.width
+					if x >= scr_x then
+						y = y + char.height
+						x = char.width
+					end
+					for charY = 1, char.height do
+						output[1][y+charY-1] = (output[1][y+charY-1] or " ") .. char[1][charY]
+						output[2][y+charY-1] = (output[2][y+charY-1] or " ") .. char[2][charY]
+						output[3][y+charY-1] = (output[3][y+charY-1] or " ") .. char[3][charY]
+					end
+				end
+				tOutput = {""}
+				for y = 1, #output[1] do
+					tOutput[#tOutput+1] = ""
+					for x = 1, #output[1][y] do
+						tOutput[#tOutput] = table.concat({tOutput[#tOutput],"&",output[2][y]:sub(x,x),"~",output[3][y]:sub(x,x),output[1][y]:sub(x,x)})
+					end
+				end
+			else
+				tOutput = message
+			end
+			enchatSend(yourName, tOutput, true)
+		end
+	end
+end
 commands.msg = function(_argument)
 	local sPoint = (_argument or ""):find(" ")
 	if enchatSettings.extraNewline then
@@ -1734,9 +1769,10 @@ commands.help = function(cmdname)
 			msg = "Sends a message that is only logged by a specific user.",
 			picto = "Opens an image maker and sends the result. Use the scroll wheel to change color, and hold left shift to change text color. If argument given, will look for an image at the given path and use that instead.",
 			tron = "Starts up a game of TRON.",
+			big = "Sends your message, but enlarged by a specified amount via Wojbie's BigFont API.",
 			help = "Shows every command, or describes a specific command.",
 		}
-		cmdname = cmdname:gsub(" ","")
+		cmdname = cmdname:gsub(" ",""):gsub("/","")
 		if helpList[cmdname] then
 			logadd("*", helpList[cmdname])
 		else
