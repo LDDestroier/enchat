@@ -577,7 +577,8 @@ if not (yourName and encKey) then
 end
 
 if not yourName then
-    cfwrite("&8~7Text = &, Background = ~", scr_y-2)
+    cfwrite("&8~7Text = &, Background = ~", scr_y-3)
+	cfwrite("&8~7&{Krazy = &k, Reset = &r", scr_y-2)
     cfwrite("&7~00~11~22~33~44~55~66&8~77&7~88~99~aa~bb~cc~dd~ee~ff", scr_y-1)
 	yourName = prettyPrompt("Enter your name.", currentY, nil, true)
 	if not checkValidName(yourName) then
@@ -675,9 +676,9 @@ downloadSkynet()
 
 -- SKYNET API STOP (thanks again) --
 
-local log = {} 		-- Records all sorts of data on text.
+local log = {} 			-- Records all sorts of data on text.
 local renderlog = {} 	-- Only records straight terminal output. Generated from 'log'
-local IDlog = {} 	-- Really only used with skynet, will prevent duplicate messages.
+local IDlog = {} 		-- Really only used with skynet, will prevent duplicate messages.
 
 local scroll = 0
 local maxScroll = 0
@@ -1039,6 +1040,25 @@ if interface then
 	end
 end
 
+local darkerCols = {
+	["0"] = "8",
+	["1"] = "c",
+	["2"] = "a",
+	["3"] = "b",
+	["4"] = "1",
+	["5"] = "d",
+	["6"] = "2",
+	["7"] = "f",
+	["8"] = "7",
+	["9"] = "b",
+	["a"] = "7",
+	["b"] = "7",
+	["c"] = "f",
+	["d"] = "7",
+	["e"] = "7",
+	["f"] = "f"
+}
+
 local animations = {
 	slideFromLeft = function(char, text, back, frame, maxFrame, length)
 		return {
@@ -1048,14 +1068,14 @@ local animations = {
 		}
 	end,
 	fadeIn = function(char, text, back, frame, maxFrame, length)
-		local fadeList = { -- works best on a black background with white text
-			colors.gray,
-			colors.lightGray,
-			palette.txt
-		}
+		-- a good example:
+		-- &1what &2in &3the &4world &5are &6you &7doing &8in &9my &aswamp
+		for i = 1, 3 - math.ceil(frame/maxFrame * 3) do
+			text = stringgsub(text, ".", darkerCols)
+		end
 		return {
 			char,
-			toblit[fadeList[mathmax(1,math.ceil((frame/maxFrame)*#fadeList))]]:rep(#text),
+			text,
 			back
 		}
 	end,
@@ -1336,6 +1356,8 @@ commands.colors = function()
 	end
 	logadd("*", "&{Color codes: (use & or ~)&}")
 	logadd(nil, "  &7~11~22~33~44~55~66~7&87~8&78~99~aa~bb~cc~dd~ee~ff")
+	logadd(nil, "  &{Reset text/BG with &r and ~r.&}")
+	logadd(nil, "  &{Use &k for krazy text.&}")
 end
 commands.update = function()
 	local res, message = updateEnchat()
