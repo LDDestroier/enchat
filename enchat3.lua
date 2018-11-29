@@ -614,12 +614,14 @@ saveSettings()
 termsetBackgroundColor(colors.black)
 termclear()
 
-local getAPI = function(apiname, apipath, apiurl, doDoFile)
+local getAPI = function(apiname, apipath, apiurl, doDoFile, doScroll)
 	apipath = fs.combine(fs.combine(enchat.dataDir,"api"), apipath)
 	if (not fs.exists(apipath)) then
+		if doScroll then term.scroll(1) end
 		bottomMessage(apiname .. " API not found! Downloading...")
 		local prog = http.get(apiurl)
 		if not prog then
+			if doScroll then term.scroll(1) end
 			bottomMessage("Failed to download " .. apiname .. " API. Abort.")
 			termsetCursorPos(1,1)
 			return
@@ -634,6 +636,7 @@ local getAPI = function(apiname, apipath, apiurl, doDoFile)
 		os.loadAPI(apipath)
 	end
 	if not _ENV[fs.getName(apipath)] then
+		if doScroll then term.scroll(1) end
 		bottomMessage("Failed to load " .. apiname .. " API. Abort.")
 		termsetCursorPos(1,1)
 		return
@@ -644,9 +647,9 @@ end
 
 local skynet, aes, bigfont
 _G.skynet_CBOR_path = fs.combine(enchat.dataDir,"/api/cbor")
-aes = getAPI("AES", "aes", "http://pastebin.com/raw/9E5UHiqv", false)
-skynet = getAPI("Skynet", "skynet", "https://raw.githubusercontent.com/osmarks/skynet/master/client.lua", true)
-bigfont = getAPI("BigFont", "bigfont", "https://pastebin.com/raw/3LfWxRWh", false)
+aes = getAPI("AES", "aes", "http://pastebin.com/raw/9E5UHiqv", false, false)
+skynet = getAPI("Skynet", "skynet", "https://raw.githubusercontent.com/osmarks/skynet/master/client.lua", true, true)
+bigfont = getAPI("BigFont", "bigfont", "https://pastebin.com/raw/3LfWxRWh", false, true)
 
 if encKey then
 	bottomMessage("Connecting to Skynet...")
