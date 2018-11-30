@@ -651,7 +651,7 @@ aes = getAPI("AES", "aes", "http://pastebin.com/raw/9E5UHiqv", false, false)
 skynet = getAPI("Skynet", "skynet", "https://raw.githubusercontent.com/osmarks/skynet/master/client.lua", true, true)
 bigfont = getAPI("BigFont", "bigfont", "https://pastebin.com/raw/3LfWxRWh", false, true)
 
-if encKey then
+if encKey and skynet then
 	bottomMessage("Connecting to Skynet...")
 	local success, msg = pcall(skynet.open, enchat.skynetPort)
 	if not success then
@@ -660,9 +660,9 @@ if encKey then
 	end
 end
 
-local log = {} 			-- Records all sorts of data on text.
+local log = {} 		-- Records all sorts of data on text.
 local renderlog = {} 	-- Only records straight terminal output. Generated from 'log'
-local IDlog = {} 		-- Really only used with skynet, will prevent duplicate messages.
+local IDlog = {} 	-- Really only used with skynet, will prevent duplicate messages.
 
 local scroll = 0
 local maxScroll = 0
