@@ -349,6 +349,14 @@ local textToBlit = function(input, onlyString, initText, initBack, checkPos)
 		end
 	}
 	local sx, str = 0
+  input = stringgsub(input, "(\\)(%d%d?%d?)", function(cap, val)
+    if tonumber(val) < 256 then
+      cpos = cpos - #val
+      return string.char(val)
+    else
+      return cap..val
+    end
+  end)
 	for cx = 1, #input do
 		str = stringsub(input,cx,cx)
 		if skip then
@@ -1339,9 +1347,9 @@ commands.colors = function()
 		logadd(nil,nil)
 	end
 	logadd("*", "&{Color codes: (use & or ~)&}")
-	logadd(nil, "  &7~11~22~33~44~55~66~7&87~8&78~99~aa~bb~cc~dd~ee~ff")
-	logadd(nil, "  &{Reset text/BG with &r and ~r.&}")
-	logadd(nil, "  &{Use &k for krazy text.&}")
+	logadd(nil, " &7~11~22~33~44~55~66~7&87~8&78~99~aa~bb~cc~dd~ee~ff")
+	logadd(nil, " &{Reset text/BG with &r and ~r.&}")
+	logadd(nil, " &{Use &k for krazy text.&}")
 end
 commands.update = function()
 	local res, message = updateEnchat()
@@ -1985,6 +1993,24 @@ local handleEvents = function()
 			keysDown[key] = nil
 		elseif (evt[1] == "render_enchat") and (not pauseRendering) then
 			dab(renderChat)
+    elseif (evt[1] == "tron_complete") then
+      if evt[3] then
+        if enchatSettings.extraNewline then
+          logadd(nil,nil)
+        end
+        if evt[2] == "win" then
+          enchatSend("*", yourName .. "&}&r~r beat " .. (evt[4] or "someone") .. "&}&r~r in TRON!", true)
+        elseif evt[2] == "lose" then
+          enchatSend("*", (evt[4] or "Someone") .. "&}&r~r beat " .. yourName .. "&}&r~r in TRON!", true)
+        elseif evt[2] == "tie" then
+          enchatSend("*", yourName .. "&}&r~r tied with " .. (evt[4] or "someone") .. "&}&r~r in TRON!", true)
+        end
+      elseif evt[2] == "timeout" then
+        if enchatSettings.extraNewline then
+          logadd(nil,nil)
+        end
+        enchatSend("*", yourName .. "&}&r~r timed out against " .. (evt[4] or "someone") .. "&}&r~r in TRON...", true)
+      end
 		elseif evt[1] == "terminate" then
 			return "exit"
 		end
