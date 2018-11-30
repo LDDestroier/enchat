@@ -349,14 +349,14 @@ local textToBlit = function(input, onlyString, initText, initBack, checkPos)
 		end
 	}
 	local sx, str = 0
-  input = stringgsub(input, "(\\)(%d%d?%d?)", function(cap, val)
-    if tonumber(val) < 256 then
-      cpos = cpos - #val
-      return string.char(val)
-    else
-      return cap..val
-    end
-  end)
+	input = stringgsub(input, "(\\)(%d%d?%d?)", function(cap, val)
+		if tonumber(val) < 256 then
+			cpos = cpos - #val
+			return string.char(val)
+		else
+			return cap..val
+		end
+	end)
 	for cx = 1, #input do
 		str = stringsub(input,cx,cx)
 		if skip then
@@ -372,7 +372,7 @@ local textToBlit = function(input, onlyString, initText, initBack, checkPos)
 						cpos = cpos - 2
 					end
 				end
-			elseif codes[str] and (not ignore or str == "}") then
+			elseif codes[str] and not (ignore and str == "{") then
 				ex = codes[str](skip) or 0
 				sx = sx + ex
     			if sx < checkPos then
@@ -420,7 +420,7 @@ local colorRead = function(maxLength, _history)
 		termsetCursorPos(cx, cy)
 		bout, xmod = textToBlit(output, false, nil, nil, x)
 		for a = 1, #bout do
-			bout[a] = bout[a]:sub(xscroll, xscroll + scr_x - cx)
+			bout[a] = stringsub(bout[a], xscroll, xscroll + scr_x - cx)
 		end
 		termblit(unpack(bout))
 		termwrite((" "):rep(scr_x - cx))
@@ -661,9 +661,16 @@ bigfont = getAPI("BigFont", "bigfont", "https://pastebin.com/raw/3LfWxRWh", fals
 
 if encKey and skynet then
 	bottomMessage("Connecting to Skynet...")
-	local success, msg = pcall(skynet.open, enchat.skynetPort)
-	if not success then
-		bottomMessage("Failed to connect to skynet. ("..(msg or "?")..")")
+	local success = parallel.waitForAny(
+		function()
+			skynet.open(enchat.skynetPort)
+		end,
+		function()
+			sleep(5)
+		end
+	)
+	if success == 2 then
+		bottomMessage("Failed to connect to skynet.")
 		skynet = nil
 	end
 end
@@ -848,7 +855,7 @@ local pictochat = function(xsize, ysize)
 			else
 				bPos = mathmax(1, mathmin(16, bPos + evt[2]))
 			end
-			text, back = allCols:sub(tPos,tPos), allCols:sub(bPos,bPos)
+			text, back = stringsub(allCols,tPos,tPos), stringsub(allCols,bPos,bPos)
 			if oldTpos ~= tPos or oldBpos ~= bPos then
 				render()
 			end
@@ -914,6 +921,7 @@ notif.height = 10
 notif.width = 6
 notif.time = 40
 notif.wrapX = 300
+notif.maxNotifs = 10
 local nList = {}
 local colorTranslate = {
 	[" "] = {240, 240, 240},
@@ -939,6 +947,9 @@ if interface then
 	if interface.canvas then
 		canvas = interface.canvas()
 		notif.newNotification = function(char, text, back, time)
+			if #nList > notif.maxNotifs then
+				tableremove(nList, 1)
+			end
 			nList[#nList+1] = {char,text,back,time,1} -- the last one is the alpha multiplier
 		end
 		notif.displayNotifications = function(doCountDown)
@@ -968,14 +979,14 @@ if interface then
 			local getWordWidth = function(str)
 				local output = 0
 				for a = 1, #str do
-					output = output + notif.width + (adjList[str:sub(a,a)] or 0)
+					output = output + notif.width + (adjList[stringsub(str,a,a)] or 0)
 				end
 				return output
 			end
 			canvas.clear()
 			local xadj, charadj, wordadj, t, r
 			local x, y, words, txtwords, bgwords = 0, 0
-			for n = mathmin(#nList,16), 1, -1 do
+			for n = 1, mathmin(#nList, notif.maxNotifs) do
 				xadj, charadj = 0, 0
 				y = y + 1
 				x = 0
@@ -996,23 +1007,25 @@ if interface then
 					end
 					for cx = 1, #char do
 						x = x + 1
-						charadj = (adjList[char:sub(cx,cx)] or 0)
+						charadj = (adjList[stringsub(char,cx,cx)] or 0)
 						r = canvas.addRectangle(xadj+1+(x-1)*notif.width, 1+(y-1)*notif.height, charadj+notif.width, notif.height)
-						if back:sub(cx,cx) ~= " " then
+						if stringsub(back,cx,cx) ~= " " then
 							r.setAlpha(notif.alpha * nList[n][5])
-							r.setColor(unpack(colorTranslate[back:sub(cx,cx)]))
+							r.setColor(unpack(colorTranslate[stringsub(back,cx,cx)]))
 						else
 							r.setAlpha(100 * nList[n][5])
 							r.setColor(unpack(colorTranslate["7"]))
 						end
 						drawEdgeLine(y,notif.alpha * nList[n][5])
-						t = canvas.addText({xadj+1+(x-1)*notif.width,2+(y-1)*notif.height}, char:sub(cx,cx))
+						t = canvas.addText({xadj+1+(x-1)*notif.width,2+(y-1)*notif.height}, stringsub(char,cx,cx))
 						t.setAlpha(notif.alpha * nList[n][5])
-						t.setColor(unpack(colorTranslate[text:sub(cx,cx)]))
+						t.setColor(unpack(colorTranslate[stringsub(text,cx,cx)]))
 						xadj = xadj + charadj
 						currentX = currentX + charadj+notif.width
 					end
 				end
+			end
+			for n = mathmin(#nList, notif.maxNotifs), 1, -1 do
 				if doCountDown then
 					if nList[n][4] > 1 then
 						nList[n][4] = nList[n][4] - 1
@@ -1054,9 +1067,9 @@ local darkerCols = {
 local animations = {
 	slideFromLeft = function(char, text, back, frame, maxFrame, length)
 		return {
-			char:sub((length or #char) - ((frame/maxFrame)*(length or #char))),
-			text:sub((length or #text) - ((frame/maxFrame)*(length or #text))),
-			back:sub((length or #back) - ((frame/maxFrame)*(length or #back)))
+			stringsub(char, (length or #char) - ((frame/maxFrame)*(length or #char))),
+			stringsub(text, (length or #text) - ((frame/maxFrame)*(length or #text))),
+			stringsub(back, (length or #back) - ((frame/maxFrame)*(length or #back)))
 		}
 	end,
 	fadeIn = function(char, text, back, frame, maxFrame, length)
