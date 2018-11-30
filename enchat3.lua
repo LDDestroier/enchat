@@ -2204,4 +2204,4 @@ end
 termsetCursorPos(1,scr_y)
 termsetBackgroundColor(initcolors.bg)
 termsetTextColor(initcolors.txt)
-termcleaLine()
+termclearLine()
