@@ -349,14 +349,14 @@ local textToBlit = function(input, onlyString, initText, initBack, checkPos)
 		end
 	}
 	local sx, str = 0
-  input = stringgsub(input, "(\\)(%d%d?%d?)", function(cap, val)
-    if tonumber(val) < 256 then
-      cpos = cpos - #val
-      return string.char(val)
-    else
-      return cap..val
-    end
-  end)
+	input = stringgsub(input, "(\\)(%d%d?%d?)", function(cap, val)
+		if tonumber(val) < 256 then
+			cpos = cpos - #val
+			return string.char(val)
+		else
+			return cap..val
+		end
+	end)
 	for cx = 1, #input do
 		str = stringsub(input,cx,cx)
 		if skip then
@@ -372,7 +372,7 @@ local textToBlit = function(input, onlyString, initText, initBack, checkPos)
 						cpos = cpos - 2
 					end
 				end
-			elseif codes[str] and (not ignore or str == "}") then
+			elseif codes[str] and not (ignore and str == "{") then
 				ex = codes[str](skip) or 0
 				sx = sx + ex
     			if sx < checkPos then
@@ -975,7 +975,7 @@ if interface then
 			canvas.clear()
 			local xadj, charadj, wordadj, t, r
 			local x, y, words, txtwords, bgwords = 0, 0
-			for n = mathmin(#nList,16), 1, -1 do
+			for n = 1, mathmin(#nList,16), 1 do
 				xadj, charadj = 0, 0
 				y = y + 1
 				x = 0
