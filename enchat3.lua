@@ -914,6 +914,7 @@ notif.height = 10
 notif.width = 6
 notif.time = 40
 notif.wrapX = 300
+notif.maxNotifs = 10
 local nList = {}
 local colorTranslate = {
 	[" "] = {240, 240, 240},
@@ -940,6 +941,9 @@ if interface then
 		canvas = interface.canvas()
 		notif.newNotification = function(char, text, back, time)
 			nList[#nList+1] = {char,text,back,time,1} -- the last one is the alpha multiplier
+			if #nList > notif.maxNotifs then
+				tableremove(nList, 1)
+			end
 		end
 		notif.displayNotifications = function(doCountDown)
 			local adjList = {
@@ -975,7 +979,7 @@ if interface then
 			canvas.clear()
 			local xadj, charadj, wordadj, t, r
 			local x, y, words, txtwords, bgwords = 0, 0
-			for n = 1, mathmin(#nList,16), 1 do
+			for n = 1, mathmin(#nList, notif.maxNotifs), 1 do
 				xadj, charadj = 0, 0
 				y = y + 1
 				x = 0
