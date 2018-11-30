@@ -661,9 +661,16 @@ bigfont = getAPI("BigFont", "bigfont", "https://pastebin.com/raw/3LfWxRWh", fals
 
 if encKey and skynet then
 	bottomMessage("Connecting to Skynet...")
-	local success, msg = pcall(skynet.open, enchat.skynetPort)
-	if not success then
-		bottomMessage("Failed to connect to skynet. ("..(msg or "?")..")")
+	local success = parallel.waitForAny(
+		function()
+			skynet.open(enchat.skynetPort)
+		end,
+		function()
+			sleep(5)
+		end
+	)
+	if success == 2 then
+		bottomMessage("Failed to connect to skynet.")
 		skynet = nil
 	end
 end
