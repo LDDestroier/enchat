@@ -420,7 +420,7 @@ local colorRead = function(maxLength, _history)
 		termsetCursorPos(cx, cy)
 		bout, xmod = textToBlit(output, false, nil, nil, x)
 		for a = 1, #bout do
-			bout[a] = bout[a]:sub(xscroll, xscroll + scr_x - cx)
+			bout[a] = stringsub(bout[a], xscroll, xscroll + scr_x - cx)
 		end
 		termblit(unpack(bout))
 		termwrite((" "):rep(scr_x - cx))
@@ -855,7 +855,7 @@ local pictochat = function(xsize, ysize)
 			else
 				bPos = mathmax(1, mathmin(16, bPos + evt[2]))
 			end
-			text, back = allCols:sub(tPos,tPos), allCols:sub(bPos,bPos)
+			text, back = stringsub(allCols,tPos,tPos), stringsub(allCols,bPos,bPos)
 			if oldTpos ~= tPos or oldBpos ~= bPos then
 				render()
 			end
@@ -947,10 +947,10 @@ if interface then
 	if interface.canvas then
 		canvas = interface.canvas()
 		notif.newNotification = function(char, text, back, time)
-			nList[#nList+1] = {char,text,back,time,1} -- the last one is the alpha multiplier
 			if #nList > notif.maxNotifs then
 				tableremove(nList, 1)
 			end
+			nList[#nList+1] = {char,text,back,time,1} -- the last one is the alpha multiplier
 		end
 		notif.displayNotifications = function(doCountDown)
 			local adjList = {
@@ -979,14 +979,14 @@ if interface then
 			local getWordWidth = function(str)
 				local output = 0
 				for a = 1, #str do
-					output = output + notif.width + (adjList[str:sub(a,a)] or 0)
+					output = output + notif.width + (adjList[stringsub(str,a,a)] or 0)
 				end
 				return output
 			end
 			canvas.clear()
 			local xadj, charadj, wordadj, t, r
 			local x, y, words, txtwords, bgwords = 0, 0
-			for n = 1, mathmin(#nList, notif.maxNotifs), 1 do
+			for n = 1, mathmin(#nList, notif.maxNotifs) do
 				xadj, charadj = 0, 0
 				y = y + 1
 				x = 0
@@ -1007,23 +1007,25 @@ if interface then
 					end
 					for cx = 1, #char do
 						x = x + 1
-						charadj = (adjList[char:sub(cx,cx)] or 0)
+						charadj = (adjList[stringsub(char,cx,cx)] or 0)
 						r = canvas.addRectangle(xadj+1+(x-1)*notif.width, 1+(y-1)*notif.height, charadj+notif.width, notif.height)
-						if back:sub(cx,cx) ~= " " then
+						if stringsub(back,cx,cx) ~= " " then
 							r.setAlpha(notif.alpha * nList[n][5])
-							r.setColor(unpack(colorTranslate[back:sub(cx,cx)]))
+							r.setColor(unpack(colorTranslate[stringsub(back,cx,cx)]))
 						else
 							r.setAlpha(100 * nList[n][5])
 							r.setColor(unpack(colorTranslate["7"]))
 						end
 						drawEdgeLine(y,notif.alpha * nList[n][5])
-						t = canvas.addText({xadj+1+(x-1)*notif.width,2+(y-1)*notif.height}, char:sub(cx,cx))
+						t = canvas.addText({xadj+1+(x-1)*notif.width,2+(y-1)*notif.height}, stringsub(char,cx,cx))
 						t.setAlpha(notif.alpha * nList[n][5])
-						t.setColor(unpack(colorTranslate[text:sub(cx,cx)]))
+						t.setColor(unpack(colorTranslate[stringsub(text,cx,cx)]))
 						xadj = xadj + charadj
 						currentX = currentX + charadj+notif.width
 					end
 				end
+			end
+			for n = mathmin(#nList, notif.maxNotifs), 1, -1 do
 				if doCountDown then
 					if nList[n][4] > 1 then
 						nList[n][4] = nList[n][4] - 1
@@ -1065,9 +1067,9 @@ local darkerCols = {
 local animations = {
 	slideFromLeft = function(char, text, back, frame, maxFrame, length)
 		return {
-			char:sub((length or #char) - ((frame/maxFrame)*(length or #char))),
-			text:sub((length or #text) - ((frame/maxFrame)*(length or #text))),
-			back:sub((length or #back) - ((frame/maxFrame)*(length or #back)))
+			stringsub(char, (length or #char) - ((frame/maxFrame)*(length or #char))),
+			stringsub(text, (length or #text) - ((frame/maxFrame)*(length or #text))),
+			stringsub(back, (length or #back) - ((frame/maxFrame)*(length or #back)))
 		}
 	end,
 	fadeIn = function(char, text, back, frame, maxFrame, length)
