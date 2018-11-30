@@ -28,7 +28,7 @@ local enchatSettings = {   -- DEFAULT settings.
 	pageKeySpeed = 8,      -- how far PageUP or PageDOWN should scroll
 	doNotif = true,        -- whether or not to use oveerlay glasses for notifications, if possible
 	doKrazy = true,        -- whether or not to add &k obfuscation
-	useSkynet = false,     -- whether or not to use gollark's Skynet in addition to modem calls
+	useSkynet = true,     -- whether or not to use gollark's Skynet in addition to modem calls
 	extraNewline = true,   -- adds an extra newline after every message since setting to true
 	acceptPictoChat = true -- whether or not to allow tablular enchat input, which is what /picto uses
 }
