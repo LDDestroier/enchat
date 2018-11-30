@@ -1207,11 +1207,11 @@ local renderChat = function(doScrollBackUp)
 		termwrite(scroll.." / "..maxScroll.."  ")
 	end
 
-	local _title = UIconf.title:gsub("YOURNAME", yourName):gsub("ENCKEY", encKey):gsub("PORT", tostring(enchat.port))
+	local _title = UIconf.title:gsub("YOURNAME", yourName.."&}&r~r"):gsub("ENCKEY", encKey.."&}&r~r"):gsub("PORT", tostring(enchat.port))
 	if UIconf.doTitle then
 		termsetTextColor(palette.title)
+		term.setBackgroundColor(palette.titlebg)
 		if UIconf.nameDecolor then
-			term.setBackgroundColor(palette.titlebg or palette.bg)
 			if UIconf.centerTitle then
 				cwrite((" "):rep(scr_x)..textToBlit(_title, true)..(" "):rep(scr_x), UIconf.titleY or 1)
 			else
@@ -2204,4 +2204,4 @@ end
 termsetCursorPos(1,scr_y)
 termsetBackgroundColor(initcolors.bg)
 termsetTextColor(initcolors.txt)
-termclearLine()
+termcleaLine()
