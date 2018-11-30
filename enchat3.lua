@@ -19,37 +19,41 @@ enchat = {
 	dataDir = "/.enchat"
 }
 
-local enchatSettings = {   -- DEFAULT settings.
-	animDiv = 4,           -- divisor of text animation speed (scrolling from left)
-	doAnimate = true,      -- whether or not to animate text moving from left side of screen
-	reverseScroll = false, -- whether or not to make scrolling up really scroll down
-	redrawDelay = 0.1,     -- delay between redrawing
-	useSetVisible = true,  -- whether or not to use term.current().setVisible(), which has performance and flickering improvements
-	pageKeySpeed = 8,      -- how far PageUP or PageDOWN should scroll
-	doNotif = true,        -- whether or not to use oveerlay glasses for notifications, if possible
-	doKrazy = true,        -- whether or not to add &k obfuscation
-	useSkynet = true,     -- whether or not to use gollark's Skynet in addition to modem calls
-	extraNewline = true,   -- adds an extra newline after every message since setting to true
-	acceptPictoChat = true -- whether or not to allow tablular enchat input, which is what /picto uses
+local enchatSettings = {	-- DEFAULT settings.
+	animDiv = 4,			-- divisor of text animation speed (scrolling from left)
+	doAnimate = true,		-- whether or not to animate text moving from left side of screen
+	reverseScroll = false,	-- whether or not to make scrolling up really scroll down
+	redrawDelay = 0.1,		-- delay between redrawing
+	useSetVisible = true,	-- whether or not to use term.current().setVisible(), which has performance and flickering improvements
+	pageKeySpeed = 8,		-- how far PageUP or PageDOWN should scroll
+	doNotif = true,			-- whether or not to use oveerlay glasses for notifications, if possible
+	doKrazy = true,			-- whether or not to add &k obfuscation
+	useSkynet = true,		-- whether or not to use gollark's Skynet in addition to modem calls
+	extraNewline = true,	-- adds an extra newline after every message since setting to true
+	acceptPictoChat = true	-- whether or not to allow tablular enchat input, which is what /picto uses
 }
 
 local palette = {
-	bg = colors.black,         -- background color
-	txt = colors.white,        -- text color (should contrast with bg)
-	promptbg = colors.gray,    -- chat prompt background
-	prompttxt = colors.white,  -- chat prompt text
+	bg = colors.black,				-- background color
+	txt = colors.white,				-- text color (should contrast with bg)
+	promptbg = colors.gray,			-- chat prompt background
+	prompttxt = colors.white,		-- chat prompt text
 	scrollMeter = colors.lightGray,	-- scroll indicator
-	chevron = colors.black,    -- color of ">" left of text prompt
-	title = colors.lightGray   -- color of title, if available
+	chevron = colors.black,			-- color of ">" left of text prompt
+	title = colors.lightGray,		-- color of title, if available
+	titlebg = colors.lightGray		-- background color of title, if available
 }
 
 UIconf = {
-	promptY = 1,		-- Y position of read prompt, relative to bottom of screen
-	chevron = ">",		-- symbol before read prompt
-	chatlogTop = 1,		-- where chatlog is written to screen, relative to top of screen
-	title = "",		-- overwritten every render, don't bother here
-	doTitle = false,	-- whether or not to draw UIconf.title at the top of the screen
-	nameDecolor = false,	-- if true, sets all names to palette.chevron color
+	promptY = 1,			-- Y position of read prompt, relative to bottom of screen
+	chevron = ">",			-- symbol before read prompt
+	chatlogTop = 1,			-- where chatlog is written to screen, relative to top of screen
+	title = "",				-- overwritten every render, don't bother here
+	doTitle = false,		-- whether or not to draw UIconf.title at the top of the screen
+	nameDecolor = false,	-- if true, sets all names to palette.chevron color,
+	centerTitle = false,	-- if true, centers the title
+	prefix = "<",
+	suffix = "> "
 }
 
 -- Attempt to get some slight optimization through localizing basic functions.
@@ -65,12 +69,26 @@ local stringsub, stringgsub, stringrep = string.sub, string.gsub, string.rep
 local unpack = unpack
 -- This better do something.
 
+local initcolors = {
+	bg = termgetBackgroundColor(),
+	txt = termgetTextColor()
+}
+
+local tArg = {...}
+
+local yourName = tArg[1]
+local encKey = tArg[2]
+
+local setEncKey = function(newKey)
+	encKey = newKey
+end
+
 local saveSettings = function()
 	local file = fs.open(fs.combine(enchat.dataDir, "settings"), "w")
 	file.write(textutilsserialize({
 		enchatSettings = enchatSettings,
 		palette = palette,
-		UIconf = UIconf
+		UIconf = UIconf,
 	}))
 	file.close()
 end
@@ -99,16 +117,6 @@ local loadSettings = function()
 	end
 end
 
-local initcolors = {
-	bg = termgetBackgroundColor(),
-	txt = termgetTextColor()
-}
-
-local tArg = {...}
-
-local yourName = tArg[1]
-local encKey = tArg[2]
-
 local updateEnchat = function(doBeta)
 	local pPath = shell.getRunningProgram()
 	local h = http.get((doBeta or enchat.isBeta) and enchat.betaurl or enchat.url)
@@ -121,10 +129,6 @@ local updateEnchat = function(doBeta)
 		file.close()
 		return true, "Updated!"
 	end
-end
-
-local setEncKey = function(newKey)
-	encKey = newKey
 end
 
 local pauseRendering = true
@@ -362,12 +366,12 @@ local textToBlit = function(input, onlyString, initText, initBack, checkPos)
 		if skip then
 			if tocolors[str] and not ignore then
 				if skip == tcode then
-					text = str
+					text = str == " " and initText or str
 					if sx < checkPos then
 						cpos = cpos - 2
 					end
 				elseif skip == bcode then
-					back = str
+					back = str == " " and initBack or str
 					if sx < checkPos then
 						cpos = cpos - 2
 					end
@@ -488,6 +492,7 @@ local colorRead = function(maxLength, _history)
 		xscroll = math.max(1, xscroll)
 	end
 end
+_G.colorRead = colorRead
 
 local checkValidName = function(_nayme)
 	local nayme = textToBlit(_nayme,true)
@@ -785,6 +790,7 @@ end
 
 local pictochat = function(xsize, ysize)
 	local output = {{},{},{}}
+	local maxWidth, minMargin = 0, math.huge
 	for y = 1, ysize do
 		output[1][y] = {}
 		output[2][y] = {}
@@ -865,7 +871,10 @@ local pictochat = function(xsize, ysize)
 					output[1][y] = table.concat(output[1][y])
 					output[2][y] = table.concat(output[2][y])
 					output[3][y] = table.concat(output[3][y])
+					maxWidth  = math.max(maxWidth,  #stringgsub(output[3][y], " +$", ""))
+					minMargin = math.min(minMargin, output[3][y]:find("[^ ]") or math.huge)
 				end
+				--error(minMargin)
 				local croppedOutput = {}
 				local touched = false
 				local crY = 0
@@ -886,6 +895,11 @@ local pictochat = function(xsize, ysize)
 						end
 						break
 					end
+				end
+				for y = 1, #output[1] do
+					output[1][y] = output[1][y]:sub(minMargin, maxWidth)
+					output[2][y] = output[2][y]:sub(minMargin, maxWidth)
+					output[3][y] = output[3][y]:sub(minMargin, maxWidth)
 				end
 				return output
 			elseif evt[2] == keys.leftShift then
@@ -1193,15 +1207,20 @@ local renderChat = function(doScrollBackUp)
 		termwrite(scroll.." / "..maxScroll.."  ")
 	end
 
-	UIconf.title = yourName.." on "..encKey
-
+	local _title = UIconf.title:gsub("YOURNAME", yourName):gsub("ENCKEY", encKey):gsub("PORT", tostring(enchat.port))
 	if UIconf.doTitle then
-		termsetTextColor(palette.chevron)
+		termsetTextColor(palette.title)
 		if UIconf.nameDecolor then
-			cwrite((" "):rep(scr_x)..textToBlit(UIconf.title, true)..(" "):rep(scr_x), 1)
+			term.setBackgroundColor(palette.titlebg or palette.bg)
+			if UIconf.centerTitle then
+				cwrite((" "):rep(scr_x)..textToBlit(_title, true)..(" "):rep(scr_x), UIconf.titleY or 1)
+			else
+				termsetCursorPos(1, UIconf.titleY or 1)
+				termwrite(textToBlit(_title, true)..(" "):rep(scr_x))
+			end
 		else
-			local blTitle = textToBlit(UIconf.title)
-			termsetCursorPos((scr_x/2) - math.ceil(#blTitle[1]/2), 1)
+			local blTitle = textToBlit(_title)
+			termsetCursorPos(UIconf.centerTitle and ((scr_x/2) - math.ceil(#blTitle[1]/2)) or 1, UIconf.titleY or 1)
 			termclearLine()
 			termblit(unpack(blTitle))
 		end
@@ -1212,8 +1231,8 @@ end
 
 local logadd = function(name, message, animType, maxFrame, ignoreWrap)
 	log[#log + 1] = {
-		prefix = name and "<" or "",
-		suffix = name and "> " or "",
+		prefix = name and UIconf.prefix or "",
+		suffix = name and UIconf.suffix or "",
 		name = name or "",
 		message = message or " ",
 		ignoreWrap = ignoreWrap,
@@ -1399,7 +1418,14 @@ commands.picto = function(filename)
 		for y = 1, #image[1] do
 			output[#output+1] = ""
 			for x = 1, #image[1][1] do
-				output[#output] = table.concat({output[#output],"&",image[2][y]:sub(x,x),"~",image[3][y]:sub(x,x),image[1][y]:sub(x,x)})
+				output[#output] = table.concat({
+					output[#output],
+					"&",
+					image[2][y]:sub(x,x),
+					"~",
+					image[3][y]:sub(x,x),
+					image[1][y]:sub(x,x)
+				})
 				isEmpty = isEmpty and (image[1][y]:sub(x,x) == " " and image[3][y]:sub(x,x) == " ")
 			end
 		end
@@ -1607,7 +1633,7 @@ commands.palette = function(_argument)
 	else
 		argument = explode(" ",argument)
 		if #argument == 1 then
-			if argument[1]:gsub("%s",""):lower() == "reset" then
+			if argument[1]:gsub("%s",""):lower() == "reset" or argument[1]:gsub("%s",""):lower() == "enchat3" then
 				palette = {
 					bg = colors.black,
 					txt = colors.white,
@@ -1615,7 +1641,8 @@ commands.palette = function(_argument)
 					prompttxt = colors.white,
 					scrollMeter = colors.lightGray,
 					chevron = colors.black,
-					title = colors.lightGray
+					title = colors.lightGray,
+					titlebg = colors.lightGray,
 				}
 				UIconf = {
 					promptY = 1,
@@ -1623,7 +1650,11 @@ commands.palette = function(_argument)
 					chatlogTop = 1,
 					title = "",
 					doTitle = false,
+					titleY = 1,
 					nameDecolor = false,
+					centerTitle = false,
+					prefix = "<",
+					suffix = "> "
 				}
 				termsetBackgroundColor(palette.bg)
 				termclear()
@@ -1637,7 +1668,8 @@ commands.palette = function(_argument)
 					prompttxt = colors.black,
 					scrollMeter = colors.white,
 					chevron = colors.lightGray,
-					title = colors.lightGray
+					title = colors.lightGray,
+					titlebg = colors.lightGray,
 				}
 				UIconf = {
 					promptY = 1,
@@ -1645,12 +1677,18 @@ commands.palette = function(_argument)
 					chatlogTop = 1,
 					title = "",
 					doTitle = false,
+					titleY = 1,
 					nameDecolor = false,
+					centerTitle = false,
+					prefix = "<",
+					suffix = "> "
 				}
 				termsetBackgroundColor(palette.bg)
 				termclear()
 				logadd("*","Switched to the old Enchat2 palette.")
 				saveSettings()
+			elseif argument[1]:gsub("%s",""):lower() == "enchat1" then
+				logadd("*","We don't talk about that one.")
 			elseif argument[1]:gsub("%s",""):lower() == "chat.lua" then
 				palette = {
 					bg = colors.black,
@@ -1659,19 +1697,78 @@ commands.palette = function(_argument)
 					prompttxt = colors.white,
 					scrollMeter = colors.white,
 					chevron = colors.yellow,
-					title = colors.yellow
+					title = colors.yellow,
+					titlebg = colors.black,
 				}
 				UIconf = {
 					promptY = 0,
 					chevron = ": ",
 					chatlogTop = 2,
-					title = "",
+					title = "YOURNAME on ENCKEY",
 					doTitle = true,
+					titleY = 1,
 					nameDecolor = true,
+					centerTitle = true,
+					prefix = "<",
+					suffix = "> "
 				}
 				termsetBackgroundColor(palette.bg)
 				termclear()
 				logadd("*","Switched to /rom/programs/rednet/chat.lua palette.")
+				saveSettings()
+			elseif argument[1]:gsub("%s",""):lower() == "talk" then
+				palette = {
+					bg = colors.black,
+					txt = colors.white,
+					promptbg = colors.black,
+					prompttxt = colors.white,
+					scrollMeter = colors.white,
+					chevron = colors.white,
+					title = colors.black,
+					titlebg = colors.white,
+				}
+				UIconf = {
+					promptY = 0,
+					chevron = "",
+					chatlogTop = 1,
+					title = " enchat v3.0     channel: ENCKEY:PORT",
+					titleY = scr_y - 1,
+					doTitle = true,
+					nameDecolor = false,
+					centerTitle = false,
+					prefix = "<",
+					suffix = "> "
+				}
+				termsetBackgroundColor(palette.bg)
+				termclear()
+				logadd("*","Switched to Talk palette.")
+				saveSettings()
+			elseif argument[1]:gsub("%s",""):lower() == "darkchat" then
+				palette = {
+					bg = colors.black,
+					txt = colors.white,
+					promptbg = colors.black,
+					prompttxt = colors.white,
+					scrollMeter = colors.white,
+					chevron = colors.white,
+					title = colors.white,
+					titlebg = colors.blue,
+				}
+				UIconf = {
+					promptY = 0,
+					chevron = "Message: ",
+					chatlogTop = 1,
+					title = "<User: YOURNAME> <Channel: ENCKEY>",
+					titleY = scr_y - 1,
+					doTitle = true,
+					nameDecolor = false,
+					centerTitle = true,
+					prefix = "",
+					suffix = ": "
+				}
+				termsetBackgroundColor(palette.bg)
+				termclear()
+				logadd("*","Switched to DarkChat palette.")
 				saveSettings()
 			else
 				if not palette[argument[1]] then
@@ -1900,9 +1997,6 @@ local main = function()
 		termsetTextColor(palette.prompttxt)
 
 		local input = colorRead(nil, mHistory)
-		if UIconf.promptY == 0 then
-			term.scroll(1)
-		end
 		if textToBlit(input,true):gsub(" ","") ~= "" then -- people who send blank messages in chat programs deserve to die
 			if checkIfCommand(input) then
 				local res = parseCommand(input)
