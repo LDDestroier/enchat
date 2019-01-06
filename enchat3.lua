@@ -1,12 +1,13 @@
 --[[
  Enchat 3.0
  Get with:
-  wget https://github.com/LDDestroier/enchat/raw/master/enchat3.lua enchat3.lua
+  wget https://github.com/LDDestroier/enchat/raw/beta/enchat3.lua enchat3b.lua
 
 This is a stable release. You fool!
 --]]
 
 local scr_x, scr_y = term.getSize()
+CHATBOX_SAFEMODE = nil
 
 enchat = {
 	version = 3.0,
@@ -16,40 +17,41 @@ enchat = {
 	url = "https://github.com/LDDestroier/enchat/raw/master/enchat3.lua",
 	betaurl = "https://github.com/LDDestroier/enchat/raw/beta/enchat3.lua",
 	ignoreModem = false,
-	dataDir = "/.enchat"
+	dataDir = "/.enchat",
+	useChatbox = false
 }
 
 local enchatSettings = {	-- DEFAULT settings.
-	animDiv = 4,			-- divisor of text animation speed (scrolling from left)
-	doAnimate = true,		-- whether or not to animate text moving from left side of screen
+	animDiv = 4,		-- divisor of text animation speed (scrolling from left)
+	doAnimate = true,	-- whether or not to animate text moving from left side of screen
 	reverseScroll = false,	-- whether or not to make scrolling up really scroll down
-	redrawDelay = 0.1,		-- delay between redrawing
+	redrawDelay = 0.1,	-- delay between redrawing
 	useSetVisible = true,	-- whether or not to use term.current().setVisible(), which has performance and flickering improvements
-	pageKeySpeed = 8,		-- how far PageUP or PageDOWN should scroll
-	doNotif = true,			-- whether or not to use oveerlay glasses for notifications, if possible
-	doKrazy = true,			-- whether or not to add &k obfuscation
-	useSkynet = true,		-- whether or not to use gollark's Skynet in addition to modem calls
+	pageKeySpeed = 8,	-- how far PageUP or PageDOWN should scroll
+	doNotif = true,		-- whether or not to use oveerlay glasses for notifications, if possible
+	doKrazy = true,		-- whether or not to add &k obfuscation
+	useSkynet = true,	-- whether or not to use gollark's Skynet in addition to modem calls
 	extraNewline = true,	-- adds an extra newline after every message since setting to true
 	acceptPictoChat = true	-- whether or not to allow tablular enchat input, which is what /picto uses
 }
 
 local palette = {
-	bg = colors.black,				-- background color
-	txt = colors.white,				-- text color (should contrast with bg)
-	promptbg = colors.gray,			-- chat prompt background
-	prompttxt = colors.white,		-- chat prompt text
+	bg = colors.black,		-- background color
+	txt = colors.white,		-- text color (should contrast with bg)
+	promptbg = colors.gray,		-- chat prompt background
+	prompttxt = colors.white,	-- chat prompt text
 	scrollMeter = colors.lightGray,	-- scroll indicator
-	chevron = colors.black,			-- color of ">" left of text prompt
-	title = colors.lightGray,		-- color of title, if available
-	titlebg = colors.lightGray		-- background color of title, if available
+	chevron = colors.black,		-- color of ">" left of text prompt
+	title = colors.lightGray,	-- color of title, if available
+	titlebg = colors.lightGray	-- background color of title, if available
 }
 
 UIconf = {
-	promptY = 1,			-- Y position of read prompt, relative to bottom of screen
-	chevron = ">",			-- symbol before read prompt
-	chatlogTop = 1,			-- where chatlog is written to screen, relative to top of screen
-	title = "",				-- overwritten every render, don't bother here
-	doTitle = false,		-- whether or not to draw UIconf.title at the top of the screen
+	promptY = 1,		-- Y position of read prompt, relative to bottom of screen
+	chevron = ">",		-- symbol before read prompt
+	chatlogTop = 1,		-- where chatlog is written to screen, relative to top of screen
+	title = "",		-- overwritten every render, don't bother here
+	doTitle = false,	-- whether or not to draw UIconf.title at the top of the screen
 	nameDecolor = false,	-- if true, sets all names to palette.chevron color,
 	centerTitle = false,	-- if true, centers the title
 	prefix = "<",
@@ -85,11 +87,13 @@ end
 
 local saveSettings = function()
 	local file = fs.open(fs.combine(enchat.dataDir, "settings"), "w")
-	file.write(textutilsserialize({
-		enchatSettings = enchatSettings,
-		palette = palette,
-		UIconf = UIconf,
-	}))
+	file.write(
+		textutilsserialize({
+			enchatSettings = enchatSettings,
+			palette = palette,
+			UIconf = UIconf,
+		})
+	)
 	file.close()
 end
 
@@ -131,6 +135,7 @@ local updateEnchat = function(doBeta)
 	end
 end
 
+-- disables chat screen updating
 local pauseRendering = true
 
 -- primarily for use when coloring palette
@@ -308,50 +313,82 @@ local parseKrazy = function(c)
 	end
 end
 
-local textToBlit = function(input, onlyString, initText, initBack, checkPos)
+local textToBlit = function(input, onlyString, initText, initBack, checkPos, useJSONformat)
 	if not input then return end
 	checkPos = checkPos or -1
 	initText, initBack = initText or toblit[term.getTextColor()], initBack or toblit[term.getBackgroundColor()]
 	tcode, bcode = "&", "~"
 	local cpos, cx = 0, 0
-	local skip, ignore, krazy, ex = nil, false, false, nil
+	local skip, ignore, ex = nil, false, nil
 	local text, back, nex = initText, initBack, nil
+	
 	local charOut, textOut, backOut = {}, {}, {}
-	local codes = {
-		["r"] = function(prev)
-			if not ignore then
-				if prev == tcode then
-					text = initText
-				elseif prev == bcode then
+	local JSONoutput = {}
+	
+	local krazy = false
+	local bold = false
+	local strikethrough = false
+	local underline = false
+	local italic = false
+	
+	local codes = {}
+	codes["r"] = function(prev)
+		if not ignore then
+			if prev == tcode then
+				text = initText
+				bold = false
+				strikethrough = false
+				underline = false
+				italic = false
+			elseif prev == bcode then
+				if useJSONformat then
+					return 0
+				else
 					back = initBack
 				end
-				krazy = false
-			else
-				return 0
 			end
-		end,
-		["{"] = function(prev)
-			if not ignore then
-				ignore = true
-			else
-				return 0
-			end
-		end,
-		["}"] = function(prev)
-			if ignore then
-				ignore = false
-			else
-				return 0
-			end
-		end,
-		["k"] = function(prev)
-			if not ignore then
-				krazy = not krazy
-			else
-				return 0
-			end
+			krazy = false
+		else
+			return 0
 		end
-	}
+	end
+	codes["k"] = function(prev)
+		if not ignore then
+			krazy = not krazy
+		else
+			return 0
+		end
+	end
+	codes["{"] = function(prev)
+		if not ignore then
+			ignore = true
+		else
+			return 0
+		end
+	end
+	codes["}"] = function(prev)
+		if ignore then
+			ignore = false
+		else
+			return 0
+		end
+	end
+	
+	if useJSONformat then
+		codes["l"] = function(prev)
+			bold = true
+		end
+		codes["m"] = function(prev)
+			strikethrough = true
+		end
+		codes["n"] = function(prev)
+			underline = true
+		end
+		codes["o"] = function(prev)
+			italic = true
+		end
+	end
+	
 	local sx, str = 0
 	input = stringgsub(input, "(\\)(%d%d?%d?)", function(cap, val)
 		if tonumber(val) < 256 then
@@ -361,6 +398,26 @@ local textToBlit = function(input, onlyString, initText, initBack, checkPos)
 			return cap..val
 		end
 	end)
+	
+	local MCcolors = {
+		["0"] = "white",	
+		["1"] = "gold",
+		["2"] = "light_purple",
+		["3"] = "aqua",
+		["4"] = "yellow",
+		["5"] = "green",
+		["6"] = "light_purple",
+		["7"] = "dark_gray",
+		["8"] = "gray",
+		["9"] = "dark_aqua",
+		["a"] = "dark_purple",
+		["b"] = "dark_blue",
+		["c"] = "gold",
+		["d"] = "dark_green",
+		["e"] = "red",
+		["f"] = "black",
+	}
+	
 	for cx = 1, #input do
 		str = stringsub(input,cx,cx)
 		if skip then
@@ -379,33 +436,62 @@ local textToBlit = function(input, onlyString, initText, initBack, checkPos)
 			elseif codes[str] and not (ignore and str == "{") then
 				ex = codes[str](skip) or 0
 				sx = sx + ex
-    			if sx < checkPos then
-    				cpos = cpos - ex - 2
-                end
+    				if sx < checkPos then
+					cpos = cpos - ex - 2
+				end
 			else
-                sx = sx + 1
-                charOut[sx] = krazy and parseKrazy(prev..str) or (skip..str)
-                textOut[sx] = stringrep(text,2)
-                backOut[sx] = stringrep(back,2)
-            end
+				sx = sx + 1
+				if useJSONformat then
+					JSONoutput[sx] = {
+						text = (skip..str),
+						color = onlyString and "f" or MCcolors[text],
+						bold = (not onlyString) and bold,
+						italic = (not onlyString) and italic,
+						underline = (not onlyString) and underline,
+						obfuscated = (not onlyString) and krazy,
+						strikethrough = (not onlyString) and strikethrough
+					}
+				else
+					charOut[sx] = krazy and parseKrazy(prev..str) or (skip..str)
+					textOut[sx] = stringrep(text,2)
+					backOut[sx] = stringrep(back,2)
+				end
+			end
 			skip = nil
 		else
 			if (str == tcode or str == bcode) and (codes[stringsub(input, 1+cx, 1+cx)] or tocolors[stringsub(input,1+cx,1+cx)]) then
 				skip = str
 			else
 				sx = sx + 1
-				charOut[sx] = krazy and parseKrazy(str) or str
-				textOut[sx] = text
-				backOut[sx] = back
+				if useJSONformat then
+					JSONoutput[sx] = {
+						text = str,
+						color = onlyString and "f" or MCcolors[text],
+						bold = (not onlyString) and bold,
+						italic = (not onlyString) and italic,
+						underline = (not onlyString) and underline,
+						obfuscated = (not onlyString) and krazy,
+						strikethrough = (not onlyString) and strikethrough
+					}
+				else
+					charOut[sx] = krazy and parseKrazy(str) or str
+					textOut[sx] = text
+					backOut[sx] = back
+				end
 			end
 		end
 	end
-	if onlyString then
-		return tableconcat(charOut), (checkPos > -1) and cpos or nil
+	if useJSONformat then
+		return textutils.serializeJSON(JSONoutput)
 	else
-		return {tableconcat(charOut), tableconcat(textOut), tableconcat(backOut)}, (checkPos > -1) and cpos or nil
+		if onlyString then
+			return tableconcat(charOut), (checkPos > -1) and cpos or nil
+		else
+			return {tableconcat(charOut), tableconcat(textOut), tableconcat(backOut)}, (checkPos > -1) and cpos or nil
+		end
 	end
 end
+_G.textToBlit = textToBlit
 
 local colorRead = function(maxLength, _history)
 	local output = ""
@@ -696,7 +782,57 @@ local getModem = function()
 	end
 end
 
+local getChatbox = function()
+	if enchat.useChatbox then
+		if commands then -- oh baby command computer
+			return {
+				say = function(text)
+					commands.tellraw("@a", textToBlit(text, false, "0", "f", nil, true))
+				end,
+				tell = function(player, text)
+					commands.tellraw(player, textToBlit(text, false, "0", "f", nil, true))
+				end
+			}
+		else
+			local cb = peripheral.find("chat_box")
+			if cb then
+				if cb.setName then -- Computronics
+					cb.setName(yourName)
+					return {
+						say = cb.say,
+						tell = cb.say -- why is there no tell command???
+					}
+				else -- whatever whackjob mod SwitchCraft uses I forget
+					return {
+						say = function(text, block)
+							if CHATBOX_SAFEMODE then
+--								if CHATBOX_SAFEMODE ~= block then
+									cb.tell(CHATBOX_SAFEMODE, text)
+--								end
+							else
+								local players = cb.getPlayerList()
+								for i = 1, #players do
+									if players[i] ~= block then
+										cb.tell(players[i], text)
+									end
+								end
+							end
+						end,
+						tell = cb.tell
+					}
+				end
+			else
+				return nil
+			end
+		end
+	else
+		return nil
+	end
+end
+
 local modem = getModem()
+local chatbox = getChatbox()
+
 if (not modem) and (not enchat.ignoreModem) then
 	if ccemux and (not enchat.ignoreModem) then
 		ccemux.attach("top","wireless_modem")
@@ -2042,6 +2178,20 @@ local handleEvents = function()
 			if type(evt[2]) == "string" and type(evt[3]) == "string" then
 				handleReceiveMessage(evt[2], evt[3])
 			end
+		elseif evt[1] == "chat" then
+			if enchat.useChatbox then
+				if enchatSettings.extraNewline then
+					logadd(nil,nil) -- readability is key
+				end
+				enchatSend(evt[2], evt[3], true)
+			end
+		elseif evt[1] == "chat_message" then -- computronics
+			if enchat.useChatbox then
+				if enchatSettings.extraNewline then
+					logadd(nil,nil) -- readability is key
+				end
+				enchatSend(evt[3], evt[4], true)
+			end
 		elseif (evt[1] == "modem_message") or (evt[1] == "skynet_message" and enchatSettings.useSkynet) then
 			local side, freq, repfreq, msg, distance
 			if evt[1] == "modem_message" then
@@ -2060,6 +2210,9 @@ local handleEvents = function()
 								if ((not msg.recipient) or (msg.recipient == yourName or msg.recipient == textToBlit(yourName,true))) then
 									if type(msg.message) == "string" then
 										handleReceiveMessage(msg.name, tostring(msg.message), msg.animType, msg.maxFrame, msg.ignoreWrap)
+										if chatbox and enchat.useChatbox then
+											chatbox.say(UIconf.prefix .. msg.name .. UIconf.suffix .. msg.message, msg.name)
+										end
 									elseif type(msg.message) == "table" and enchatSettings.acceptPictoChat and #msg.message <= 64 then
 										logaddTable(msg.name, msg.message, msg.animType, msg.maxFrame, msg.ignoreWrap)
 										if enchatSettings.extraNewline then
