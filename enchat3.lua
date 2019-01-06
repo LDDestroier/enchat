@@ -1,7 +1,7 @@
 --[[
  Enchat 3.0
  Get with:
-  wget https://github.com/LDDestroier/enchat/raw/beta/enchat3.lua enchat3b.lua
+  wget https://github.com/LDDestroier/enchat/raw/master/enchat3.lua enchat3.lua
 
 This is a stable release. You fool!
 --]]
