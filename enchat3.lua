@@ -2270,19 +2270,9 @@ local handleEvents = function()
 			if type(evt[2]) == "string" and type(evt[3]) == "string" then
 				handleReceiveMessage(evt[2], evt[3])
 			end
-		elseif evt[1] == "chat" and ((not checkRSinput()) or (not enchat.disableChatboxWithRedstone)) and enchat.useChatboxthen
+		elseif evt[1] == "chat" and ((not checkRSinput()) or (not enchat.disableChatboxWithRedstone)) and enchat.useChatbox then
 			if enchat.useChatboxWhitelist then
-				if evt[3] == chatboxName then
-					if table.concat(evt[4]," ") == optInPhrase then
-						chatbox.tell(evt[2], "Opted in to Enchat's chatbox messages.")
-						chatboxWhitelist[evt[2]] = true
-					elseif table.concat(evt[4]," ") == optOutPhrase then
-						chatbox.tell(evt[2], "Opted out from Enchat's chatbox messages.")
-						chatboxWhitelist[evt[2]] = true
-					else
-						chatbox.tell(evt[2], "\\"..chatboxName.." ["..optInPhrase.."/"..optOutPhrase.."]")
-					end
-				else
+				if chatboxWhitelist[evt[2]] then
 					if enchatSettings.extraNewline then
 						logadd(nil,nil) -- readability is key
 					end
@@ -2299,7 +2289,7 @@ local handleEvents = function()
 				if evt[4] == ("\\"..chatboxName.." "..optInPhrase) and not chatboxWhitelist[evt[3]] then
 					chatboxWhitelist[evt[3]] = true
 					chatbox.tell(evt[3], "Opted in to Enchat's chatbox messages.")
-				elseif evt[4] == optOutPhrase and chatboxWhitelist[evt[3]] then
+				elseif evt[4] == ("\\"..chatboxName.." "..optOutPhrase) and chatboxWhitelist[evt[3]] then
 					chatboxWhitelist[evt[3]] = nil
 					chatbox.tell(evt[3], "Opted out from Enchat's chatbox messages.")
 				else
@@ -2313,6 +2303,18 @@ local handleEvents = function()
 					logadd(nil,nil) -- readability is still key
 				end
 				enchatSend(evt[3], evt[4], true)
+			end
+		elseif evt[1] == "command" and enchat.useChatbox then
+			if evt[3] == chatboxName then
+				if evt[4][1] == "opt" then
+					if evt[4][2] == "in" then
+						chatboxWhitelist[evt[2]] = true
+						chatbox.tell(evt[2], "Opted in to Enchat's chatbox messages.")
+					elseif evt[4][2] == "out" then
+						chatboxWhitelist[evt[2]] = nil
+						chatbox.tell(evt[2], "Opted out from Enchat's chatbox messages.")
+					end
+				end
 			end
 		elseif (evt[1] == "modem_message") or (evt[1] == "skynet_message" and enchatSettings.useSkynet) then
 			local side, freq, repfreq, msg, distance
