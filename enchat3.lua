@@ -9,6 +9,7 @@ This is a stable release. You fool!
 local scr_x, scr_y = term.getSize()
 CHATBOX_SAFEMODE = nil
 
+-- non-changable settings
 enchat = {
 	version = 3.0,
 	isBeta = false,
@@ -18,10 +19,11 @@ enchat = {
 	betaurl = "https://github.com/LDDestroier/enchat/raw/beta/enchat3.lua",
 	ignoreModem = false,
 	dataDir = "/.enchat",
-	useChatbox = false
+	useChatbox = false,
+	disableChatboxWithRedstone = false,
 }
 
-local enchatSettings = {	-- DEFAULT settings.
+local enchatSettings = {	-- DEFAULT, changable settings.
 	animDiv = 4,		-- divisor of text animation speed (scrolling from left)
 	doAnimate = true,	-- whether or not to animate text moving from left side of screen
 	reverseScroll = false,	-- whether or not to make scrolling up really scroll down
@@ -35,6 +37,7 @@ local enchatSettings = {	-- DEFAULT settings.
 	acceptPictoChat = true	-- whether or not to allow tablular enchat input, which is what /picto uses
 }
 
+-- colors for various elements
 local palette = {
 	bg = colors.black,		-- background color
 	txt = colors.white,		-- text color (should contrast with bg)
@@ -46,7 +49,8 @@ local palette = {
 	titlebg = colors.lightGray	-- background color of title, if available
 }
 
-UIconf = {
+-- UI adjustments, used to emulate the appearence of other chat programs
+local UIconf = {
 	promptY = 1,		-- Y position of read prompt, relative to bottom of screen
 	chevron = ">",		-- symbol before read prompt
 	chatlogTop = 1,		-- where chatlog is written to screen, relative to top of screen
@@ -138,70 +142,101 @@ end
 -- disables chat screen updating
 local pauseRendering = true
 
--- primarily for use when coloring palette
+-- primarily for use when using the pallete command, hoh hoh
 local colors_strnames = {
 	["white"] = colors.white,
 	["pearl"] = colors.white,
+	["silver"] = colors.white,
 	["aryan"] = colors.white,
 	["#f0f0f0"] = colors.white,
+	
 	["orange"] = colors.orange,
 	["carrot"] = colors.orange,
+	["fuhrer"] = colors.orange,
 	["pumpkin"] = colors.orange,
 	["#f2b233"] = colors.orange,
+	
 	["magenta"] = colors.magenta,
 	["hotpink"] = colors.magenta,
 	["lightpurple"] = colors.magenta,
 	["light purple"] = colors.magenta,
 	["#e57fd8"] = colors.magenta,
+	
 	["lightblue"] = colors.lightBlue,
 	["light blue"] = colors.lightBlue,
 	["skyblue"] = colors.lightBlue,
 	["#99b2f2"] = colors.lightBlue,
+	
 	["yellow"] = colors.yellow,
 	["piss"] = colors.yellow,
+	["pee"] = colors.yellow,
 	["lemon"] = colors.yellow,
 	["cowardice"] = colors.yellow,
 	["#dede6c"] = colors.yellow,
+	
 	["lime"] = colors.lime,
 	["lightgreen"] = colors.lime,
 	["light green"] = colors.lime,
 	["slime"] = colors.lime,
+	["radiation"] = colors.lime,
 	["#7fcc19"] = colors.lime,
+	
 	["pink"] = colors.pink,
 	["lightishred"] = colors.pink,
 	["lightish red"] = colors.pink,
 	["communist"] = colors.pink,
+	["commie"] = colors.pink,
+	["patrick"] = colors.pink,
 	["#f2b2cc"] = colors.pink,
+	
 	["gray"] = colors.gray,
 	["grey"] = colors.gray,
 	["graey"] = colors.gray,
+	["gunmetal"] = colors.gray,
 	["#4c4c4c"] = colors.gray,
+	
 	["lightgray"] = colors.lightGray,
 	["lightgrey"] = colors.lightGray,
 	["light gray"] = colors.lightGray,
 	["light grey"] = colors.lightGray,
 	["#999999"] = colors.lightGray,
+	
 	["cyan"] = colors.cyan,
 	["seawater"] = colors.cyan,
+	["brine"] = colors.cyan,
 	["#4c99b2"] = colors.cyan,
+	
 	["purple"] = colors.purple,
 	["purble"] = colors.purple,
 	["obsidian"] = colors.purple,
+	["diviner"] = colors.purple,
 	["#b266e5"] = colors.purple,
+	
 	["blue"] = colors.blue,
 	["blu"] = colors.blue,
+	["azure"] = colors.blue,
+	["sapphire"] = colors.blue,
+	["lapis"] = colors.blue,
+	["volnutt"] = colors.blue,
 	["blueberry"] = colors.blue,
 	["x"] = colors.blue,
 	["megaman"] = colors.blue,
 	["#3366bb"] = colors.blue,
+	
 	["brown"] = colors.brown,
 	["shit"] = colors.brown,
 	["dirt"] = colors.brown,
+	["mud"] = colors.brown,
+	["bricks"] = colors.brown,
 	["#7f664c"] = colors.brown,
+	
 	["green"] = colors.green,
 	["grass"] = colors.green,
 	["#57a64e"] = colors.green,
+	
 	["red"] = colors.red,
+	["crimson"] = colors.red,
+	["vermillion"] = colors.red,
 	["menstration"] = colors.red,
 	["blood"] = colors.red,
 	["marinara"] = colors.red,
@@ -209,8 +244,11 @@ local colors_strnames = {
 	["protoman"] = colors.red,
 	["communism"] = colors.red,
 	["#cc4c4c"] = colors.red,
+	
 	["black"] = colors.black,
 	["dark"] = colors.black,
+	["darkness"] = colors.black,
+	["space"] = colors.black,
 	["coal"] = colors.black,
 	["onyx"] = colors.black,
 	["#191919"] = colors.black,
@@ -247,6 +285,7 @@ local codeNames = {
 	["k"] = "krazy"			-- Makes the font kuh-razy!
 }
 
+-- indicates which character should turn into which random &k character
 local kraziez = {
 	["l"] = {
 		"!",
@@ -280,7 +319,8 @@ for k,v in pairs(kraziez) do
 		kraziez[kraziez[k][a]] = v
 	end
 end
--- check if using older CC version, omit special characters if it's too old
+
+-- check if using older CC version, and omit special characters if it's too old to avoid crash
 if tonumber(_CC_VERSION or 0) >= 1.76 then
 	for a = 1, 255 do
 		if (a ~= 32) and (a ~= 13) and (a ~= 10) then
@@ -305,6 +345,7 @@ local explode = function(div, str, replstr, includeDiv)
 	tableinsert(arr, string.sub(replstr or str, pos))
 	return arr
 end
+
 local parseKrazy = function(c)
 	if kraziez[c] then
 		return kraziez[c][mathrandom(1, #kraziez[c])]
@@ -313,6 +354,7 @@ local parseKrazy = function(c)
 	end
 end
 
+-- my main man, the function that turns unformatted strings into formatted strings
 local textToBlit = function(input, onlyString, initText, initBack, checkPos, useJSONformat)
 	if not input then return end
 	checkPos = checkPos or -1
@@ -493,6 +535,8 @@ local textToBlit = function(input, onlyString, initText, initBack, checkPos, use
 end
 _G.textToBlit = textToBlit
 
+-- convoluted read function that renders color codes as they are written.
+-- struggles with \123 codes, but hey, fuck you
 local colorRead = function(maxLength, _history)
 	local output = ""
 	local history, _history = {}, _history or {}
@@ -665,6 +709,8 @@ local cfwrite = function(text, y)
 	return fwrite(text)
 end
 
+-- execution start!
+
 if not checkValidName(yourName) then -- not so fast, evildoers
 	yourName = nil
 end
@@ -696,7 +742,7 @@ if not encKey then
 	currentY = currentY + 3
 end
 
--- prevent terminating. It is reversed upon exit.
+-- prevents terminating. it is reversed upon exit.
 local oldePullEvent = os.pullEvent
 os.pullEvent = os.pullEventRaw
 
@@ -757,12 +803,14 @@ if encKey and skynet then
 			skynet.open(enchat.skynetPort)
 		end,
 		function()
-			sleep(5)
+			sleep(3)
 		end
 	)
 	if success == 2 then
+		term.scroll(1)
 		bottomMessage("Failed to connect to skynet.")
 		skynet = nil
+		sleep(0.5)
 	end
 end
 
@@ -784,7 +832,8 @@ end
 
 local getChatbox = function()
 	if enchat.useChatbox then
-		if commands then -- oh baby command computer
+		if commands then -- oh baby, a command computer, now we're talkin'
+			-- mind you, you still need a chatbox to get chat input...
 			return {
 				say = function(text)
 					commands.tellraw("@a", textToBlit(text, false, "0", "f", nil, true))
@@ -835,7 +884,7 @@ local chatbox = getChatbox()
 
 if (not modem) and (not enchat.ignoreModem) then
 	if ccemux and (not enchat.ignoreModem) then
-		ccemux.attach("top","wireless_modem")
+		ccemux.attach("top", "wireless_modem")
 		modem = getModem()
 	elseif not skynet then
 		error("You should get a modem.")
@@ -889,6 +938,7 @@ local splitStrTbl = function(tbl, maxLength)
 	return output
 end
 
+-- same as term.blit, but wraps by-word.
 local blitWrap = function(char, text, back, noWrite) -- where ALL of the onscreen wrapping is done
 	local cWords = splitStrTbl(explode(" ",char,nil, true), scr_x)
 	local tWords = splitStrTbl(explode(" ",char,text,true), scr_x)
@@ -924,6 +974,7 @@ local blitWrap = function(char, text, back, noWrite) -- where ALL of the onscree
 	return output, maxLength
 end
 
+-- simple picture drawing function, for /picto
 local pictochat = function(xsize, ysize)
 	local output = {{},{},{}}
 	local maxWidth, minMargin = 0, math.huge
@@ -1064,6 +1115,8 @@ local pictochat = function(xsize, ysize)
 		end
 	end
 end
+
+-- notifications will only appear if you have plethora's neural connector and overlay glasses on your person
 
 local notif = {}
 notif.alpha = 248
@@ -1214,6 +1267,7 @@ local darkerCols = {
 	["f"] = "f"
 }
 
+-- used for regular chat. they can be disabled if you hate fun
 local animations = {
 	slideFromLeft = function(char, text, back, frame, maxFrame, length)
 		return {
@@ -1316,6 +1370,7 @@ local genRenderLog = function()
 	end
 end
 
+-- there is probably a much better way of doing this, but I don't care at the moment
 local tsv = function(visible)
 	if term.current().setVisible and enchatSettings.useSetVisible then
 		return term.current().setVisible(visible)
@@ -1505,7 +1560,7 @@ commands.tron = function()
     pauseRendering = true
     prog = load(contents, nil, nil, _ENV)(enchatSettings.useSkynet and "skynet", "quick", yourName)
   else
-    logadd("*","Could not download TRON.")
+    logadd("*", "Could not download TRON.")
   end
   pauseRendering = false
   doRender = true
@@ -1825,6 +1880,8 @@ commands.palette = function(_argument)
 				saveSettings()
 			elseif argument[1]:gsub("%s",""):lower() == "enchat1" then
 				logadd("*","We don't talk about that one.")
+			elseif argument[1]:gsub("%s",""):lower() == "enchat4" then
+				logadd("*","Let's leave that to future LDD.")
 			elseif argument[1]:gsub("%s",""):lower() == "chat.lua" then
 				palette = {
 					bg = colors.black,
@@ -2000,7 +2057,6 @@ commands.set = function(_argument)
 		pauseRendering = true
 		termsetBackgroundColor(colors.black)
 		termclear()
-		downloadSkynet()
 		pauseRendering = false
 	end
 end
@@ -2169,6 +2225,17 @@ local adjScroll = function(distance)
 	scroll = mathmin(maxScroll, mathmax(0, scroll + distance))
 end
 
+local checkRSinput = function()
+	return (
+		rs.getInput("front") or
+		rs.getInput("back")  or
+		rs.getInput("left")  or
+		rs.getInput("right") or
+		rs.getInput("top")   or
+		rs.getInput("bottom")
+	)
+end
+
 local handleEvents = function()
 	local oldScroll
 	local keysDown = {}
@@ -2178,14 +2245,14 @@ local handleEvents = function()
 			if type(evt[2]) == "string" and type(evt[3]) == "string" then
 				handleReceiveMessage(evt[2], evt[3])
 			end
-		elseif evt[1] == "chat" then
+		elseif evt[1] == "chat" and ((not checkRSinput()) or (not enchat.disableChatboxWithRedstone)) then
 			if enchat.useChatbox then
 				if enchatSettings.extraNewline then
 					logadd(nil,nil) -- readability is key
 				end
 				enchatSend(evt[2], evt[3], true)
 			end
-		elseif evt[1] == "chat_message" then -- computronics
+		elseif evt[1] == "chat_message" and ((not checkRSinput()) or (not enchat.disableChatboxWithRedstone)) then -- computronics
 			if enchat.useChatbox then
 				if enchatSettings.extraNewline then
 					logadd(nil,nil) -- readability is key
@@ -2210,7 +2277,7 @@ local handleEvents = function()
 								if ((not msg.recipient) or (msg.recipient == yourName or msg.recipient == textToBlit(yourName,true))) then
 									if type(msg.message) == "string" then
 										handleReceiveMessage(msg.name, tostring(msg.message), msg.animType, msg.maxFrame, msg.ignoreWrap)
-										if chatbox and enchat.useChatbox then
+										if chatbox and enchat.useChatbox and ((not checkRSinput()) or (not enchat.disableChatboxWithRedstone)) then
 											chatbox.say(UIconf.prefix .. msg.name .. UIconf.suffix .. msg.message, msg.name)
 										end
 									elseif type(msg.message) == "table" and enchatSettings.acceptPictoChat and #msg.message <= 64 then
@@ -2253,24 +2320,24 @@ local handleEvents = function()
 			keysDown[key] = nil
 		elseif (evt[1] == "render_enchat") and (not pauseRendering) then
 			dab(renderChat)
-    elseif (evt[1] == "tron_complete") then
-      if evt[3] then
-        if enchatSettings.extraNewline then
-          logadd(nil,nil)
-        end
-        if evt[2] == "win" then
-          enchatSend("*", yourName .. "&}&r~r beat " .. (evt[4] or "someone") .. "&}&r~r in TRON!", true)
-        elseif evt[2] == "lose" then
-          enchatSend("*", (evt[4] or "Someone") .. "&}&r~r beat " .. yourName .. "&}&r~r in TRON!", true)
-        elseif evt[2] == "tie" then
-          enchatSend("*", yourName .. "&}&r~r tied with " .. (evt[4] or "someone") .. "&}&r~r in TRON!", true)
-        end
-      elseif evt[2] == "timeout" then
-        if enchatSettings.extraNewline then
-          logadd(nil,nil)
-        end
-        enchatSend("*", yourName .. "&}&r~r timed out against " .. (evt[4] or "someone") .. "&}&r~r in TRON...", true)
-      end
+		elseif (evt[1] == "tron_complete") then
+			if evt[3] then
+				if enchatSettings.extraNewline then
+					logadd(nil,nil)
+				end
+				if evt[2] == "win" then
+					enchatSend("*", yourName .. "&}&r~r beat " .. (evt[4] or "someone") .. "&}&r~r in TRON!", true)
+				elseif evt[2] == "lose" then
+					enchatSend("*", (evt[4] or "Someone") .. "&}&r~r beat " .. yourName .. "&}&r~r in TRON!", true)
+				elseif evt[2] == "tie" then
+					enchatSend("*", yourName .. "&}&r~r tied with " .. (evt[4] or "someone") .. "&}&r~r in TRON!", true)
+				end
+			elseif evt[2] == "timeout" then
+				if enchatSettings.extraNewline then
+					logadd(nil,nil)
+				end
+				enchatSend("*", yourName .. "&}&r~r timed out against " .. (evt[4] or "someone") .. "&}&r~r in TRON...", true)
+			end
 		elseif evt[1] == "terminate" then
 			return "exit"
 		end
@@ -2354,7 +2421,7 @@ if not res then
 	cwrite("I'll probably fix it, maybe.",10)
 end
 
-termsetCursorPos(1,scr_y)
+termsetCursorPos(1, scr_y)
 termsetBackgroundColor(initcolors.bg)
 termsetTextColor(initcolors.txt)
 termclearLine()
