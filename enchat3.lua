@@ -7,10 +7,14 @@ This is a stable release. You fool!
 --]]
 
 local scr_x, scr_y = term.getSize()
-CHATBOX_SAFEMODE = nil
+local CHATBOX_SAFEMODE = nil
+
+local chatboxName  = "ec"
+local optInPhrase  = "opt in"
+local optOutPhrase = "opt out"
 
 -- non-changable settings
-enchat = {
+local enchat = {
 	version = 3.0,
 	isBeta = false,
 	port = 11000,
@@ -21,7 +25,10 @@ enchat = {
 	dataDir = "/.enchat",
 	useChatbox = false,
 	disableChatboxWithRedstone = false,
+	useChatboxWhitelist = true
 }
+
+local chatboxWhitelist = {}
 
 local enchatSettings = {	-- DEFAULT, changable settings.
 	animDiv = 4,		-- divisor of text animation speed (scrolling from left)
@@ -96,6 +103,7 @@ local saveSettings = function()
 			enchatSettings = enchatSettings,
 			palette = palette,
 			UIconf = UIconf,
+			chatboxWhitelist = chatboxWhitelist,
 		})
 	)
 	file.close()
@@ -119,6 +127,9 @@ local loadSettings = function()
 		end
 		for k,v in pairs(newSettings.UIconf) do
 			UIconf[k] = v
+		end
+		for k,v in pairs(newSettings.chatboxWhitelist) do
+			chatboxWhitelist[k] = v
 		end
 	else
 		saveSettings()
@@ -192,6 +203,7 @@ local colors_strnames = {
 	["gray"] = colors.gray,
 	["grey"] = colors.gray,
 	["graey"] = colors.gray,
+	["steel"] = colors.gray,
 	["gunmetal"] = colors.gray,
 	["#4c4c4c"] = colors.gray,
 	
@@ -199,9 +211,12 @@ local colors_strnames = {
 	["lightgrey"] = colors.lightGray,
 	["light gray"] = colors.lightGray,
 	["light grey"] = colors.lightGray,
+	["iron"] = colors.lightGray,
 	["#999999"] = colors.lightGray,
 	
 	["cyan"] = colors.cyan,
+	["aqua"] = colors.cyan,
+	["teal"] = colors.cyan,
 	["seawater"] = colors.cyan,
 	["brine"] = colors.cyan,
 	["#4c99b2"] = colors.cyan,
@@ -232,6 +247,8 @@ local colors_strnames = {
 	
 	["green"] = colors.green,
 	["grass"] = colors.green,
+	["verdant"] = colors.green,
+	["leaf"] = colors.green,
 	["#57a64e"] = colors.green,
 	
 	["red"] = colors.red,
@@ -836,7 +853,13 @@ local getChatbox = function()
 			-- mind you, you still need a chatbox to get chat input...
 			return {
 				say = function(text)
-					commands.tellraw("@a", textToBlit(text, false, "0", "f", nil, true))
+					if enchat.useChatboxWhitelist then
+						for player,v in pairs(chatboxWhitelist) do
+							commands.tellraw(player, textToBlit(text, false, "0", "f", nil, true))
+						end
+					else
+						commands.tellraw("@a", textToBlit(text, false, "0", "f", nil, true))
+					end
 				end,
 				tell = function(player, text)
 					commands.tellraw(player, textToBlit(text, false, "0", "f", nil, true))
@@ -855,14 +878,20 @@ local getChatbox = function()
 					return {
 						say = function(text, block)
 							if CHATBOX_SAFEMODE then
---								if CHATBOX_SAFEMODE ~= block then
-									cb.tell(CHATBOX_SAFEMODE, text, yourName)
---								end
+								cb.tell(CHATBOX_SAFEMODE, text, yourName)
 							else
-								local players = cb.getPlayerList()
-								for i = 1, #players do
-									if players[i] ~= block then
-										cb.tell(players[i], text, yourName)
+								if enchat.useChatboxWhitelist then
+									for player,v in pairs(chatboxWhitelist) do
+										if player ~= block then
+											cb.tell(player, text, yourName)
+										end
+									end
+								else
+									local players = cb.getPlayerList()
+									for i = 1, #players do
+										if players[i] ~= block then
+											cb.tell(players[i], text, yourName)
+										end
 									end
 								end
 							end
@@ -2247,19 +2276,52 @@ local handleEvents = function()
 			if type(evt[2]) == "string" and type(evt[3]) == "string" then
 				handleReceiveMessage(evt[2], evt[3])
 			end
-		elseif evt[1] == "chat" and ((not checkRSinput()) or (not enchat.disableChatboxWithRedstone)) then
-			if enchat.useChatbox then
-				if enchatSettings.extraNewline then
-					logadd(nil,nil) -- readability is key
-				end
-				enchatSend(evt[2], evt[3], true)
+		elseif evt[1] == "chat" and ((not checkRSinput()) or (not enchat.disableChatboxWithRedstone)) and enchat.useChatbox then
+			if enchatSettings.extraNewline then
+				logadd(nil,nil) -- readability is key
 			end
-		elseif evt[1] == "chat_message" and ((not checkRSinput()) or (not enchat.disableChatboxWithRedstone)) then -- computronics
-			if enchat.useChatbox then
+			enchatSend(evt[2], evt[3], true)
+		elseif evt[1] == "chat_message" and ((not checkRSinput()) or (not enchat.disableChatboxWithRedstone)) and enchat.useChatbox then -- computronics
+			if enchat.useChatboxWhitelist then
+				if evt[4] == ("\\"..chatboxName.." "..optInPhrase) and not chatboxWhitelist[evt[3]] then
+					chatboxWhitelist[evt[3]] = true
+					chatbox.tell(evt[3], "Opted in to Enchat's chatbox messages.")
+				elseif evt[4] == ("\\"..chatboxName.." "..optOutPhrase) and chatboxWhitelist[evt[3]] then
+					chatboxWhitelist[evt[3]] = nil
+					chatbox.tell(evt[3], "Opted out from Enchat's chatbox messages.")
+				else
+					if enchatSettings.extraNewline then
+						logadd(nil,nil) -- readability is key
+					end
+					enchatSend(evt[3], evt[4], true)
+				end
+			else
 				if enchatSettings.extraNewline then
-					logadd(nil,nil) -- readability is key
+					logadd(nil,nil) -- readability is still key
 				end
 				enchatSend(evt[3], evt[4], true)
+			end
+		elseif evt[1] == "command" and enchat.useChatbox then
+			if evt[3] == chatboxName then
+				if evt[4][1] == "opt" then
+					if evt[4][2] == "in" then
+						if chatboxWhitelist[evt[2]] then
+							chatbox.tell(evt[2], "You're already opted in.")
+						else
+							chatboxWhitelist[evt[2]] = true
+							chatbox.tell(evt[2], "Opted in to Enchat's chatbox messages.")
+							saveSettings()
+						end
+					elseif evt[4][2] == "out" then
+						if not chatboxWhitelist[evt[2]] then
+							chatbox.tell(evt[2], "You're already opted out.")
+						else
+							chatboxWhitelist[evt[2]] = nil
+							chatbox.tell(evt[2], "Opted out from Enchat's chatbox messages.")
+							saveSettings()
+						end
+					end
+				end
 			end
 		elseif (evt[1] == "modem_message") or (evt[1] == "skynet_message" and enchatSettings.useSkynet) then
 			local side, freq, repfreq, msg, distance
