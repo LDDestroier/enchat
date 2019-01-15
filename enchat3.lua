@@ -2278,7 +2278,7 @@ local handleEvents = function()
 									if type(msg.message) == "string" then
 										handleReceiveMessage(msg.name, tostring(msg.message), msg.animType, msg.maxFrame, msg.ignoreWrap)
 										if chatbox and enchat.useChatbox and ((not checkRSinput()) or (not enchat.disableChatboxWithRedstone)) then
-											chatbox.say(UIconf.prefix .. msg.name .. UIconf.suffix .. msg.message, msg.name)
+											chatbox.say(textToBlit(UIconf.prefix .. msg.name .. UIconf.suffix .. msg.message, true), msg.name)
 										end
 									elseif type(msg.message) == "table" and enchatSettings.acceptPictoChat and #msg.message <= 64 then
 										logaddTable(msg.name, msg.message, msg.animType, msg.maxFrame, msg.ignoreWrap)
