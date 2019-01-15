@@ -856,18 +856,20 @@ local getChatbox = function()
 						say = function(text, block)
 							if CHATBOX_SAFEMODE then
 --								if CHATBOX_SAFEMODE ~= block then
-									cb.tell(CHATBOX_SAFEMODE, text)
+									cb.tell(CHATBOX_SAFEMODE, text, yourName)
 --								end
 							else
 								local players = cb.getPlayerList()
 								for i = 1, #players do
 									if players[i] ~= block then
-										cb.tell(players[i], text)
+										cb.tell(players[i], text, yourName)
 									end
 								end
 							end
 						end,
-						tell = cb.tell
+						tell = function(user, text)
+							cb.tell(user, text, yourName)
+						end
 					}
 				end
 			else
