@@ -21,7 +21,10 @@ enchat = {
 	dataDir = "/.enchat",
 	useChatbox = false,
 	disableChatboxWithRedstone = false,
+	useChatboxWhitelist
 }
+
+local chatboxWhitelist = {}
 
 local enchatSettings = {	-- DEFAULT, changable settings.
 	animDiv = 4,		-- divisor of text animation speed (scrolling from left)
@@ -96,6 +99,7 @@ local saveSettings = function()
 			enchatSettings = enchatSettings,
 			palette = palette,
 			UIconf = UIconf,
+			chatboxWhitelist = chatboxWhitelist,
 		})
 	)
 	file.close()
@@ -119,6 +123,9 @@ local loadSettings = function()
 		end
 		for k,v in pairs(newSettings.UIconf) do
 			UIconf[k] = v
+		end
+		for k,v in pairs(newSettings.chatboxWhitelist) do
+			chatboxWhitelist[k] = v
 		end
 	else
 		saveSettings()
@@ -836,7 +843,13 @@ local getChatbox = function()
 			-- mind you, you still need a chatbox to get chat input...
 			return {
 				say = function(text)
-					commands.tellraw("@a", textToBlit(text, false, "0", "f", nil, true))
+					if enchat.useChatboxWhitelist then
+						for player,v in pairs(chatboxWhitelist) do
+							commands.tellraw(player, textToBlit(text, false, "0", "f", nil, true))
+						end
+					else
+						commands.tellraw("@a", textToBlit(text, false, "0", "f", nil, true))
+					end
 				end,
 				tell = function(player, text)
 					commands.tellraw(player, textToBlit(text, false, "0", "f", nil, true))
@@ -855,14 +868,20 @@ local getChatbox = function()
 					return {
 						say = function(text, block)
 							if CHATBOX_SAFEMODE then
---								if CHATBOX_SAFEMODE ~= block then
-									cb.tell(CHATBOX_SAFEMODE, text, yourName)
---								end
+								cb.tell(CHATBOX_SAFEMODE, text, yourName)
 							else
-								local players = cb.getPlayerList()
-								for i = 1, #players do
-									if players[i] ~= block then
-										cb.tell(players[i], text, yourName)
+								if enchat.useChatboxWhitelist then
+									for player,v in pairs(chatboxWhitelist) do
+										if player ~= block then
+											cb.tell(player, text, yourName)
+										end
+									end
+								else
+									local players = cb.getPlayerList()
+									for i = 1, #players do
+										if players[i] ~= block then
+											cb.tell(players[i], text, yourName)
+										end
 									end
 								end
 							end
@@ -2249,17 +2268,41 @@ local handleEvents = function()
 			end
 		elseif evt[1] == "chat" and ((not checkRSinput()) or (not enchat.disableChatboxWithRedstone)) then
 			if enchat.useChatbox then
-				if enchatSettings.extraNewline then
-					logadd(nil,nil) -- readability is key
+				if enchat.useChatboxWhitelist then
+					if evt[3] == "--opt in" and not chatboxWhitelist[evt[2]] then
+						chatboxWhitelist[evt[2]] = true
+						chatbox.tell(evt[2], "Opted in to Enchat3 chatbox messages.")
+					elseif evt[3] == "--opt out" and chatboxWhitelist[evt[2]] then
+						chatboxWhitelist[evt[2]] = nil
+						chatbox.tell(evt[2], "Opted out from Enchat3 chatbox messages.")
+					else
+						enchatSend(evt[2], evt[3], true)
+					end
+				else
+					if enchatSettings.extraNewline then
+						logadd(nil,nil) -- readability is key
+					end
+					enchatSend(evt[2], evt[3], true)
 				end
-				enchatSend(evt[2], evt[3], true)
 			end
 		elseif evt[1] == "chat_message" and ((not checkRSinput()) or (not enchat.disableChatboxWithRedstone)) then -- computronics
 			if enchat.useChatbox then
-				if enchatSettings.extraNewline then
-					logadd(nil,nil) -- readability is key
+				if enchat.useChatboxWhitelist then
+					if evt[4] == "--opt in" and not chatboxWhitelist[evt[3]] then
+						chatboxWhitelist[evt[3]] = true
+						chatbox.tell(evt[3], "Opted in to Enchat3 chatbox messages.")
+					elseif evt[4] == "--opt out" and chatboxWhitelist[evt[3]] then
+						chatboxWhitelist[evt[3]] = nil
+						chatbox.tell(evt[3], "Opted out from Enchat3 chatbox messages.")
+					else
+						enchatSend(evt[3], evt[4], true)
+					end
+				else
+					if enchatSettings.extraNewline then
+						logadd(nil,nil) -- readability is still key
+					end
+					enchatSend(evt[3], evt[4], true)
 				end
-				enchatSend(evt[3], evt[4], true)
 			end
 		elseif (evt[1] == "modem_message") or (evt[1] == "skynet_message" and enchatSettings.useSkynet) then
 			local side, freq, repfreq, msg, distance
