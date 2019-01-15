@@ -9,8 +9,9 @@ This is a stable release. You fool!
 local scr_x, scr_y = term.getSize()
 local CHATBOX_SAFEMODE = nil
 
-local optInPhrase  = "\\ec opt in"
-local optOutPhrase = "\\ec opt out"
+local chatboxName  = "ec"
+local optInPhrase  = "opt in"
+local optOutPhrase = "opt out"
 
 -- non-changable settings
 local enchat = {
@@ -2269,17 +2270,17 @@ local handleEvents = function()
 			if type(evt[2]) == "string" and type(evt[3]) == "string" then
 				handleReceiveMessage(evt[2], evt[3])
 			end
-		elseif evt[1] == "chat" and ((not checkRSinput()) or (not enchat.disableChatboxWithRedstone)) then
-			if enchat.useChatbox then
-				if enchat.useChatboxWhitelist then
-					if evt[3] == optInPhrase and not chatboxWhitelist[evt[2]] then
+		elseif evt[1] == "chat" and ((not checkRSinput()) or (not enchat.disableChatboxWithRedstone)) and enchat.useChatboxthen
+			if enchat.useChatboxWhitelist then
+				if evt[3] == chatboxName then
+					if table.concat(evt[4]," ") == optInPhrase then
+						chatbox.tell(evt[2], "Opted in to Enchat's chatbox messages.")
 						chatboxWhitelist[evt[2]] = true
-						chatbox.tell(evt[2], "Opted in to Enchat3 chatbox messages.")
-					elseif evt[3] == optOutPhrase and chatboxWhitelist[evt[2]] then
-						chatboxWhitelist[evt[2]] = nil
-						chatbox.tell(evt[2], "Opted out from Enchat3 chatbox messages.")
+					elseif table.concat(evt[4]," ") == optOutPhrase then
+						chatbox.tell(evt[2], "Opted out from Enchat's chatbox messages.")
+						chatboxWhitelist[evt[2]] = true
 					else
-						enchatSend(evt[2], evt[3], true)
+						chatbox.tell(evt[2], "\\"..chatboxName.." ["..optInPhrase.."/"..optOutPhrase.."]")
 					end
 				else
 					if enchatSettings.extraNewline then
@@ -2287,25 +2288,31 @@ local handleEvents = function()
 					end
 					enchatSend(evt[2], evt[3], true)
 				end
+			else
+				if enchatSettings.extraNewline then
+					logadd(nil,nil) -- readability is key
+				end
+				enchatSend(evt[2], evt[3], true)
 			end
-		elseif evt[1] == "chat_message" and ((not checkRSinput()) or (not enchat.disableChatboxWithRedstone)) then -- computronics
-			if enchat.useChatbox then
-				if enchat.useChatboxWhitelist then
-					if evt[4] == optInPhrase and not chatboxWhitelist[evt[3]] then
-						chatboxWhitelist[evt[3]] = true
-						chatbox.tell(evt[3], "Opted in to Enchat3 chatbox messages.")
-					elseif evt[4] == optOutPhrase and chatboxWhitelist[evt[3]] then
-						chatboxWhitelist[evt[3]] = nil
-						chatbox.tell(evt[3], "Opted out from Enchat3 chatbox messages.")
-					else
-						enchatSend(evt[3], evt[4], true)
-					end
+		elseif evt[1] == "chat_message" and ((not checkRSinput()) or (not enchat.disableChatboxWithRedstone)) and enchat.useChatbox then -- computronics
+			if enchat.useChatboxWhitelist then
+				if evt[4] == ("\\"..chatboxName.." "..optInPhrase) and not chatboxWhitelist[evt[3]] then
+					chatboxWhitelist[evt[3]] = true
+					chatbox.tell(evt[3], "Opted in to Enchat's chatbox messages.")
+				elseif evt[4] == optOutPhrase and chatboxWhitelist[evt[3]] then
+					chatboxWhitelist[evt[3]] = nil
+					chatbox.tell(evt[3], "Opted out from Enchat's chatbox messages.")
 				else
 					if enchatSettings.extraNewline then
-						logadd(nil,nil) -- readability is still key
+						logadd(nil,nil) -- readability is key
 					end
 					enchatSend(evt[3], evt[4], true)
 				end
+			else
+				if enchatSettings.extraNewline then
+					logadd(nil,nil) -- readability is still key
+				end
+				enchatSend(evt[3], evt[4], true)
 			end
 		elseif (evt[1] == "modem_message") or (evt[1] == "skynet_message" and enchatSettings.useSkynet) then
 			local side, freq, repfreq, msg, distance
