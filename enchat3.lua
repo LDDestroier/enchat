@@ -2308,11 +2308,21 @@ local handleEvents = function()
 			if evt[3] == chatboxName then
 				if evt[4][1] == "opt" then
 					if evt[4][2] == "in" then
-						chatboxWhitelist[evt[2]] = true
-						chatbox.tell(evt[2], "Opted in to Enchat's chatbox messages.")
+						if chatboxWhitelist[evt[2]] then
+							chatbox.tell(evt[2], "You're already opted in.")
+						else
+							chatboxWhitelist[evt[2]] = true
+							chatbox.tell(evt[2], "Opted in to Enchat's chatbox messages.")
+							saveSettings()
+						end
 					elseif evt[4][2] == "out" then
-						chatboxWhitelist[evt[2]] = nil
-						chatbox.tell(evt[2], "Opted out from Enchat's chatbox messages.")
+						if not chatboxWhitelist[evt[2]] then
+							chatbox.tell(evt[2], "You're already opted out.")
+						else
+							chatboxWhitelist[evt[2]] = nil
+							chatbox.tell(evt[2], "Opted out from Enchat's chatbox messages.")
+							saveSettings()
+						end
 					end
 				end
 			end
