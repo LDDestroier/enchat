@@ -7,10 +7,13 @@ This is a stable release. You fool!
 --]]
 
 local scr_x, scr_y = term.getSize()
-CHATBOX_SAFEMODE = nil
+local CHATBOX_SAFEMODE = nil
+
+local optInPhrase  = "\\ec opt in"
+local optOutPhrase = "\\ec opt out"
 
 -- non-changable settings
-enchat = {
+local enchat = {
 	version = 3.0,
 	isBeta = false,
 	port = 11000,
@@ -2269,10 +2272,10 @@ local handleEvents = function()
 		elseif evt[1] == "chat" and ((not checkRSinput()) or (not enchat.disableChatboxWithRedstone)) then
 			if enchat.useChatbox then
 				if enchat.useChatboxWhitelist then
-					if evt[3] == "\opt in" and not chatboxWhitelist[evt[2]] then
+					if evt[3] == optInPhrase and not chatboxWhitelist[evt[2]] then
 						chatboxWhitelist[evt[2]] = true
 						chatbox.tell(evt[2], "Opted in to Enchat3 chatbox messages.")
-					elseif evt[3] == "\opt out" and chatboxWhitelist[evt[2]] then
+					elseif evt[3] == optOutPhrase and chatboxWhitelist[evt[2]] then
 						chatboxWhitelist[evt[2]] = nil
 						chatbox.tell(evt[2], "Opted out from Enchat3 chatbox messages.")
 					else
@@ -2288,10 +2291,10 @@ local handleEvents = function()
 		elseif evt[1] == "chat_message" and ((not checkRSinput()) or (not enchat.disableChatboxWithRedstone)) then -- computronics
 			if enchat.useChatbox then
 				if enchat.useChatboxWhitelist then
-					if evt[4] == "\opt in" and not chatboxWhitelist[evt[3]] then
+					if evt[4] == optInPhrase and not chatboxWhitelist[evt[3]] then
 						chatboxWhitelist[evt[3]] = true
 						chatbox.tell(evt[3], "Opted in to Enchat3 chatbox messages.")
-					elseif evt[4] == "\opt out" and chatboxWhitelist[evt[3]] then
+					elseif evt[4] == optOutPhrase and chatboxWhitelist[evt[3]] then
 						chatboxWhitelist[evt[3]] = nil
 						chatbox.tell(evt[3], "Opted out from Enchat3 chatbox messages.")
 					else
