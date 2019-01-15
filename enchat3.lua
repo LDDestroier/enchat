@@ -21,7 +21,7 @@ enchat = {
 	dataDir = "/.enchat",
 	useChatbox = false,
 	disableChatboxWithRedstone = false,
-	useChatboxWhitelist
+	useChatboxWhitelist = true
 }
 
 local chatboxWhitelist = {}
