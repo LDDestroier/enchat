@@ -203,6 +203,7 @@ local colors_strnames = {
 	["gray"] = colors.gray,
 	["grey"] = colors.gray,
 	["graey"] = colors.gray,
+	["steel"] = colors.gray,
 	["gunmetal"] = colors.gray,
 	["#4c4c4c"] = colors.gray,
 	
@@ -210,9 +211,12 @@ local colors_strnames = {
 	["lightgrey"] = colors.lightGray,
 	["light gray"] = colors.lightGray,
 	["light grey"] = colors.lightGray,
+	["iron"] = colors.lightGray,
 	["#999999"] = colors.lightGray,
 	
 	["cyan"] = colors.cyan,
+	["aqua"] = colors.cyan,
+	["teal"] = colors.cyan,
 	["seawater"] = colors.cyan,
 	["brine"] = colors.cyan,
 	["#4c99b2"] = colors.cyan,
@@ -243,6 +247,8 @@ local colors_strnames = {
 	
 	["green"] = colors.green,
 	["grass"] = colors.green,
+	["verdant"] = colors.green,
+	["leaf"] = colors.green,
 	["#57a64e"] = colors.green,
 	
 	["red"] = colors.red,
