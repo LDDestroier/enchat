@@ -2271,19 +2271,10 @@ local handleEvents = function()
 				handleReceiveMessage(evt[2], evt[3])
 			end
 		elseif evt[1] == "chat" and ((not checkRSinput()) or (not enchat.disableChatboxWithRedstone)) and enchat.useChatbox then
-			if enchat.useChatboxWhitelist then
-				if chatboxWhitelist[evt[2]] then
-					if enchatSettings.extraNewline then
-						logadd(nil,nil) -- readability is key
-					end
-					enchatSend(evt[2], evt[3], true)
-				end
-			else
-				if enchatSettings.extraNewline then
-					logadd(nil,nil) -- readability is key
-				end
-				enchatSend(evt[2], evt[3], true)
+			if enchatSettings.extraNewline then
+				logadd(nil,nil) -- readability is key
 			end
+			enchatSend(evt[2], evt[3], true)
 		elseif evt[1] == "chat_message" and ((not checkRSinput()) or (not enchat.disableChatboxWithRedstone)) and enchat.useChatbox then -- computronics
 			if enchat.useChatboxWhitelist then
 				if evt[4] == ("\\"..chatboxName.." "..optInPhrase) and not chatboxWhitelist[evt[3]] then
