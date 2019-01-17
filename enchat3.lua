@@ -1177,6 +1177,7 @@ local colorTranslate = {
 	["f"] = {25,  25,  25 }
 }
 local interface, canvas = peripheral.find("neuralInterface")
+local notifYstuff = {}
 if interface then
 	if interface.canvas then
 		canvas = interface.canvas()
@@ -1217,13 +1218,21 @@ if interface then
 				end
 				return output
 			end
-			canvas.clear()
+			--canvas.clear()
 			local xadj, charadj, wordadj, t, r
 			local x, y, words, txtwords, bgwords = 0, 0
 			for n = 1, mathmin(#nList, notif.maxNotifs) do
 				xadj, charadj = 0, 0
 				y = y + 1
 				x = 0
+				if notifYstuff[y] then
+					for xx = 1, #notifYstuff[y] do
+						notifYstuff[y][xx].remove()
+					end
+					notifYstuff[y] = nil
+				else
+					notifYstuff[y] = {}
+				end
 				words = explode(" ",nList[n][1],nil,true)
 				txtwords = explode(" ",nList[n][1],nList[n][2],true)
 				bgwords = explode(" ",nList[n][1],nList[n][3],true)
@@ -1254,6 +1263,10 @@ if interface then
 						t = canvas.addText({xadj+1+(x-1)*notif.width,2+(y-1)*notif.height}, stringsub(char,cx,cx))
 						t.setAlpha(notif.alpha * nList[n][5])
 						t.setColor(unpack(colorTranslate[stringsub(text,cx,cx)]))
+						
+						notifYstuff[y][#notifYstuff[y]+1] = t
+						notifYstuff[y][#notifYstuff[y]+1] = r
+						
 						xadj = xadj + charadj
 						currentX = currentX + charadj+notif.width
 					end
