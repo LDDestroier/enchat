@@ -119,16 +119,16 @@ local loadSettings = function()
 	file.close()
 	local newSettings = textutilsunserialize(contents)
 	if newSettings then
-		for k,v in pairs(newSettings.enchatSettings) do
+		for k,v in pairs(newSettings.enchatSettings or {}) do
 			enchatSettings[k] = v
 		end
-		for k,v in pairs(newSettings.palette) do
+		for k,v in pairs(newSettings.palette or {}) do
 			palette[k] = v
 		end
-		for k,v in pairs(newSettings.UIconf) do
+		for k,v in pairs(newSettings.UIconf or {}) do
 			UIconf[k] = v
 		end
-		for k,v in pairs(newSettings.chatboxWhitelist) do
+		for k,v in pairs(newSettings.chatboxWhitelist or {}) do
 			chatboxWhitelist[k] = v
 		end
 	else
@@ -1268,7 +1268,11 @@ if interface then
 							while true do
 								nList[n][5] = mathmax(nList[n][5] - 0.2, 0)
 								notif.displayNotifications(false)
-								if nList[n][5] == 0 then break else sleep(0.05) end
+								if nList[n][5] == 0 then
+									break
+								else
+									sleep(0.1)
+								end
 							end
 						end
 						tableremove(nList,n)
@@ -1369,7 +1373,7 @@ local genRenderLog = function()
 		end
 		if (log[a].frame == 0) and (canvas and enchatSettings.doNotif) then
 			if not (log[a].name == "" and log[a].message == " ") then
-				notif.newNotification(prebuff[1],prebuff[2],prebuff[3],notif.time * 4)
+				notif.newNotification(prebuff[1],prebuff[2],prebuff[3],notif.time * 2)
 			end
 		end
 		if log[a].maxFrame == true then
