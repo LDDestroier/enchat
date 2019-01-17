@@ -2130,7 +2130,7 @@ commands.help = function(cmdname)
 			picto = "Opens an image maker and sends the result. Use the scroll wheel to change color, and hold left shift to change text color. If argument given, will look for an image at the given path and use that instead.",
 			tron = "Starts up a game of TRON.",
 			big = "Sends your message, but enlarged by a specified amount via Wojbie's BigFont API.",
-			optlist = "Lists every person that has opted in to the chatbox output."
+			optlist = "Lists every person that has opted in to the chatbox output.",
 			help = "Shows every command, or describes a specific command.",
 		}
 		cmdname = cmdname:gsub(" ",""):gsub("/","")
