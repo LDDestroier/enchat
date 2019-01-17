@@ -2094,6 +2094,18 @@ commands.set = function(_argument)
 		termclear()
 		pauseRendering = false
 	end
+	if canvas and not enchatSettings.doNotif then
+		canvas.clear()
+	end
+end
+commands.optlist = function()
+	local output = ""
+	for k,v in pairs(chatboxWhitelist) do
+		output = output .. k .. "&r~r, "
+	end
+	output = output:sub(1, -2)
+	logadd("* Players who have opted in:")
+	logadd(nil, output)
 end
 commands.help = function(cmdname)
 	if enchatSettings.extraNewline then
@@ -2118,6 +2130,7 @@ commands.help = function(cmdname)
 			picto = "Opens an image maker and sends the result. Use the scroll wheel to change color, and hold left shift to change text color. If argument given, will look for an image at the given path and use that instead.",
 			tron = "Starts up a game of TRON.",
 			big = "Sends your message, but enlarged by a specified amount via Wojbie's BigFont API.",
+			optlist = "Lists every person that has opted in to the chatbox output."
 			help = "Shows every command, or describes a specific command.",
 		}
 		cmdname = cmdname:gsub(" ",""):gsub("/","")
