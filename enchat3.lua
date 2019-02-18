@@ -7,14 +7,11 @@ This is a stable release. You fool!
 --]]
 
 local scr_x, scr_y = term.getSize()
-local CHATBOX_SAFEMODE = nil
-
-local chatboxName  = "ec"
-local optInPhrase  = "opt in"
-local optOutPhrase = "opt out"
+CHATBOX_SAFEMODE = nil
 
 -- non-changable settings
-local enchat = {
+enchat = {
+	connectToSkynet = true,
 	version = 3.0,
 	isBeta = false,
 	port = 11000,
@@ -25,46 +22,46 @@ local enchat = {
 	dataDir = "/.enchat",
 	useChatbox = false,
 	disableChatboxWithRedstone = false,
-	useChatboxWhitelist = true
 }
 
-local chatboxWhitelist = {}
-
-local enchatSettings = {	-- DEFAULT, changable settings.
-	animDiv = 4,		-- divisor of text animation speed (scrolling from left)
-	doAnimate = true,	-- whether or not to animate text moving from left side of screen
+-- changable settings
+local enchatSettings = {	-- DEFAULT settings.
+	animDiv = 4,			-- divisor of text animation speed (scrolling from left)
+	doAnimate = true,		-- whether or not to animate text moving from left side of screen
 	reverseScroll = false,	-- whether or not to make scrolling up really scroll down
-	redrawDelay = 0.1,	-- delay between redrawing
+	redrawDelay = 0.1,		-- delay between redrawing
 	useSetVisible = true,	-- whether or not to use term.current().setVisible(), which has performance and flickering improvements
-	pageKeySpeed = 8,	-- how far PageUP or PageDOWN should scroll
-	doNotif = true,		-- whether or not to use oveerlay glasses for notifications, if possible
-	doKrazy = true,		-- whether or not to add &k obfuscation
-	useSkynet = true,	-- whether or not to use gollark's Skynet in addition to modem calls
+	pageKeySpeed = 8,		-- how far PageUP or PageDOWN should scroll
+	doNotif = true,			-- whether or not to use oveerlay glasses for notifications, if possible
+	doKrazy = true,			-- whether or not to add &k obfuscation
+	useSkynet = true,		-- whether or not to use gollark's Skynet in addition to modem calls
 	extraNewline = true,	-- adds an extra newline after every message since setting to true
-	acceptPictoChat = true	-- whether or not to allow tablular enchat input, which is what /picto uses
+	acceptPictoChat = true,	-- whether or not to allow tablular enchat input, which is what /picto uses
+	noRepeatNames = true,	-- whether or not to display the username in two or more consecutive messages by the same user
 }
 
 -- colors for various elements
-local palette = {
-	bg = colors.black,		-- background color
-	txt = colors.white,		-- text color (should contrast with bg)
-	promptbg = colors.gray,		-- chat prompt background
-	prompttxt = colors.white,	-- chat prompt text
-	scrollMeter = colors.lightGray,	-- scroll indicator
-	chevron = colors.black,		-- color of ">" left of text prompt
-	title = colors.lightGray,	-- color of title, if available
-	titlebg = colors.lightGray	-- background color of title, if available
+palette = {
+	bg = colors.black,
+	txt = colors.white,
+	promptbg = colors.gray,
+	prompttxt = colors.white,
+	scrollMeter = colors.lightGray,
+	chevron = colors.black,
+	title = colors.lightGray,
+	titlebg = colors.gray,
 }
 
--- UI adjustments, used to emulate the appearence of other chat programs
-local UIconf = {
-	promptY = 1,		-- Y position of read prompt, relative to bottom of screen
-	chevron = ">",		-- symbol before read prompt
-	chatlogTop = 1,		-- where chatlog is written to screen, relative to top of screen
-	title = "",		-- overwritten every render, don't bother here
-	doTitle = false,	-- whether or not to draw UIconf.title at the top of the screen
-	nameDecolor = false,	-- if true, sets all names to palette.chevron color,
-	centerTitle = false,	-- if true, centers the title
+-- UI adjustments, used to emulate the appearance of other chat programs
+UIconf = {
+	promptY = 1,
+	chevron = ">",
+	chatlogTop = 1,
+	title = "Enchat 3",
+	doTitle = false,
+	titleY = 1,
+	nameDecolor = false,
+	centerTitle = true,
 	prefix = "<",
 	suffix = "> "
 }
@@ -103,7 +100,6 @@ local saveSettings = function()
 			enchatSettings = enchatSettings,
 			palette = palette,
 			UIconf = UIconf,
-			chatboxWhitelist = chatboxWhitelist,
 		})
 	)
 	file.close()
@@ -119,17 +115,14 @@ local loadSettings = function()
 	file.close()
 	local newSettings = textutilsunserialize(contents)
 	if newSettings then
-		for k,v in pairs(newSettings.enchatSettings or {}) do
+		for k,v in pairs(newSettings.enchatSettings) do
 			enchatSettings[k] = v
 		end
-		for k,v in pairs(newSettings.palette or {}) do
+		for k,v in pairs(newSettings.palette) do
 			palette[k] = v
 		end
-		for k,v in pairs(newSettings.UIconf or {}) do
+		for k,v in pairs(newSettings.UIconf) do
 			UIconf[k] = v
-		end
-		for k,v in pairs(newSettings.chatboxWhitelist or {}) do
-			chatboxWhitelist[k] = v
 		end
 	else
 		saveSettings()
@@ -160,38 +153,39 @@ local colors_strnames = {
 	["silver"] = colors.white,
 	["aryan"] = colors.white,
 	["#f0f0f0"] = colors.white,
-	
+
 	["orange"] = colors.orange,
 	["carrot"] = colors.orange,
 	["fuhrer"] = colors.orange,
 	["pumpkin"] = colors.orange,
 	["#f2b233"] = colors.orange,
-	
+
 	["magenta"] = colors.magenta,
 	["hotpink"] = colors.magenta,
 	["lightpurple"] = colors.magenta,
 	["light purple"] = colors.magenta,
 	["#e57fd8"] = colors.magenta,
-	
+
 	["lightblue"] = colors.lightBlue,
 	["light blue"] = colors.lightBlue,
 	["skyblue"] = colors.lightBlue,
 	["#99b2f2"] = colors.lightBlue,
-	
+
 	["yellow"] = colors.yellow,
 	["piss"] = colors.yellow,
 	["pee"] = colors.yellow,
 	["lemon"] = colors.yellow,
+	["spongebob"] = colors.yellow,
 	["cowardice"] = colors.yellow,
 	["#dede6c"] = colors.yellow,
-	
+
 	["lime"] = colors.lime,
 	["lightgreen"] = colors.lime,
 	["light green"] = colors.lime,
 	["slime"] = colors.lime,
 	["radiation"] = colors.lime,
 	["#7fcc19"] = colors.lime,
-	
+
 	["pink"] = colors.pink,
 	["lightishred"] = colors.pink,
 	["lightish red"] = colors.pink,
@@ -199,34 +193,30 @@ local colors_strnames = {
 	["commie"] = colors.pink,
 	["patrick"] = colors.pink,
 	["#f2b2cc"] = colors.pink,
-	
+
 	["gray"] = colors.gray,
 	["grey"] = colors.gray,
 	["graey"] = colors.gray,
-	["steel"] = colors.gray,
 	["gunmetal"] = colors.gray,
 	["#4c4c4c"] = colors.gray,
-	
+
 	["lightgray"] = colors.lightGray,
 	["lightgrey"] = colors.lightGray,
 	["light gray"] = colors.lightGray,
 	["light grey"] = colors.lightGray,
-	["iron"] = colors.lightGray,
 	["#999999"] = colors.lightGray,
-	
+
 	["cyan"] = colors.cyan,
-	["aqua"] = colors.cyan,
-	["teal"] = colors.cyan,
 	["seawater"] = colors.cyan,
 	["brine"] = colors.cyan,
 	["#4c99b2"] = colors.cyan,
-	
+
 	["purple"] = colors.purple,
 	["purble"] = colors.purple,
 	["obsidian"] = colors.purple,
 	["diviner"] = colors.purple,
 	["#b266e5"] = colors.purple,
-	
+
 	["blue"] = colors.blue,
 	["blu"] = colors.blue,
 	["azure"] = colors.blue,
@@ -237,20 +227,18 @@ local colors_strnames = {
 	["x"] = colors.blue,
 	["megaman"] = colors.blue,
 	["#3366bb"] = colors.blue,
-	
+
 	["brown"] = colors.brown,
 	["shit"] = colors.brown,
 	["dirt"] = colors.brown,
 	["mud"] = colors.brown,
 	["bricks"] = colors.brown,
 	["#7f664c"] = colors.brown,
-	
+
 	["green"] = colors.green,
 	["grass"] = colors.green,
-	["verdant"] = colors.green,
-	["leaf"] = colors.green,
 	["#57a64e"] = colors.green,
-	
+
 	["red"] = colors.red,
 	["crimson"] = colors.red,
 	["vermillion"] = colors.red,
@@ -261,7 +249,7 @@ local colors_strnames = {
 	["protoman"] = colors.red,
 	["communism"] = colors.red,
 	["#cc4c4c"] = colors.red,
-	
+
 	["black"] = colors.black,
 	["dark"] = colors.black,
 	["darkness"] = colors.black,
@@ -350,6 +338,16 @@ else
 	end
 end
 
+local makeRandomString = function(length, begin, stop)
+	local output = ""
+	for a = 1, length do
+		output = output .. string.char(math.random(begin or 1, stop or 255))
+	end
+	return output
+end
+
+local personalID = makeRandomString(64, 32, 128)
+
 local explode = function(div, str, replstr, includeDiv)
 	if (div == '') then
 		return false
@@ -380,16 +378,16 @@ local textToBlit = function(input, onlyString, initText, initBack, checkPos, use
 	local cpos, cx = 0, 0
 	local skip, ignore, ex = nil, false, nil
 	local text, back, nex = initText, initBack, nil
-	
+
 	local charOut, textOut, backOut = {}, {}, {}
 	local JSONoutput = {}
-	
+
 	local krazy = false
 	local bold = false
 	local strikethrough = false
 	local underline = false
 	local italic = false
-	
+
 	local codes = {}
 	codes["r"] = function(prev)
 		if not ignore then
@@ -432,7 +430,7 @@ local textToBlit = function(input, onlyString, initText, initBack, checkPos, use
 			return 0
 		end
 	end
-	
+
 	if useJSONformat then
 		codes["l"] = function(prev)
 			bold = true
@@ -447,7 +445,7 @@ local textToBlit = function(input, onlyString, initText, initBack, checkPos, use
 			italic = true
 		end
 	end
-	
+
 	local sx, str = 0
 	input = stringgsub(input, "(\\)(%d%d?%d?)", function(cap, val)
 		if tonumber(val) < 256 then
@@ -457,9 +455,9 @@ local textToBlit = function(input, onlyString, initText, initBack, checkPos, use
 			return cap..val
 		end
 	end)
-	
+
 	local MCcolors = {
-		["0"] = "white",	
+		["0"] = "white",
 		["1"] = "gold",
 		["2"] = "light_purple",
 		["3"] = "aqua",
@@ -476,7 +474,7 @@ local textToBlit = function(input, onlyString, initText, initBack, checkPos, use
 		["e"] = "red",
 		["f"] = "black",
 	}
-	
+
 	for cx = 1, #input do
 		str = stringsub(input,cx,cx)
 		if skip then
@@ -546,6 +544,7 @@ local textToBlit = function(input, onlyString, initText, initBack, checkPos, use
 		if onlyString then
 			return tableconcat(charOut), (checkPos > -1) and cpos or nil
 		else
+--			return {tableconcat(charOut), tableconcat(textOut):gsub(" ", initText), tableconcat(backOut):gsub(" ", initBack)}, (checkPos > -1) and cpos or nil
 			return {tableconcat(charOut), tableconcat(textOut), tableconcat(backOut)}, (checkPos > -1) and cpos or nil
 		end
 	end
@@ -810,10 +809,12 @@ end
 local skynet, aes, bigfont
 _G.skynet_CBOR_path = fs.combine(enchat.dataDir,"/api/cbor")
 aes = getAPI("AES", "aes", "http://pastebin.com/raw/9E5UHiqv", false, false)
-skynet = getAPI("Skynet", "skynet", "https://raw.githubusercontent.com/osmarks/skynet/master/client.lua", true, true)
+if enchat.connectToSkynet then
+	skynet = getAPI("Skynet", "skynet", "https://raw.githubusercontent.com/osmarks/skynet/master/client.lua", true, true)
+end
 bigfont = getAPI("BigFont", "bigfont", "https://pastebin.com/raw/3LfWxRWh", false, true)
 
-if encKey and skynet then
+if encKey and skynet and enchat.connectToSkynet then
 	bottomMessage("Connecting to Skynet...")
 	local success = parallel.waitForAny(
 		function()
@@ -831,9 +832,9 @@ if encKey and skynet then
 	end
 end
 
-local log = {} 		-- Records all sorts of data on text.
+local log = {} 			-- Records all sorts of data on text.
 local renderlog = {} 	-- Only records straight terminal output. Generated from 'log'
-local IDlog = {} 	-- Really only used with skynet, will prevent duplicate messages.
+local IDlog = {} 		-- Really only used with skynet, will prevent duplicate messages.
 
 local scroll = 0
 local maxScroll = 0
@@ -853,13 +854,7 @@ local getChatbox = function()
 			-- mind you, you still need a chatbox to get chat input...
 			return {
 				say = function(text)
-					if enchat.useChatboxWhitelist then
-						for player,v in pairs(chatboxWhitelist) do
-							commands.tellraw(player, textToBlit(text, false, "0", "f", nil, true))
-						end
-					else
-						commands.tellraw("@a", textToBlit(text, false, "0", "f", nil, true))
-					end
+					commands.tellraw("@a", textToBlit(text, false, "0", "f", nil, true))
 				end,
 				tell = function(player, text)
 					commands.tellraw(player, textToBlit(text, false, "0", "f", nil, true))
@@ -878,27 +873,19 @@ local getChatbox = function()
 					return {
 						say = function(text, block)
 							if CHATBOX_SAFEMODE then
-								cb.tell(CHATBOX_SAFEMODE, text, yourName)
+--								if CHATBOX_SAFEMODE ~= block then
+									cb.tell(CHATBOX_SAFEMODE, text)
+--								end
 							else
-								if enchat.useChatboxWhitelist then
-									for player,v in pairs(chatboxWhitelist) do
-										if player ~= block then
-											cb.tell(player, text, yourName)
-										end
-									end
-								else
-									local players = cb.getPlayerList()
-									for i = 1, #players do
-										if players[i] ~= block then
-											cb.tell(players[i], text, yourName)
-										end
+								local players = cb.getPlayerList()
+								for i = 1, #players do
+									if players[i] ~= block then
+										cb.tell(players[i], text)
 									end
 								end
 							end
 						end,
-						tell = function(user, text)
-							cb.tell(user, text, yourName)
-						end
+						tell = cb.tell
 					}
 				end
 			else
@@ -1268,11 +1255,7 @@ if interface then
 							while true do
 								nList[n][5] = mathmax(nList[n][5] - 0.2, 0)
 								notif.displayNotifications(false)
-								if nList[n][5] == 0 then
-									break
-								else
-									sleep(0.1)
-								end
+								if nList[n][5] == 0 then break else sleep(0.05) end
 							end
 						end
 						tableremove(nList,n)
@@ -1353,50 +1336,71 @@ local inAnimate = function(animType, buff, frame, maxFrame, length)
 end
 
 local genRenderLog = function()
-	local buff, prebuff, maxLength
+	local buff, prebuff, maxLength, lastUser
 	local scrollToBottom = scroll == maxScroll
 	renderlog = {}
+	local dcName, dcMessage
 	for a = 1, #log do
-		termsetCursorPos(1,1)
-		if UIconf.nameDecolor then
-			local dcName = textToBlit(table.concat({log[a].prefix,log[a].name,log[a].suffix}), true, toblit[palette.txt], toblit[palette.bg])
-			local dcMessage = textToBlit(log[a].message, false, toblit[palette.txt], toblit[palette.bg])
-			prebuff = {
-				dcName..dcMessage[1],
-				toblit[palette.chevron]:rep(#dcName)..dcMessage[2],
-				toblit[palette.bg]:rep(#dcName)..dcMessage[3]
-			}
-		else
-			prebuff = textToBlit(table.concat(
-				{log[a].prefix, "&}&r~r", log[a].name, "&}&r~r", log[a].suffix, "&}&r~r", log[a].message}
-			), false, toblit[palette.txt], toblit[palette.bg])
-		end
-		if (log[a].frame == 0) and (canvas and enchatSettings.doNotif) then
-			if not (log[a].name == "" and log[a].message == " ") then
-				notif.newNotification(prebuff[1],prebuff[2],prebuff[3],notif.time * 2)
-			end
-		end
-		if log[a].maxFrame == true then
-			log[a].maxFrame = math.floor(mathmin(#prebuff[1], scr_x) / enchatSettings.animDiv)
-		end
-		if log[a].ignoreWrap then
-			buff, maxLength = {prebuff}, mathmin(#prebuff[1], scr_x)
-		else
-			buff, maxLength = blitWrap(prebuff[1], prebuff[2], prebuff[3], true)
-		end
-		-- repeat every line in multiline entries
-		for l = 1, #buff do
-			-- holy shit, two animations, lookit mr. roxas over here
-			if log[a].animType then
-				renderlog[#renderlog + 1] = inAnimate(log[a].animType, buff[l], log[a].frame, log[a].maxFrame, maxLength)
+		if not ((lastUser == log[a].personalID and log[a].personalID) and log[a].name == "" and log[a].message == " ") then
+			termsetCursorPos(1,1)
+			if UIconf.nameDecolor then
+				if lastUser == log[a].personalID and log[a].personalID then
+					dcName = ""
+				else
+					dcName = textToBlit(table.concat({log[a].prefix,log[a].name,log[a].suffix}), true, toblit[palette.txt], toblit[palette.bg])
+				end
+				dcMessage = textToBlit(log[a].message, false, toblit[palette.txt], toblit[palette.bg])
+				prebuff = {
+					dcName..dcMessage[1],
+					toblit[palette.chevron]:rep(#dcName)..dcMessage[2],
+					toblit[palette.bg]:rep(#dcName)..dcMessage[3]
+				}
 			else
-				renderlog[#renderlog + 1] = inAnimate("fadeIn", inAnimate("slideFromLeft", buff[l], log[a].frame, log[a].maxFrame, maxLength), log[a].frame, log[a].maxFrame, maxLength)
+				if lastUser == log[a].personalID and log[a].personalID then
+					prebuff = textToBlit(" " .. log[a].message, false, toblit[palette.txt], toblit[palette.bg])
+				else
+					prebuff = textToBlit(table.concat({
+						log[a].prefix,
+						"&}&r~r",
+						log[a].name,
+						"&}&r~r",
+						log[a].suffix,
+						"&}&r~r",
+						log[a].message
+					}),
+					false, toblit[palette.txt], toblit[palette.bg])
+				end
 			end
-		end
-		if (log[a].frame < log[a].maxFrame) and log[a].frame >= 0 then
-			log[a].frame = log[a].frame + 1
-		else
-			log[a].frame = -1
+			if log[a].message ~= " " and enchatSettings.noRepeatNames then
+				lastUser = log[a].personalID
+			end
+			if (log[a].frame == 0) and (canvas and enchatSettings.doNotif) then
+				if not (log[a].name == "" and log[a].message == " ") then
+					notif.newNotification(prebuff[1], prebuff[2], prebuff[3], notif.time * 4)
+				end
+			end
+			if log[a].maxFrame == true then
+				log[a].maxFrame = math.floor(mathmin(#prebuff[1], scr_x) / enchatSettings.animDiv)
+			end
+			if log[a].ignoreWrap then
+				buff, maxLength = {prebuff}, mathmin(#prebuff[1], scr_x)
+			else
+				buff, maxLength = blitWrap(prebuff[1], prebuff[2], prebuff[3], true)
+			end
+			-- repeat every line in multiline entries
+			for l = 1, #buff do
+				-- holy shit, two animations, lookit mr. roxas over here
+				if log[a].animType then
+					renderlog[#renderlog + 1] = inAnimate(log[a].animType, buff[l], log[a].frame, log[a].maxFrame, maxLength)
+				else
+					renderlog[#renderlog + 1] = inAnimate("fadeIn", inAnimate("slideFromLeft", buff[l], log[a].frame, log[a].maxFrame, maxLength), log[a].frame, log[a].maxFrame, maxLength)
+				end
+			end
+			if (log[a].frame < log[a].maxFrame) and log[a].frame >= 0 then
+				log[a].frame = log[a].frame + 1
+			else
+				log[a].frame = -1
+			end
 		end
 	end
 	maxScroll = mathmax(0, #renderlog - (scr_y - 2))
@@ -1455,7 +1459,7 @@ local renderChat = function(doScrollBackUp)
 	tsv(true)
 end
 
-local logadd = function(name, message, animType, maxFrame, ignoreWrap)
+local logadd = function(name, message, animType, maxFrame, ignoreWrap, _personalID)
 	log[#log + 1] = {
 		prefix = name and UIconf.prefix or "",
 		suffix = name and UIconf.suffix or "",
@@ -1464,11 +1468,12 @@ local logadd = function(name, message, animType, maxFrame, ignoreWrap)
 		ignoreWrap = ignoreWrap,
 		frame = 0,
 		maxFrame = maxFrame or true,
-		animType = animType
+		animType = animType,
+		personalID = _personalID
 	}
 end
 
-local logaddTable = function(name, message, animType, maxFrame, ignoreWrap)
+local logaddTable = function(name, message, animType, maxFrame, ignoreWrap, _personalID)
 	if type(message) == "table" and type(name) == "string" then
 		if #message > 0 then
 			local isGood = true
@@ -1479,29 +1484,21 @@ local logaddTable = function(name, message, animType, maxFrame, ignoreWrap)
 				end
 			end
 			if isGood then
-				logadd(name,message[1],animType,maxFrame,ignoreWrap)
+				logadd(name, message[1], animType, maxFrame, ignoreWrap, _personalID)
 				for l = 2, #message do
-					logadd(nil,message[l],animType,maxFrame,ignoreWrap)
+					logadd(nil, message[l], animType, maxFrame, ignoreWrap, _personalID)
 				end
 			end
 		end
 	end
 end
 
-local makeRandomString = function(length)
-	local output = ""
-	for a = 1, length do
-		output = output .. string.char(math.random(1,255))
-	end
-	return output
-end
-
-local enchatSend = function(name, message, doLog, animType, maxFrame, crying, recipient, ignoreWrap)
+local enchatSend = function(name, message, doLog, animType, maxFrame, crying, recipient, ignoreWrap, omitPersonalID)
 	if doLog then
 		if type(message) == "string" then
-			logadd(name, message, animType, maxFrame, ignoreWrap)
+			logadd(name, message, animType, maxFrame, ignoreWrap, (not omitPersonalID) and personalID)
 		else
-			logaddTable(name, message, animType, maxFrame, ignoreWrap)
+			logaddTable(name, message, animType, maxFrame, ignoreWrap, (not omitPersonalID) and personalID)
 		end
 	end
 	local messageID = makeRandomString(64)
@@ -1513,6 +1510,7 @@ local enchatSend = function(name, message, doLog, animType, maxFrame, crying, re
 		messageID = messageID,
 		recipient = recipient,
 		ignoreWrap = ignoreWrap,
+		personalID = (not omitPersonalID) and personalID,
 		cry = crying
 	})
 	IDlog[messageID] = true
@@ -1725,7 +1723,7 @@ commands.key = function(newKey)
 			enchatSend("*", "'"..yourName.."&}&r~r' buggered off. (keychange)", false)
 			setEncKey(newKey)
 			logadd("*", "Key changed to '"..encKey.."&}&r~r'.")
-			enchatSend("*", "'"..yourName.."&}&r~r' has moseyed on over.", false)
+			enchatSend("*", "'"..yourName.."&}&r~r' has moseyed on over.", false, nil, nil, nil, nil, nil, true)
 		else
 			logadd("*", "That's already the key, though.")
 		end
@@ -1809,11 +1807,13 @@ commands.big = function(_argument)
 					end
 				end
 				tOutput = {""}
+				local yy = 1
 				for y = 1, #output[1] do
 					tOutput[#tOutput+1] = ""
 					for x = 1, #output[1][y] do
-						tOutput[#tOutput] = table.concat({tOutput[#tOutput],"&",output[2][y]:sub(x,x),"~",output[3][y]:sub(x,x),output[1][y]:sub(x,x)})
+						tOutput[#tOutput] = table.concat({tOutput[#tOutput],"&",output[2][yy]:sub(x,x),"~",output[3][yy]:sub(x,x),output[1][yy]:sub(x,x)})
 					end
+					yy = yy + 1
 				end
 			else
 				tOutput = message
@@ -1868,17 +1868,17 @@ commands.palette = function(_argument)
 					scrollMeter = colors.lightGray,
 					chevron = colors.black,
 					title = colors.lightGray,
-					titlebg = colors.lightGray,
+					titlebg = colors.gray,
 				}
 				UIconf = {
 					promptY = 1,
 					chevron = ">",
 					chatlogTop = 1,
-					title = "",
+					title = "Enchat 3",
 					doTitle = false,
 					titleY = 1,
 					nameDecolor = false,
-					centerTitle = false,
+					centerTitle = true,
 					prefix = "<",
 					suffix = "> "
 				}
@@ -1894,14 +1894,14 @@ commands.palette = function(_argument)
 					prompttxt = colors.black,
 					scrollMeter = colors.white,
 					chevron = colors.lightGray,
-					title = colors.lightGray,
-					titlebg = colors.lightGray,
+					title = colors.yellow,
+					titlebg = colors.gray,
 				}
 				UIconf = {
 					promptY = 1,
 					chevron = ">",
 					chatlogTop = 1,
-					title = "",
+					title = "Enchat 2",
 					doTitle = false,
 					titleY = 1,
 					nameDecolor = false,
@@ -2094,18 +2094,6 @@ commands.set = function(_argument)
 		termclear()
 		pauseRendering = false
 	end
-	if canvas and not enchatSettings.doNotif then
-		canvas.clear()
-	end
-end
-commands.optlist = function()
-	local output = ""
-	for k,v in pairs(chatboxWhitelist) do
-		output = output .. k .. "&r~r, "
-	end
-	output = output:sub(1, -2)
-	logadd("* Players who have opted in:")
-	logadd(nil, output)
 end
 commands.help = function(cmdname)
 	if enchatSettings.extraNewline then
@@ -2130,7 +2118,6 @@ commands.help = function(cmdname)
 			picto = "Opens an image maker and sends the result. Use the scroll wheel to change color, and hold left shift to change text color. If argument given, will look for an image at the given path and use that instead.",
 			tron = "Starts up a game of TRON.",
 			big = "Sends your message, but enlarged by a specified amount via Wojbie's BigFont API.",
-			optlist = "Lists every person that has opted in to the chatbox output.",
 			help = "Shows every command, or describes a specific command.",
 		}
 		cmdname = cmdname:gsub(" ",""):gsub("/","")
@@ -2245,7 +2232,7 @@ local main = function()
 				end
 			else
 				if enchatSettings.extraNewline then
-					logadd(nil,nil) -- readability is key
+					logadd(nil,nil,nil,nil,nil,personalID) -- readability is key
 				end
 				enchatSend(yourName, input, true)
 			end
@@ -2253,7 +2240,7 @@ local main = function()
 				mHistory[#mHistory+1] = input
 			end
 		elseif input == "" then
-			logadd(nil,nil)
+			logadd(nil,nil,nil,nil,nil,personalID)
 		end
 		os.queueEvent("render_enchat")
 
@@ -2261,11 +2248,11 @@ local main = function()
 
 end
 
-local handleReceiveMessage = function(user, message, animType, maxFrame)
+local handleReceiveMessage = function(user, message, animType, maxFrame, _personalID)
 	if enchatSettings.extraNewline then
-		logadd(nil,nil) -- readability is still key
+		logadd(nil,nil,nil,nil,nil,_personalID) -- readability is still key
 	end
-	logadd(user, message,animations[animType] and animType or nil,(type(maxFrame) == "number") and maxFrame or nil)
+	logadd(user, message, animations[animType] and animType or nil, (type(maxFrame) == "number") and maxFrame or nil, nil, _personalID)
 	os.queueEvent("render_enchat")
 end
 
@@ -2293,52 +2280,19 @@ local handleEvents = function()
 			if type(evt[2]) == "string" and type(evt[3]) == "string" then
 				handleReceiveMessage(evt[2], evt[3])
 			end
-		elseif evt[1] == "chat" and ((not checkRSinput()) or (not enchat.disableChatboxWithRedstone)) and enchat.useChatbox then
-			if enchatSettings.extraNewline then
-				logadd(nil,nil) -- readability is key
-			end
-			enchatSend(evt[2], evt[3], true)
-		elseif evt[1] == "chat_message" and ((not checkRSinput()) or (not enchat.disableChatboxWithRedstone)) and enchat.useChatbox then -- computronics
-			if enchat.useChatboxWhitelist then
-				if evt[4] == ("\\"..chatboxName.." "..optInPhrase) and not chatboxWhitelist[evt[3]] then
-					chatboxWhitelist[evt[3]] = true
-					chatbox.tell(evt[3], "Opted in to Enchat's chatbox messages.")
-				elseif evt[4] == ("\\"..chatboxName.." "..optOutPhrase) and chatboxWhitelist[evt[3]] then
-					chatboxWhitelist[evt[3]] = nil
-					chatbox.tell(evt[3], "Opted out from Enchat's chatbox messages.")
-				else
-					if enchatSettings.extraNewline then
-						logadd(nil,nil) -- readability is key
-					end
-					enchatSend(evt[3], evt[4], true)
-				end
-			else
+		elseif evt[1] == "chat" and ((not checkRSinput()) or (not enchat.disableChatboxWithRedstone)) then
+			if enchat.useChatbox then
 				if enchatSettings.extraNewline then
-					logadd(nil,nil) -- readability is still key
+					logadd(nil,nil) -- readability is key
+				end
+				enchatSend(evt[2], evt[3], true)
+			end
+		elseif evt[1] == "chat_message" and ((not checkRSinput()) or (not enchat.disableChatboxWithRedstone)) then -- computronics
+			if enchat.useChatbox then
+				if enchatSettings.extraNewline then
+					logadd(nil,nil) -- readability is key
 				end
 				enchatSend(evt[3], evt[4], true)
-			end
-		elseif evt[1] == "command" and enchat.useChatbox then
-			if evt[3] == chatboxName then
-				if evt[4][1] == "opt" then
-					if evt[4][2] == "in" then
-						if chatboxWhitelist[evt[2]] then
-							chatbox.tell(evt[2], "You're already opted in.")
-						else
-							chatboxWhitelist[evt[2]] = true
-							chatbox.tell(evt[2], "Opted in to Enchat's chatbox messages.")
-							saveSettings()
-						end
-					elseif evt[4][2] == "out" then
-						if not chatboxWhitelist[evt[2]] then
-							chatbox.tell(evt[2], "You're already opted out.")
-						else
-							chatboxWhitelist[evt[2]] = nil
-							chatbox.tell(evt[2], "Opted out from Enchat's chatbox messages.")
-							saveSettings()
-						end
-					end
-				end
 			end
 		elseif (evt[1] == "modem_message") or (evt[1] == "skynet_message" and enchatSettings.useSkynet) then
 			local side, freq, repfreq, msg, distance
@@ -2357,12 +2311,12 @@ local handleEvents = function()
 								IDlog[msg.messageID] = true
 								if ((not msg.recipient) or (msg.recipient == yourName or msg.recipient == textToBlit(yourName,true))) then
 									if type(msg.message) == "string" then
-										handleReceiveMessage(msg.name, tostring(msg.message), msg.animType, msg.maxFrame, msg.ignoreWrap)
+										handleReceiveMessage(msg.name, tostring(msg.message), msg.animType, msg.maxFrame, msg.personalID)
 										if chatbox and enchat.useChatbox and ((not checkRSinput()) or (not enchat.disableChatboxWithRedstone)) then
-											chatbox.say(textToBlit(UIconf.prefix .. msg.name .. UIconf.suffix .. msg.message, true), msg.name)
+											chatbox.say(UIconf.prefix .. msg.name .. UIconf.suffix .. msg.message, msg.name)
 										end
 									elseif type(msg.message) == "table" and enchatSettings.acceptPictoChat and #msg.message <= 64 then
-										logaddTable(msg.name, msg.message, msg.animType, msg.maxFrame, msg.ignoreWrap)
+										logaddTable(msg.name, msg.message, msg.animType, msg.maxFrame, msg.ignoreWrap, msg.personalID)
 										if enchatSettings.extraNewline then
 											logadd(nil,nil)
 										end
@@ -2445,7 +2399,7 @@ end
 
 getModem()
 
-enchatSend("*", "'"..yourName.."&}&r~r' has moseyed on over.", true)
+enchatSend("*", "'"..yourName.."&}&r~r' has moseyed on over.", true, nil, nil, nil, nil, nil, true)
 
 local funky = {
 	main,
