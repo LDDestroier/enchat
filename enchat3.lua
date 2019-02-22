@@ -1777,9 +1777,9 @@ commands.big = function(_argument)
 		local fontSize = tonumber(_argument:sub(1,sPoint-1))
 		local message = _argument:sub(sPoint+1)
 		if not fontSize then
-			logadd("*","Size must be number between 1 and 3.")
-		elseif fontSize < 0 or fontSize > 3 then
-			logadd("*","Size must be number between 1 and 3.")
+			logadd("*","Size must be number between 1 and 2.")
+		elseif fontSize < 0 or fontSize > 2 then
+			logadd("*","Size must be number between 1 and 2.")
 		else
 			fontSize = math.floor(.5+fontSize)
 			local tOutput
