@@ -809,7 +809,7 @@ end
 local skynet, aes, bigfont
 _G.skynet_CBOR_path = fs.combine(enchat.dataDir,"/api/cbor")
 aes = getAPI("AES", "aes", "http://pastebin.com/raw/9E5UHiqv", false, false)
-if enchat.connectToSkynet then
+if enchat.connectToSkynet and http.websocket then
 	skynet = getAPI("Skynet", "skynet", "https://raw.githubusercontent.com/osmarks/skynet/master/client.lua", true, true)
 end
 bigfont = getAPI("BigFont", "bigfont", "https://pastebin.com/raw/3LfWxRWh", false, true)
