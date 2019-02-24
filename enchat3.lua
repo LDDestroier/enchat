@@ -861,7 +861,7 @@ local getChatbox = function()
 				end
 			}
 		else
-			local cb = peripheral.find("chat_box")
+			local cb = chatbox or peripheral.find("chat_box")
 			if cb then
 				if cb.setName then -- Computronics
 					cb.setName(yourName)
