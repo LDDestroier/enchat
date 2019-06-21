@@ -1588,7 +1588,7 @@ commands.tron = function()
   local url = "https://raw.githubusercontent.com/LDDestroier/CC/master/tron.lua"
   local prog, contents = http.get(url)
   if prog then
-    enchatSend("*", yourName .. "&}&r~r has started a game of TRON.")
+    enchatSend("*", yourName .. "&}&r~r has started a game of TRON.", true)
     contents = prog.readAll()
     pauseRendering = true
     prog = load(contents, nil, nil, _ENV)(enchatSettings.useSkynet and "skynet", "quick", yourName)
@@ -1777,9 +1777,9 @@ commands.big = function(_argument)
 		local fontSize = tonumber(_argument:sub(1,sPoint-1))
 		local message = _argument:sub(sPoint+1)
 		if not fontSize then
-			logadd("*","Size must be number between 1 and 2.")
+			logadd("*","Size must be number between 0 and 2.")
 		elseif fontSize < 0 or fontSize > 2 then
-			logadd("*","Size must be number between 1 and 2.")
+			logadd("*","Size must be number between 0 and 2.")
 		else
 			fontSize = math.floor(.5+fontSize)
 			local tOutput
