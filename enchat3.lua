@@ -1493,35 +1493,40 @@ local logaddTable = function(name, message, animType, maxFrame, ignoreWrap, _per
 	end
 end
 
-local enchatSend = function(name, message, doLog, animType, maxFrame, crying, recipient, ignoreWrap, omitPersonalID)
-	if doLog then
+local enchatSend = function(name, message, option, doLog, animType, maxFrame, crying, recipient, ignoreWrap, omitPersonalID)
+	option = option or {}
+	if option.doLog then
 		if type(message) == "string" then
-			logadd(name, message, animType, maxFrame, ignoreWrap, (not omitPersonalID) and personalID)
+			logadd(name, message, option.animType, option.maxFrame, option.ignoreWrap, (not option.omitPersonalID) and personalID)
 		else
-			logaddTable(name, message, animType, maxFrame, ignoreWrap, (not omitPersonalID) and personalID)
+			logaddTable(name, message, option.animType, option.maxFrame, option.ignoreWrap, (not option.omitPersonalID) and personalID)
 		end
 	end
 	local messageID = makeRandomString(64)
 	local outmsg = encrite({
 		name = name,
 		message = message,
-		animType = animType,
-		maxFrame = maxFrame,
+		animType = option.animType,
+		maxFrame = option.maxFrame,
 		messageID = messageID,
-		recipient = recipient,
-		ignoreWrap = ignoreWrap,
-		personalID = (not omitPersonalID) and personalID,
-		cry = crying
+		recipient = option.recipient,
+		ignoreWrap = option.ignoreWrap,
+		personalID = (not option.omitPersonalID) and personalID,
+		cry = option.crying,
+		simCommand = option.simCommand,
+		simArgument = option.simArgument,
 	})
 	IDlog[messageID] = true
-	if not enchat.ignoreModem then modemTransmit(enchat.port, enchat.port, outmsg) end
+	if not enchat.ignoreModem then
+		modemTransmit(enchat.port, enchat.port, outmsg)
+	end
 	if skynet and enchatSettings.useSkynet then
 		skynet.send(enchat.skynetPort, outmsg)
 	end
 end
 
 local cryOut = function(name, crying)
-	enchatSend(name, nil, false, nil, nil, crying)
+	enchatSend(name, nil, {crying = crying})
 end
 
 local getPictureFile = function(path) -- ONLY NFP or NFT, fuck BLT
@@ -1557,6 +1562,9 @@ local userCryList = {}
 
 local commandInit = "/"
 local commands = {}
+local simmableCommands = {
+	big = true
+}
 -- Commands only have one argument, being a single string.
 -- Separate arguments can be extrapolated with the explode() function.
 commands.about = function()
@@ -1579,7 +1587,7 @@ commands.me = function(msg)
 		logadd(nil,nil)
 	end
 	if msg then
-		enchatSend("&2*", yourName.."~r&2 "..msg, true)
+		enchatSend("&2*", yourName.."~r&2 "..msg, {doLog = true})
 	else
 		logadd("*",commandInit.."me [message]")
 	end
@@ -1588,7 +1596,7 @@ commands.tron = function()
   local url = "https://raw.githubusercontent.com/LDDestroier/CC/master/tron.lua"
   local prog, contents = http.get(url)
   if prog then
-    enchatSend("*", yourName .. "&}&r~r has started a game of TRON.", true)
+    enchatSend("*", yourName .. "&}&r~r has started a game of TRON.", {doLog = true})
     contents = prog.readAll()
     pauseRendering = true
     prog = load(contents, nil, nil, _ENV)(enchatSettings.useSkynet and "skynet", "quick", yourName)
@@ -1610,7 +1618,7 @@ end
 commands.update = function()
 	local res, message = updateEnchat()
 	if res then
-		enchatSend("*",yourName.."&}&r~r has updated and exited.")
+		enchatSend("*", yourName.."&}&r~r has updated and exited.")
 		termsetBackgroundColor(colors.black)
 		termsetTextColor(colors.white)
 		termclear()
@@ -1655,7 +1663,7 @@ commands.picto = function(filename)
 		end
 	end
 	if not isEmpty then
-		enchatSend(yourName,output,true,"slideFromLeft",nil,nil,nil,true)
+		enchatSend(yourName, output, {doLog = true, animType = "slideFromLeft", ignoreWrap = true})
 	end
 end
 commands.list = function()
@@ -1690,14 +1698,14 @@ commands.nick = function(newName)
 			if newName == yourName then
 				logadd("*","But you're already called that!")
 			else
-				enchatSend("*","'"..yourName.."&}&r~r' is now known as '"..newName.."&}&r~r'.", true)
+				enchatSend("*", "'"..yourName.."&}&r~r' is now known as '"..newName.."&}&r~r'.", {doLog = true})
 				yourName = newName
 			end
 		else
 			if #newName < 2 then
-				logadd("*","That name is too damned small.")
+				logadd("*", "That name is too damned small.")
 			elseif #newName > 32 then
-				logadd("*","Woah there, that name is too large.")
+				logadd("*", "Woah there, that name is too large.")
 			end
 		end
 	else
@@ -1720,10 +1728,10 @@ commands.key = function(newKey)
 	end
 	if newKey then
 		if newKey ~= encKey then
-			enchatSend("*", "'"..yourName.."&}&r~r' buggered off. (keychange)", false)
+			enchatSend("*", "'"..yourName.."&}&r~r' buggered off. (keychange)")
 			setEncKey(newKey)
 			logadd("*", "Key changed to '"..encKey.."&}&r~r'.")
-			enchatSend("*", "'"..yourName.."&}&r~r' has moseyed on over.", false, nil, nil, nil, nil, nil, true)
+			enchatSend("*", "'"..yourName.."&}&r~r' has moseyed on over.", {omitPersonalID = true})
 		else
 			logadd("*", "That's already the key, though.")
 		end
@@ -1736,7 +1744,7 @@ commands.shrug = function(face)
 	if enchatSettings.extraNewline then
 		logadd(nil,nil)
 	end
-	enchatSend(yourName, "¯\\_"..(face and ("("..face..")") or "\2").."_/¯", true)
+	enchatSend(yourName, "¯\\_"..(face and ("("..face..")") or "\2").."_/¯", {doLog = true})
 end
 commands.asay = function(_argument)
 	local sPoint = (_argument or ""):find(" ")
@@ -1757,7 +1765,7 @@ commands.asay = function(_argument)
 		}
 		if animations[animType] then
 			if textToBlit(message,true):gsub(" ","") ~= "" then
-				enchatSend(yourName, message, true, animType, animFrameMod[animType])
+				enchatSend(yourName, message, {doLog = true, animType = animType, maxFrame = animFrameMod[animType]})
 			else
 				logadd("*","That message is no good.")
 			end
@@ -1766,7 +1774,7 @@ commands.asay = function(_argument)
 		end
 	end
 end
-commands.big = function(_argument)
+commands.big = function(_argument, simUser)
 	local sPoint = (_argument or ""):find(" ")
 	if enchatSettings.extraNewline then
 		logadd(nil,nil)
@@ -1818,7 +1826,12 @@ commands.big = function(_argument)
 			else
 				tOutput = message
 			end
-			enchatSend(yourName, tOutput, true)
+			if simUser then
+				logaddTable(simUser, tOutput)
+			else
+				logaddTable(yourName, tOutput)
+				enchatSend(yourName, nil, {simCommand = "big", simArgument = _argument})
+			end
 		end
 	end
 end
@@ -1838,7 +1851,7 @@ commands.msg = function(_argument)
 			if textToBlit(message,true):gsub(" ","") == "" then
 				logadd("*","That message is no good.")
 			else
-				enchatSend(yourName, message, false, nil, nil, false, recipient)
+				enchatSend(yourName, message, {recipient = recipient})
 				logadd("*","to '"..recipient.."': "..message)
 			end
 		end
@@ -2234,7 +2247,7 @@ local main = function()
 				if enchatSettings.extraNewline then
 					logadd(nil,nil,nil,nil,nil,personalID) -- readability is key
 				end
-				enchatSend(yourName, input, true)
+				enchatSend(yourName, input, {doLog = true})
 			end
 			if mHistory[#mHistory] ~= input then
 				mHistory[#mHistory+1] = input
@@ -2285,14 +2298,14 @@ local handleEvents = function()
 				if enchatSettings.extraNewline then
 					logadd(nil,nil) -- readability is key
 				end
-				enchatSend(evt[2], evt[3], true)
+				enchatSend(evt[2], evt[3], {doLog = true})
 			end
 		elseif evt[1] == "chat_message" and ((not checkRSinput()) or (not enchat.disableChatboxWithRedstone)) then -- computronics
 			if enchat.useChatbox then
 				if enchatSettings.extraNewline then
 					logadd(nil,nil) -- readability is key
 				end
-				enchatSend(evt[3], evt[4], true)
+				enchatSend(evt[3], evt[4], {doLog = true})
 			end
 		elseif (evt[1] == "modem_message") or (evt[1] == "skynet_message" and enchatSettings.useSkynet) then
 			local side, freq, repfreq, msg, distance
@@ -2319,6 +2332,10 @@ local handleEvents = function()
 										logaddTable(msg.name, msg.message, msg.animType, msg.maxFrame, msg.ignoreWrap, msg.personalID)
 										if enchatSettings.extraNewline then
 											logadd(nil,nil)
+										end
+									elseif commands[msg.simCommand or false] and type(msg.simArgument) == "string" then
+										if simmableCommands[msg.simCommand or false] then
+											commands[msg.simCommand](msg.simArgument, msg.name)
 										end
 									end
 								end
@@ -2361,17 +2378,17 @@ local handleEvents = function()
 					logadd(nil,nil)
 				end
 				if evt[2] == "win" then
-					enchatSend("*", yourName .. "&}&r~r beat " .. (evt[4] or "someone") .. "&}&r~r in TRON!", true)
+					enchatSend("*", yourName .. "&}&r~r beat " .. (evt[4] or "someone") .. "&}&r~r in TRON!", {doLog = true})
 				elseif evt[2] == "lose" then
-					enchatSend("*", (evt[4] or "Someone") .. "&}&r~r beat " .. yourName .. "&}&r~r in TRON!", true)
+					enchatSend("*", (evt[4] or "Someone") .. "&}&r~r beat " .. yourName .. "&}&r~r in TRON!", {doLog = true})
 				elseif evt[2] == "tie" then
-					enchatSend("*", yourName .. "&}&r~r tied with " .. (evt[4] or "someone") .. "&}&r~r in TRON!", true)
+					enchatSend("*", yourName .. "&}&r~r tied with " .. (evt[4] or "someone") .. "&}&r~r in TRON!", {doLog = true})
 				end
 			elseif evt[2] == "timeout" then
 				if enchatSettings.extraNewline then
 					logadd(nil,nil)
 				end
-				enchatSend("*", yourName .. "&}&r~r timed out against " .. (evt[4] or "someone") .. "&}&r~r in TRON...", true)
+				enchatSend("*", yourName .. "&}&r~r timed out against " .. (evt[4] or "someone") .. "&}&r~r in TRON...", {doLog = true})
 			end
 		elseif evt[1] == "terminate" then
 			return "exit"
@@ -2399,7 +2416,7 @@ end
 
 getModem()
 
-enchatSend("*", "'"..yourName.."&}&r~r' has moseyed on over.", true, nil, nil, nil, nil, nil, true)
+enchatSend("*", "'"..yourName.."&}&r~r' has moseyed on over.", {doLog = true, omitPersonalID = true})
 
 local funky = {
 	main,
