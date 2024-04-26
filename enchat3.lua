@@ -1,9 +1,9 @@
 --[[
- Enchat 3.0
+ Enchat 3.1
  Get with:
   wget https://github.com/LDDestroier/enchat/raw/master/enchat3.lua enchat3.lua
 
-This is a stable release. You fool!
+This is a stable release. You unkempt lout!
 --]]
 
 local scr_x, scr_y = term.getSize()
@@ -11,14 +11,14 @@ CHATBOX_SAFEMODE = nil
 
 -- non-changable settings
 enchat = {
-	connectToSkynet = true,
-	version = 3.0,
+	connectToSkynet = false,
+	version = 3.1,
 	isBeta = false,
 	port = 11000,
 	skynetPort = "enchat3-default",
 	url = "https://github.com/LDDestroier/enchat/raw/master/enchat3.lua",
 	betaurl = "https://github.com/LDDestroier/enchat/raw/beta/enchat3.lua",
-	ignoreModem = false,
+	ignoreModem = true,
 	dataDir = "/.enchat",
 	useChatbox = false,
 	disableChatboxWithRedstone = false,
@@ -26,17 +26,17 @@ enchat = {
 
 -- changable settings
 local enchatSettings = {	-- DEFAULT settings.
-	animDiv = 4,			-- divisor of text animation speed (scrolling from left)
+	animDiv = 2,			-- divisor of text animation speed (scrolling from left)
 	doAnimate = true,		-- whether or not to animate text moving from left side of screen
 	reverseScroll = false,	-- whether or not to make scrolling up really scroll down
-	redrawDelay = 0.1,		-- delay between redrawing
-	useSetVisible = false,	-- whether or not to use term.current().setVisible(), which has performance and flickering improvements
+	redrawDelay = 0.05,		-- delay between redrawing
+	useSetVisible = true,	-- whether or not to use term.current().setVisible(), which has performance and flickering improvements
 	pageKeySpeed = 8,		-- how far PageUP or PageDOWN should scroll
 	doNotif = true,			-- whether or not to use oveerlay glasses for notifications, if possible
 	doKrazy = true,			-- whether or not to add &k obfuscation
 	useSkynet = true,		-- whether or not to use gollark's Skynet in addition to modem calls
 	extraNewline = true,	-- adds an extra newline after every message since setting to true
-	acceptPictoChat = true,	-- whether or not to allow tablular enchat input, which is what /picto uses
+	acceptPictoChat = true,	-- whether or not to allow tablular enchat input, which is what /picto and /big uses
 	noRepeatNames = true,	-- whether or not to display the username in two or more consecutive messages by the same user
 }
 
@@ -55,7 +55,7 @@ palette = {
 -- UI adjustments, used to emulate the appearance of other chat programs
 UIconf = {
 	promptY = 1,
-	chevron = ">",
+	chevron = "\007",
 	chatlogTop = 1,
 	title = "Enchat 3",
 	doTitle = false,
@@ -67,6 +67,7 @@ UIconf = {
 }
 
 -- Attempt to get some slight optimization through localizing basic functions.
+-- In retrospect, this is kinda foolish.
 local mathmax, mathmin, mathrandom = math.max, math.min, math.random
 local termblit, termwrite = term.blit, term.write
 local termsetCursorPos, termgetCursorPos, termsetCursorBlink = term.setCursorPos, term.getCursorPos, term.setCursorBlink
@@ -77,7 +78,6 @@ local tableinsert, tableremove, tableconcat = table.insert, table.remove, table.
 local textutilsserialize, textutilsunserialize = textutils.serialize, textutils.unserialize
 local stringsub, stringgsub, stringrep = string.sub, string.gsub, string.rep
 local unpack = unpack
--- This better do something.
 
 local initcolors = {
 	bg = termgetBackgroundColor(),
@@ -146,18 +146,19 @@ end
 -- disables chat screen updating
 local pauseRendering = true
 
--- primarily for use when using the pallete command, hoh hoh
+-- Aliases for the different colors
+-- Used primarily with the /palette command
 local colors_strnames = {
 	["white"] = colors.white,
 	["pearl"] = colors.white,
 	["silver"] = colors.white,
-	["aryan"] = colors.white,
+	["irish"] = colors.white,
 	["#f0f0f0"] = colors.white,
 
 	["orange"] = colors.orange,
 	["carrot"] = colors.orange,
-	["fuhrer"] = colors.orange,
 	["pumpkin"] = colors.orange,
+	["spispopd"] = colors.orange,
 	["#f2b233"] = colors.orange,
 
 	["magenta"] = colors.magenta,
@@ -192,6 +193,7 @@ local colors_strnames = {
 	["communist"] = colors.pink,
 	["commie"] = colors.pink,
 	["patrick"] = colors.pink,
+	["bubblegum"] = colors.pink,
 	["#f2b2cc"] = colors.pink,
 
 	["gray"] = colors.gray,
@@ -232,11 +234,12 @@ local colors_strnames = {
 	["shit"] = colors.brown,
 	["dirt"] = colors.brown,
 	["mud"] = colors.brown,
-	["bricks"] = colors.brown,
+	["poop"] = colors.brown,
 	["#7f664c"] = colors.brown,
 
 	["green"] = colors.green,
 	["grass"] = colors.green,
+	["verde"] = colors.green,
 	["#57a64e"] = colors.green,
 
 	["red"] = colors.red,
@@ -325,6 +328,25 @@ for k,v in pairs(kraziez) do
 	end
 end
 
+getStringHeight = function(str, screenwidth)
+	local new_i = 0
+	local old_i = 0
+	local lines = 1
+	-- count newlines throughout string
+	while true do
+		new_i = string.find(str, "\n", old_i + 1)
+		if new_i then
+			lines = lines + 1
+			lines = lines + math.floor((new_i - old_i) / screenwidth)
+		else
+			break
+		end
+		old_i = new_i
+	end
+
+	return lines
+end
+
 -- check if using older CC version, and omit special characters if it's too old to avoid crash
 if tonumber(_CC_VERSION or 0) >= 1.76 then
 	for a = 1, 255 do
@@ -361,12 +383,18 @@ local explode = function(div, str, replstr, includeDiv)
 	return arr
 end
 
-local parseKrazy = function(c)
-	if kraziez[c] then
-		return kraziez[c][mathrandom(1, #kraziez[c])]
-	else
-		return kraziez.all[mathrandom(1, #kraziez.all)]
+local parseKrazy = function(str)
+	local output = ""
+	local c
+	for i = 1, #str do
+		c = stringsub(str, i)
+		if kraziez[c] then
+			output = output .. kraziez[c][mathrandom(1, #kraziez[c])]
+		else
+			output = output .. kraziez.all[mathrandom(1, #kraziez.all)]
+		end
 	end
+	return output
 end
 
 -- my main man, the function that turns unformatted strings into formatted strings
@@ -374,7 +402,7 @@ local textToBlit = function(input, onlyString, initText, initBack, checkPos, use
 	if not input then return end
 	checkPos = checkPos or -1
 	initText, initBack = initText or toblit[term.getTextColor()], initBack or toblit[term.getBackgroundColor()]
-	tcode, bcode = "&", "~"
+	local tcode, bcode, ecode = "&", "~", "\\"
 	local cpos, cx = 0, 0
 	local skip, ignore, ex = nil, false, nil
 	local text, back, nex = initText, initBack, nil
@@ -387,6 +415,7 @@ local textToBlit = function(input, onlyString, initText, initBack, checkPos, use
 	local strikethrough = false
 	local underline = false
 	local italic = false
+	local doEscape = false
 
 	local codes = {}
 	codes["r"] = function(prev)
@@ -477,6 +506,7 @@ local textToBlit = function(input, onlyString, initText, initBack, checkPos, use
 
 	for cx = 1, #input do
 		str = stringsub(input,cx,cx)
+		-- skip is the character behind the current index
 		if skip then
 			if tocolors[str] and not ignore then
 				if skip == tcode then
@@ -490,10 +520,13 @@ local textToBlit = function(input, onlyString, initText, initBack, checkPos, use
 						cpos = cpos - 2
 					end
 				end
-			elseif codes[str] and not (ignore and str == "{") then
+			elseif codes[str] and (
+--				not ( ignore == true and str == "{" ) and
+				not ( ignore == true and str ~= "}" )
+			) then
 				ex = codes[str](skip) or 0
 				sx = sx + ex
-    				if sx < checkPos then
+				if sx < checkPos then
 					cpos = cpos - ex - 2
 				end
 			else
@@ -509,7 +542,7 @@ local textToBlit = function(input, onlyString, initText, initBack, checkPos, use
 						strikethrough = (not onlyString) and strikethrough
 					}
 				else
-					charOut[sx] = krazy and parseKrazy(prev..str) or (skip..str)
+					charOut[sx] = krazy and parseKrazy(skip..str) or (skip..str)
 					textOut[sx] = stringrep(text,2)
 					backOut[sx] = stringrep(back,2)
 				end
@@ -537,7 +570,9 @@ local textToBlit = function(input, onlyString, initText, initBack, checkPos, use
 				end
 			end
 		end
+		doEscape = false
 	end
+
 	if useJSONformat then
 		return textutils.serializeJSON(JSONoutput)
 	else
@@ -571,6 +606,9 @@ local colorRead = function(maxLength, _history)
 		bout, xmod = textToBlit(output, false, nil, nil, x)
 		for a = 1, #bout do
 			bout[a] = stringsub(bout[a], xscroll, xscroll + scr_x - cx)
+		end
+		if #bout[1] ~= #bout[2] or #bout[2] ~= #bout[3] then
+			error("Message blit of inconsistant size!\n" .. textutils.serialize(bout))
 		end
 		termblit(unpack(bout))
 		termwrite((" "):rep(scr_x - cx))
@@ -657,22 +695,36 @@ end
 local prettyClearScreen = function(start, stop)
 	termsetTextColor(colors.lightGray)
 	termsetBackgroundColor(colors.gray)
+	start = start or 1
+	stop = stop or scr_y
 	if _VERSION then
-		for y = start or 1, stop or scr_y do
+		for y = start, stop do
 			termsetCursorPos(1,y)
-			if y == (start or 1) then
+			termclearLine()
+			if y == start then
+				termsetTextColor(colors.lightGray)
+				termsetBackgroundColor(colors.gray)
 				termwrite(("\135"):rep(scr_x))
-			elseif y == (stop or scr_y) then
+			end
+			if y == start + 1 then
+				termsetTextColor(colors.gray)
+				termsetBackgroundColor(colors.black)
+				termwrite(("\129"):rep(scr_x))
+			end
+			if y == stop - 1 then
+				termsetTextColor(colors.black)
+				termsetBackgroundColor(colors.gray)
+				termwrite(("\159"):rep(scr_x))	
+			elseif y == stop then
 				termsetTextColor(colors.gray)
 				termsetBackgroundColor(colors.lightGray)
-				termwrite(("\135"):rep(scr_x))
-			else
-				termclearLine()
+				termwrite(("\135"):rep(scr_x))	
 			end
 		end
 	else
 		termclear()
 	end
+	termsetBackgroundColor(colors.black)
 end
 
 local cwrite = function(text, y)
@@ -699,11 +751,11 @@ end
 
 local prettyPrompt = function(prompt, y, replchar, doColor)
 	local cy, cx = termgetCursorPos()
-	termsetBackgroundColor(colors.gray)
+	termsetBackgroundColor(colors.black)
 	termsetTextColor(colors.white)
 	local yadj = 1 + prettyCenterWrite(prompt, y or cy)
 	termsetCursorPos(1, y + yadj)
-	termsetBackgroundColor(colors.lightGray)
+	termsetBackgroundColor(colors.gray)
 	termclearLine()
 	local output
 	if doColor then
@@ -731,23 +783,23 @@ if not checkValidName(yourName) then -- not so fast, evildoers
 	yourName = nil
 end
 
-local currentY = 2
+local currentY = 3
 
 if not (yourName and encKey) then
 	prettyClearScreen()
 end
 
 if not yourName then
-    cfwrite("&8~7Text = &, Background = ~", scr_y-3)
-	cfwrite("&8~7&{Krazy = &k, Reset = &r", scr_y-2)
-    cfwrite("&7~00~11~22~33~44~55~66&8~77&7~88~99~aa~bb~cc~dd~ee~ff", scr_y-1)
+	cfwrite("&8~fText = &, Background = ~", scr_y-4)
+	cfwrite("&8~f&{Krazy = &k, Reset = &r", scr_y-3)
+	cfwrite("&7~00~11~22~33~44~55~66&8~77&7~88~99~aa~bb~cc~dd~ee~f", scr_y-2)
+
 	yourName = prettyPrompt("Enter your name.", currentY, nil, true)
+
 	if not checkValidName(yourName) then
 		while true do
 			yourName = prettyPrompt("That name isn't valid. Enter another.", currentY, nil, true)
-			if checkValidName(yourName) then
-				break
-			end
+			if checkValidName(yourName) then break end
 		end
 	end
 	currentY = currentY + 3
@@ -1287,14 +1339,14 @@ local darkerCols = {
 
 -- used for regular chat. they can be disabled if you hate fun
 local animations = {
-	slideFromLeft = function(char, text, back, frame, maxFrame, length)
+	slideFromLeft = function(char, text, back, frame, maxFrame, length, messageStartX)
 		return {
 			stringsub(char, (length or #char) - ((frame/maxFrame)*(length or #char))),
 			stringsub(text, (length or #text) - ((frame/maxFrame)*(length or #text))),
 			stringsub(back, (length or #back) - ((frame/maxFrame)*(length or #back)))
 		}
 	end,
-	fadeIn = function(char, text, back, frame, maxFrame, length)
+	fadeIn = function(char, text, back, frame, maxFrame, length, messageStartX)
 		-- a good example:
 		-- &1what &2in &3the &4world &5are &6you &7doing &8in &9my &aswamp
 		for i = 1, 3 - math.ceil(frame/maxFrame * 3) do
@@ -1306,10 +1358,10 @@ local animations = {
 			back
 		}
 	end,
-	flash = function(char, text, back, frame, maxFrame, length)
+	flash = function(char, text, back, frame, maxFrame, length, messageStartX)
 		local t = palette.txt
 		if frame ~= maxFrame then
-			t = (frame % 2 == 0) and t or palette.bg
+			t = (frame % 4 < 2) and t or palette.bg
 		end
 		return {
 			char,
@@ -1317,7 +1369,44 @@ local animations = {
 			(frame % 2 == 0) and back or (" "):rep(#back)
 		}
 	end,
-	none = function(char, text, back, frame, maxFrame, length)
+	capstrobe = function(char, text, back, frame, maxFrame, length, messageStartX)
+		local cappyChar = ""
+		for i = 1, #char do
+			if i < messageStartX then
+				cappyChar = cappyChar .. char:sub(i,i)
+			else
+				if math.random(1, 2) == 1 then
+					cappyChar = cappyChar .. string.upper(char:sub(i,i))
+				else
+					cappyChar = cappyChar .. string.lower(char:sub(i,i))
+				end
+			end
+		end
+		return {
+			cappyChar,
+			text,
+			back
+		}
+	end,
+	implode = function(char, text, back, frame, maxFrame, length, messageStartX)
+		local a_size = 20
+		local spaces = a_size - ((frame / maxFrame) * a_size)
+		local _char = char:sub(1,1)
+		local _text = text:sub(1,1)
+		local _back = back:sub(1,1)
+		for i = 2, #char do
+			_char = _char .. (" "):rep(spaces) .. char:sub(i,i)
+			_text = _text .. (" "):rep(spaces) .. text:sub(i,i)
+			_back = _back .. (" "):rep(spaces) .. back:sub(i,i)
+		end
+		
+		return {
+			_char,
+			_text,
+			_back
+		}
+	end,
+	none = function(char, text, back, frame, maxFrame, length, messageStartX)
 		return {
 			char,
 			text,
@@ -1326,10 +1415,10 @@ local animations = {
 	end
 }
 
-local inAnimate = function(animType, buff, frame, maxFrame, length)
+local inAnimate = function(animType, buff, frame, maxFrame, length, messageStartX)
 	local char, text, back = buff[1], buff[2], buff[3]
 	if enchatSettings.doAnimate and (frame >= 0) and (maxFrame > 0) then
-		return animations[animType or "slideFromleft"](char, text, back, frame, maxFrame, length)
+		return animations[animType or "slideFromleft"](char, text, back, frame, maxFrame, length, messageStartX)
 	else
 		return {char,text,back}
 	end
@@ -1341,13 +1430,14 @@ local genRenderLog = function()
 	renderlog = {}
 	local dcName, dcMessage
 	for a = 1, #log do
+
+		dcName = textToBlit(table.concat({log[a].prefix,log[a].name,log[a].suffix}), true, toblit[palette.txt], toblit[palette.bg])
+
 		if not ((lastUser == log[a].personalID and log[a].personalID) and log[a].name == "" and log[a].message == " ") then
 			termsetCursorPos(1,1)
 			if UIconf.nameDecolor then
 				if lastUser == log[a].personalID and log[a].personalID then
 					dcName = ""
-				else
-					dcName = textToBlit(table.concat({log[a].prefix,log[a].name,log[a].suffix}), true, toblit[palette.txt], toblit[palette.bg])
 				end
 				dcMessage = textToBlit(log[a].message, false, toblit[palette.txt], toblit[palette.bg])
 				prebuff = {
@@ -1358,6 +1448,7 @@ local genRenderLog = function()
 			else
 				if lastUser == log[a].personalID and log[a].personalID then
 					prebuff = textToBlit(" " .. log[a].message, false, toblit[palette.txt], toblit[palette.bg])
+					dcName = ""
 				else
 					prebuff = textToBlit(table.concat({
 						log[a].prefix,
@@ -1391,9 +1482,9 @@ local genRenderLog = function()
 			for l = 1, #buff do
 				-- holy shit, two animations, lookit mr. roxas over here
 				if log[a].animType then
-					renderlog[#renderlog + 1] = inAnimate(log[a].animType, buff[l], log[a].frame, log[a].maxFrame, maxLength)
+					renderlog[#renderlog + 1] = inAnimate(log[a].animType, buff[l], log[a].frame, log[a].maxFrame, maxLength, #dcName)
 				else
-					renderlog[#renderlog + 1] = inAnimate("fadeIn", inAnimate("slideFromLeft", buff[l], log[a].frame, log[a].maxFrame, maxLength), log[a].frame, log[a].maxFrame, maxLength)
+					renderlog[#renderlog + 1] = inAnimate("fadeIn", inAnimate("slideFromLeft", buff[l], log[a].frame, log[a].maxFrame, maxLength, #dcName), log[a].frame, log[a].maxFrame, maxLength, 0)
 				end
 			end
 			if (log[a].frame < log[a].maxFrame) and log[a].frame >= 0 then
@@ -1760,8 +1851,10 @@ commands.asay = function(_argument)
 		local animType = _argument:sub(1,sPoint-1)
 		local message = _argument:sub(sPoint+1)
 		local animFrameMod = {
-			flash = 8,
-			fadeIn = 4,
+			flash = 64,
+			fadeIn = 8,
+			capstrobe = math.huge,
+			implode = 20
 		}
 		if animations[animType] then
 			if textToBlit(message,true):gsub(" ","") ~= "" then
@@ -1776,62 +1869,80 @@ commands.asay = function(_argument)
 end
 commands.big = function(_argument, simUser)
 	local sPoint = (_argument or ""):find(" ")
+	local allgood = true
+	local fontSize
+	local message
 	if enchatSettings.extraNewline then
 		logadd(nil,nil)
 	end
 	if not sPoint then
-		logadd("*",commandInit .. "big <size> <text>")
+		fontSize = 1
+		message = _argument
+		if type(_argument) ~= "string" then
+			logadd("*",commandInit .. "big <size> <text>")
+			allgood = false
+		end
 	else
-		local fontSize = tonumber(_argument:sub(1,sPoint-1))
-		local message = _argument:sub(sPoint+1)
-		if not fontSize then
-			logadd("*","Size must be number between 0 and 2.")
-		elseif fontSize < 0 or fontSize > 2 then
-			logadd("*","Size must be number between 0 and 2.")
+		if type(_argument) == "string" then
+			fontSize = tonumber(_argument:sub(1,sPoint-1))
+			if fontSize then
+				message = _argument:sub(sPoint+1)
+			else
+				fontSize = 1
+				message = _argument
+			end
 		else
-			fontSize = math.floor(.5+fontSize)
-			local tOutput
-			if fontSize > 0 then
-				message = textToBlit(message, false, "0", "f")
-				local output = {{},{},{}}
-				local x, y = 1, 1
-				local char
-				for i = 1, #message[1] do
-					char = bigfont.makeBlittleText(
-						fontSize,
-						stringsub(message[1],i,i),
-						stringsub(message[2],i,i),
-						stringsub(message[3],i,i)
-					)
-					x = x + char.width
-					if x >= scr_x then
-						y = y + char.height
-						x = char.width
-					end
-					for charY = 1, char.height do
-						output[1][y+charY-1] = (output[1][y+charY-1] or " ") .. char[1][charY]
-						output[2][y+charY-1] = (output[2][y+charY-1] or " ") .. char[2][charY]
-						output[3][y+charY-1] = (output[3][y+charY-1] or " ") .. char[3][charY]
-					end
+			logadd("*",commandInit .. "big <size> <text>")
+			allgood = false
+		end
+	end
+	if not fontSize then
+		logadd("*","Size must be number between 0 and 2.")
+	elseif fontSize < 0 or fontSize > 2 then
+		logadd("*","Size must be number between 0 and 2.")
+	elseif allgood then
+		fontSize = math.floor(.5+fontSize)
+		local tOutput
+		if fontSize > 0 then
+			message = textToBlit(message, false, "0", "f")
+			local output = {{},{},{}}
+			local x, y = 1, 1
+			local char
+			for i = 1, #message[1] do
+				char = bigfont.makeBlittleText(
+					fontSize,
+					stringsub(message[1],i,i),
+					tocolors[ stringsub(message[2],i,i) ],
+					tocolors[ stringsub(message[3],i,i) ]
+				)
+			x = x + char.width
+			if x >= scr_x then
+					y = y + char.height
+					x = char.width
 				end
-				tOutput = {""}
-				local yy = 1
-				for y = 1, #output[1] do
-					tOutput[#tOutput+1] = ""
-					for x = 1, #output[1][y] do
-						tOutput[#tOutput] = table.concat({tOutput[#tOutput],"&",output[2][yy]:sub(x,x),"~",output[3][yy]:sub(x,x),output[1][yy]:sub(x,x)})
-					end
-					yy = yy + 1
+				for charY = 1, char.height do
+					output[1][y+charY-1] = (output[1][y+charY-1] or " ") .. char[1][charY]
+					output[2][y+charY-1] = (output[2][y+charY-1] or " ") .. char[2][charY]
+					output[3][y+charY-1] = (output[3][y+charY-1] or " ") .. char[3][charY]
 				end
-			else
-				tOutput = message
 			end
-			if simUser then
-				logaddTable(simUser, tOutput)
-			else
-				logaddTable(yourName, tOutput)
-				enchatSend(yourName, nil, {simCommand = "big", simArgument = _argument})
+			tOutput = {""}
+			local yy = 1
+			for y = 1, #output[1] do
+				tOutput[#tOutput+1] = ""
+				for x = 1, #output[1][y] do
+					tOutput[#tOutput] = table.concat({tOutput[#tOutput],"&",output[2][yy]:sub(x,x),"~",output[3][yy]:sub(x,x),output[1][yy]:sub(x,x)})
+				end
+				yy = yy + 1
 			end
+		else
+			tOutput = message
+		end
+		if simUser then
+			logaddTable(simUser, tOutput)
+		else
+			logaddTable(yourName, tOutput)
+			enchatSend(yourName, nil, {simCommand = "big", simArgument = _argument})
 		end
 	end
 end
@@ -2061,7 +2172,7 @@ commands.set = function(_argument)
 		["function"] = function() return "c" end,
 		["nil"] = function() return "8" end,
 		["thread"] = function() return "d" end,
-		["userdata"] = function() return "c" end, -- ha
+		["userdata"] = function() return "c" end, -- as if
 	}
 	local custColorize = function(input)
 		return "&"..collist[type(input)](input)
@@ -2114,23 +2225,25 @@ commands.help = function(cmdname)
 	end
 	if cmdname then
 		local helpList = {
-			exit = "Exits Enchat and returns to loader (most likely CraftOS)",
-			about = "Tells you a bit about this here Enchat.",
+			exit = "Exits Enchat.",
+			about = "Tells you a bit about that there Enchat.",
 			me = "Sends a message in the format of \"* yourName message\"",
-			colors = "Lists all the colors you can use.",
+			asay = "Sends an animated message.",
+			colors = "Lists all the color codes you can use.",
 			update = "Updates and overwrites Enchat, then exits if successful.",
 			list = "Lists all users in range using the same key.",
 			nick = "Give yourself a different username.",
 			whoami = "Tells you your current username.",
-			key = "Change the current encryption key. Tells you the key, if without argument.",
-			clear = "Clears the local chat log. Not your inventory, I swear.",
-			ping = "Pong. *sigh*",
+			key = "Change the current encryption key. If no argument, tells you the current key.",
+			clear = "Clears the screen of chat messages.",
+			ping = "Outputs a given message verbatim in the chatlog.",
 			shrug = "Sends out a shrugging emoticon.",
+			palette = "Changes the color of a specified Enchat element. Includes presets: enchat3, enchat2, chat.lua, talk, darkchat",
 			set = "Changes config options during the current session. Lists all options, if without argument.",
-			msg = "Sends a message that is only logged by a specific user.",
+			msg = "Sends a message to a specific user.",
 			picto = "Opens an image maker and sends the result. Use the scroll wheel to change color, and hold left shift to change text color. If argument given, will look for an image at the given path and use that instead.",
 			tron = "Starts up a game of TRON.",
-			big = "Sends your message, but enlarged by a specified amount via Wojbie's BigFont API.",
+			big = "Sends your message, but enlarged via Wojbie's BigFont API.",
 			help = "Shows every command, or describes a specific command.",
 		}
 		cmdname = cmdname:gsub(" ",""):gsub("/","")
@@ -2462,15 +2575,15 @@ tsv(true) -- in case it's false, y'know
 if not res then
 	prettyClearScreen(1,scr_y-1)
 	termsetTextColor(colors.white)
-	termsetBackgroundColor(colors.gray)
-	cwrite("There was an error.",2)
-	cfwrite("Report this to &3@LDDestroier#2901&r",3)
-	cwrite("on Discord,",4)
-	cwrite("if you feel like it.",5)
-	termsetCursorPos(1,7)
+	termsetBackgroundColor(colors.black)
+	cwrite("There was an error.",3)
+	cfwrite("Report this to &3@LDDestroier&r",4)
+	cwrite("on Discord,",5)
+	cwrite("if you feel like it.",6)
+	termsetCursorPos(1,8)
 	printError(outcome)
 	termsetTextColor(colors.lightGray)
-	cwrite("I'll probably fix it, maybe.",10)
+	cwrite("I'll probably fix it, maybe.", 10 + getStringHeight(outcome, scr_x))
 end
 
 termsetCursorPos(1, scr_y)
