@@ -28,6 +28,8 @@ enchat = {
 
 -- changable settings
 local enchatSettings = {	-- DEFAULT settings.
+	defaultName = "",		-- defaults to this name if you type nothing and push enter
+	defaultKey = "",		-- defaults to this key if you type nothing and push enter
 	animDiv = 2,			-- divisor of text animation speed (scrolling from left)
 	doAnimate = true,		-- whether or not to animate text moving from left side of screen
 	reverseScroll = false,	-- whether or not to make scrolling up really scroll down
@@ -777,6 +779,7 @@ local prettyCenterWrite = function(text, y)
 end
 
 local prettyPrompt = function(prompt, y, replchar, doColor)
+	local prevTX, prevBG = termgetTextColor(), termgetBackgroundColor()
 	local cy, cx = termgetCursorPos()
 	termsetBackgroundColor(colors.black)
 	termsetTextColor(colors.white)
@@ -791,6 +794,8 @@ local prettyPrompt = function(prompt, y, replchar, doColor)
 	else
 		output = read(replchar)
 	end
+	termsetTextColor(prevTX)
+	termsetBackgroundColor(prevBG)
 	return output
 end
 
@@ -807,6 +812,9 @@ end
 
 -- execution start!
 
+loadSettings()
+saveSettings()
+
 if not checkValidName(yourName) then -- not so fast, evildoers
 	yourName = nil
 end
@@ -822,19 +830,35 @@ if not yourName then
 	cfwrite("&8~f&{Krazy = &k, Reset = &r", scr_y-3)
 	cfwrite("&7~00~11~22~33~44~55~66&8~77&7~88~99~aa~bb~cc~dd~ee~f", scr_y-2)
 
+	if checkValidName(enchatSettings.defaultName) then
+		cfwrite("&7~fDefault: " .. enchatSettings.defaultName, 6)
+	end
+
 	yourName = prettyPrompt("Enter your name.", currentY, nil, true)
 
 	if not checkValidName(yourName) then
-		while true do
-			yourName = prettyPrompt("That name isn't valid. Enter another.", currentY, nil, true)
-			if checkValidName(yourName) then break end
+		if yourName == "" and checkValidName(enchatSettings.defaultName) then
+			yourName = enchatSettings.defaultName
+		else
+			while true do
+				yourName = prettyPrompt("That name isn't valid. Enter another.", currentY, nil, true)
+				if checkValidName(yourName) then break end
+			end
 		end
 	end
 	currentY = currentY + 3
 end
 
 if not encKey then
+
+	if enchatSettings.defaultKey ~= "" then
+		cwrite("Default: " .. enchatSettings.defaultKey, 9)
+	end
+
 	setEncKey(prettyPrompt("Enter an encryption key.", currentY, "*"))
+	if encKey == "" and enchatSettings.defaultKey ~= "" then
+		setEncKey(enchatSettings.defaultKey)
+	end
 	currentY = currentY + 3
 end
 
@@ -848,9 +872,6 @@ local bottomMessage = function(text)
 	termclearLine()
 	termwrite(text)
 end
-
-loadSettings()
-saveSettings()
 
 termsetBackgroundColor(colors.black)
 termclear()
@@ -2204,6 +2225,7 @@ commands.set = function(_argument)
 		logadd(nil,nil)
 	end
 	argument = _argument or ""
+
 	local collist = {
 		["string"] = function() return "0" end,
 		["table"] = function() return "5" end,
@@ -2214,16 +2236,25 @@ commands.set = function(_argument)
 		["thread"] = function() return "d" end,
 		["userdata"] = function() return "c" end, -- as if
 	}
+
 	local custColorize = function(input)
 		return "&"..collist[type(input)](input)
 	end
-	local contextualQuote = function(judgetxt,txt)
+
+	local contextualQuote = function(judgetxt, txt, ignoreString)
 		if type(judgetxt) == "string" then
-			return table.concat({"'",txt,"'"})
+			if ignoreString then
+				return txt
+
+			else
+				return table.concat({"\"",txt,"\""})
+			end
+
 		else
-			return txt
+			return table.concat({"'",txt,"'"})
 		end
 	end
+
 	local arguments = explode(" ",argument)
 	if #argument == 0 then
 		for k,v in pairs(enchatSettings) do
@@ -2240,13 +2271,17 @@ commands.set = function(_argument)
 				end
 				if type(enchatSettings[arguments[1]]) == type(newval) then
 					enchatSettings[arguments[1]] = newval
-					logadd("*","Set '&4"..arguments[1].."&r' to &{"..contextualQuote(newval,textutilsserialize(newval).."&}").." ("..type(newval)..")")
+					logadd("*","Set '&4"..arguments[1].."&r' to &{"..contextualQuote(newval,textutilsserialize(newval).."&}", true).." ("..type(newval)..")")
 					saveSettings()
 				else
 					logadd("*","Wrong value type (it's "..type(enchatSettings[arguments[1]])..")")
 				end
 			else
-				logadd("*","'"..arguments[1].."' is set to "..contextualQuote(enchatSettings[arguments[1]],custColorize(enchatSettings[arguments[1]])..textutilsserialize(enchatSettings[arguments[1]]).."&r").." ("..type(enchatSettings[arguments[1]])..")")
+				logadd("*","'"..arguments[1].."' is set to " .. contextualQuote(
+					enchatSettings[arguments[1]],
+					custColorize(enchatSettings[arguments[1]]) .. textutilsserialize(enchatSettings[arguments[1]]).."&r",
+					true
+				) .. " ("..type(enchatSettings[arguments[1]])..")")
 			end
 		else
 			logadd("*","No such setting.")
