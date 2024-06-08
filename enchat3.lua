@@ -11,7 +11,7 @@ CHATBOX_SAFEMODE = nil
 
 -- non-changable settings
 enchat = {
-	connectToSkynet = false,
+	connectToSkynet = true,
 	version = 3.1,
 	isBeta = false,
 	port = 11000,
