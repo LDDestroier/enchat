@@ -516,12 +516,14 @@ local textToBlit = function(input, onlyString, initText, initBack, checkPos, use
 					if sx < checkPos then
 						cpos = cpos - 2
 					end
+
 				elseif skip == bcode then
 					back = str == " " and initBack or str
 					if sx < checkPos then
 						cpos = cpos - 2
 					end
 				end
+
 			elseif codes[str] and (
 --				not ( ignore == true and str == "{" ) and
 				not ( ignore == true and str ~= "}" )
@@ -531,6 +533,7 @@ local textToBlit = function(input, onlyString, initText, initBack, checkPos, use
 				if sx < checkPos then
 					cpos = cpos - ex - 2
 				end
+
 			else
 				sx = sx + 1
 				if useJSONformat then
@@ -543,6 +546,7 @@ local textToBlit = function(input, onlyString, initText, initBack, checkPos, use
 						obfuscated = (not onlyString) and krazy,
 						strikethrough = (not onlyString) and strikethrough
 					}
+
 				else
 					charOut[sx] = krazy and parseKrazy(skip..str) or (skip..str)
 					textOut[sx] = stringrep(text,2)
@@ -550,9 +554,11 @@ local textToBlit = function(input, onlyString, initText, initBack, checkPos, use
 				end
 			end
 			skip = nil
+
 		else
 			if (str == tcode or str == bcode) and (codes[stringsub(input, 1+cx, 1+cx)] or tocolors[stringsub(input,1+cx,1+cx)]) then
 				skip = str
+
 			else
 				sx = sx + 1
 				if useJSONformat then
@@ -565,6 +571,7 @@ local textToBlit = function(input, onlyString, initText, initBack, checkPos, use
 						obfuscated = (not onlyString) and krazy,
 						strikethrough = (not onlyString) and strikethrough
 					}
+
 				else
 					charOut[sx] = krazy and parseKrazy(str) or str
 					textOut[sx] = text
@@ -577,9 +584,11 @@ local textToBlit = function(input, onlyString, initText, initBack, checkPos, use
 
 	if useJSONformat then
 		return textutils.serializeJSON(JSONoutput)
+
 	else
 		if onlyString then
 			return tableconcat(charOut), (checkPos > -1) and cpos or nil
+
 		else
 --			return {tableconcat(charOut), tableconcat(textOut):gsub(" ", initText), tableconcat(backOut):gsub(" ", initBack)}, (checkPos > -1) and cpos or nil
 			return {tableconcat(charOut), tableconcat(textOut), tableconcat(backOut)}, (checkPos > -1) and cpos or nil
@@ -591,6 +600,7 @@ _G.textToBlit = textToBlit
 -- convoluted read function that renders color codes as they are written.
 -- struggles with \123 codes, but hey, fuck you
 local colorRead = function(maxLength, _history)
+	local evt, key, bout, xmod, timtam
 	local output = ""
 	local history, _history = {}, _history or {}
 	for a = 1, #_history do
@@ -602,7 +612,7 @@ local colorRead = function(maxLength, _history)
 	local x, xscroll = 1, 1
 	local ctrlDown = false
 	termsetCursorBlink(true)
-	local evt, key, bout, xmod, timtam
+
 	while true do
 		termsetCursorPos(cx, cy)
 		bout, xmod = textToBlit(output, false, nil, nil, x)
@@ -623,10 +633,13 @@ local colorRead = function(maxLength, _history)
 			key = evt[2]
 			if key == keys.leftCtrl then
 				ctrlDown = true
+
 			elseif key == keys.left then
 				x = mathmax(x - 1, 1)
+
 			elseif key == keys.right then
 				x = mathmin(x + 1, #output+1)
+
 			elseif key == keys.backspace then
 				if x > 1 then
 					repeat
@@ -634,25 +647,31 @@ local colorRead = function(maxLength, _history)
 						x = x - 1
 					until output:sub(x-1,x-1) == " " or (not ctrlDown) or (x == 1)
 				end
+
 			elseif key == keys.delete then
 				if x < #output+1 then
 					repeat
 						output = output:sub(1,x-1)..output:sub(x+1)
 					until output:sub(x,x) == " " or (not ctrlDown) or (x == #output+1)
 				end
+
 			elseif key == keys.enter then
 				termsetCursorBlink(false)
 				return output
+
 			elseif key == keys.home then
 				x = 1
+
 			elseif key == keys["end"] then
 				x = #output+1
+
 			elseif key == keys.up then
 				if history[hPos-1] then
 					hPos = hPos - 1
 					output = history[hPos]
 					x = #output+1
 				end
+
 			elseif key == keys.down then
 				if history[hPos+1] then
 					hPos = hPos + 1
@@ -660,16 +679,20 @@ local colorRead = function(maxLength, _history)
 					x = #output+1
 				end
 			end
+
 		elseif evt[1] == "key_up" then
 			if evt[2] == keys.leftCtrl then
 				ctrlDown = false
 			end
 		end
+
 		if hPos > 1 then
 			history[hPos] = output
 		end
+
 		if x+cx-xscroll+xmod > scr_x then
 			xscroll = x-(scr_x-cx)+xmod
+
 		elseif x-xscroll+xmod < 0 then
 			repeat
 				xscroll = xscroll - 1
@@ -684,6 +707,7 @@ local checkValidName = function(_nayme)
 	local nayme = textToBlit(_nayme,true)
 	if type(nayme) ~= "string" then
 		return false
+
 	else
 		return (#nayme >= 2 and #nayme <= 32 and nayme:gsub(" ","") ~= "")
 	end
@@ -716,11 +740,12 @@ local prettyClearScreen = function(start, stop)
 			if y == stop - 1 then
 				termsetTextColor(colors.black)
 				termsetBackgroundColor(colors.gray)
-				termwrite(("\159"):rep(scr_x))	
+				termwrite(("\159"):rep(scr_x))
+
 			elseif y == stop then
 				termsetTextColor(colors.gray)
 				termsetBackgroundColor(colors.lightGray)
-				termwrite(("\135"):rep(scr_x))	
+				termwrite(("\135"):rep(scr_x))
 			end
 		end
 	else
@@ -762,6 +787,7 @@ local prettyPrompt = function(prompt, y, replchar, doColor)
 	local output
 	if doColor then
 		output = colorRead()
+
 	else
 		output = read(replchar)
 	end
@@ -845,16 +871,20 @@ local getAPI = function(apiname, apipath, apiurl, doDoFile, doScroll)
 		file.write(prog.readAll())
 		file.close()
 	end
+
 	if doDoFile then
 		return dofile(apipath)
+
 	else
 		os.loadAPI(apipath)
 	end
+
 	if not _ENV[fs.getName(apipath)] then
 		if doScroll then term.scroll(1) end
 		bottomMessage("Failed to load " .. apiname .. " API. Abort.")
 		termsetCursorPos(1,1)
 		return
+
 	else
 		return _ENV[fs.getName(apipath)]
 	end
@@ -1401,7 +1431,7 @@ local animations = {
 			_text = _text .. (" "):rep(spaces) .. text:sub(i,i)
 			_back = _back .. (" "):rep(spaces) .. back:sub(i,i)
 		end
-		
+
 		return {
 			_char,
 			_text,
@@ -1685,14 +1715,16 @@ commands.me = function(msg)
 		logadd("*",commandInit.."me [message]")
 	end
 end
-commands.tron = function()
+commands.tron = function(msg)
   local url = "https://raw.githubusercontent.com/LDDestroier/CC/master/tron.lua"
   local prog, contents = http.get(url)
   if prog then
-    enchatSend("*", yourName .. "&}&r~r has started a game of TRON.", {doLog = true})
+	if msg ~= "silent" then
+		enchatSend("*", yourName .. "&}&r~r has started a game of TRON.", {doLog = true})
+	end
     contents = prog.readAll()
     pauseRendering = true
-    prog = load(contents, nil, nil, _ENV)(enchatSettings.useSkynet and "skynet", "quick", yourName)
+    prog = load(contents, nil, nil, _ENV)((enchat.connectToSkynet and enchatSettings.useSkynet) and "skynet", "quick", yourName)
   else
     logadd("*", "Could not download TRON.")
   end
@@ -1830,7 +1862,13 @@ commands.key = function(newKey)
 		end
 	else
 		logadd("*","Key = '"..encKey.."&}&r~r'")
-		logadd("*","Channel = '"..enchat.port.."'")
+		if enchat.connectToSkynet and enchatSettings.useSkynet then
+			logadd("*","Channel = '"..enchat.skynetPort.."'")
+			logadd("*","Skynet is enabled.")
+		else
+			logadd("*","Channel = '"..enchat.port.."'")
+			logadd("*","Skynet is disabled.")
+		end
 	end
 end
 commands.shrug = function(face)
@@ -2408,6 +2446,11 @@ local handleEvents = function()
 			if type(evt[2]) == "string" and type(evt[3]) == "string" then
 				handleReceiveMessage(evt[2], evt[3])
 			end
+
+		elseif evt[1] == "term_resize" then
+			scr_x, scr_y = term.getSize()
+			os.queueEvent("render_enchat")
+
 		elseif evt[1] == "chat" and ((not checkRSinput()) or (not enchat.disableChatboxWithRedstone)) then
 			if enchat.useChatbox then
 				if enchatSettings.extraNewline then
@@ -2415,6 +2458,7 @@ local handleEvents = function()
 				end
 				enchatSend(evt[2], evt[3], {doLog = true})
 			end
+
 		elseif evt[1] == "chat_message" and ((not checkRSinput()) or (not enchat.disableChatboxWithRedstone)) then -- computronics
 			if enchat.useChatbox then
 				if enchatSettings.extraNewline then
@@ -2422,6 +2466,7 @@ local handleEvents = function()
 				end
 				enchatSend(evt[3], evt[4], {doLog = true})
 			end
+
 		elseif (evt[1] == "modem_message") or (evt[1] == "skynet_message" and enchatSettings.useSkynet) then
 			local side, freq, repfreq, msg, distance
 			if evt[1] == "modem_message" then
@@ -2429,6 +2474,7 @@ local handleEvents = function()
 			else
 				freq, msg = evt[2], evt[3]
 			end
+
 			if (freq == enchat.port) or (freq == enchat.skynetPort) then
 				msg = decrite(msg)
 				if type(msg) == "table" then
@@ -2462,6 +2508,7 @@ local handleEvents = function()
 					end
 				end
 			end
+
 		elseif evt[1] == "mouse_scroll" and (not pauseRendering) then
 			local dist = evt[2]
 			oldScroll = scroll
@@ -2469,6 +2516,7 @@ local handleEvents = function()
 			if scroll ~= oldScroll then
 				dab(renderChat)
 			end
+
 		elseif evt[1] == "key" and (not pauseRendering) then
 			local key = evt[2]
 			keysDown[key] = true
@@ -2482,11 +2530,14 @@ local handleEvents = function()
 			if scroll ~= oldScroll then
 				dab(renderChat)
 			end
+
 		elseif evt[1] == "key_up" then
 			local key = evt[2]
 			keysDown[key] = nil
+
 		elseif (evt[1] == "render_enchat") and (not pauseRendering) then
 			dab(renderChat)
+
 		elseif (evt[1] == "tron_complete") then
 			if evt[3] then
 				if enchatSettings.extraNewline then
@@ -2499,12 +2550,14 @@ local handleEvents = function()
 				elseif evt[2] == "tie" then
 					enchatSend("*", yourName .. "&}&r~r tied with " .. (evt[4] or "someone") .. "&}&r~r in TRON!", {doLog = true})
 				end
+
 			elseif evt[2] == "timeout" then
 				if enchatSettings.extraNewline then
 					logadd(nil,nil)
 				end
 				enchatSend("*", yourName .. "&}&r~r timed out against " .. (evt[4] or "someone") .. "&}&r~r in TRON...", {doLog = true})
 			end
+
 		elseif evt[1] == "terminate" then
 			return "exit"
 		end
