@@ -18,6 +18,8 @@ enchat = {
 	skynetPort = "enchat3-default",
 	url = "https://github.com/LDDestroier/enchat/raw/master/enchat3.lua",
 	betaurl = "https://github.com/LDDestroier/enchat/raw/beta/enchat3.lua",
+	skynet_url = "https://raw.githubusercontent.com/osmarks/skynet/master/client.lua",
+	bigfont_url = "https://pastebin.com/raw/3LfWxRWh",
 	ignoreModem = false,
 	dataDir = "/.enchat",
 	useChatbox = false,
@@ -862,9 +864,9 @@ local skynet, aes, bigfont
 -- _G.skynet_CBOR_path = fs.combine(enchat.dataDir,"/api/cbor")
 aes = getAPI("AES", "aes", "http://pastebin.com/raw/9E5UHiqv", false, false)
 if enchat.connectToSkynet and http.websocket then
-	skynet = getAPI("Skynet", "skynet", "https://raw.githubusercontent.com/LDDestroier/CC/master/API/skynet.lua", true, true)
+	skynet = getAPI("Skynet", "skynet", enchat.skynet_url, true, true)
 end
-bigfont = getAPI("BigFont", "bigfont", "https://pastebin.com/raw/3LfWxRWh", false, true)
+bigfont = getAPI("BigFont", "bigfont", enchat.bigfont_url, false, true)
 
 if encKey and skynet and enchat.connectToSkynet then
 	bottomMessage("Connecting to Skynet...")
